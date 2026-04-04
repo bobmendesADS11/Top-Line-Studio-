@@ -7,6 +7,24 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('three') || id.includes('@react-three')) {
+                return 'vendor-three';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-icons';
+              }
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
