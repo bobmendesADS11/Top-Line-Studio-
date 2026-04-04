@@ -36,8 +36,9 @@ export default function Landing({ onStart }: LandingProps) {
         </div>
 
         <h1 className="text-6xl md:text-8xl font-serif mb-4 tracking-tight">
-          Top Line <span className="gold-gradient">Studio</span>
+          Top Line <span className="gold-gradient">Formaturas</span>
         </h1>
+        <h2 className="text-4xl md:text-5xl font-serif mb-8 gold-gradient opacity-90">Studio</h2>
         
         <p className="text-xl md:text-2xl text-gray-300 mb-8 font-light italic">
           "Sonhe, Acredite, Realize"
