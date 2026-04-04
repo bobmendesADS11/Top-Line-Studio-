@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Image as ImageIcon, Check, Search, Filter, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { createClient } from '../utils/supabase/client';
+const supabase = createClient();
 
 interface Photo {
   id: string;

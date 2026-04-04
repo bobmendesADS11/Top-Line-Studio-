@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, ChevronRight, Save, Share2, Download, Layout, Layers, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Share2, Download, Layout, Layers, Sparkles, Loader2 } from 'lucide-react';
 import Album3D from './Album3D';
 import confetti from 'canvas-confetti';
+import { createClient } from '../utils/supabase/client';
+
+const supabase = createClient();
 
 interface Photo {
   id: string;
@@ -17,6 +20,7 @@ interface EditorProps {
 
 export default function Editor({ selectedPhotos, onBack }: EditorProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [loading, setLoading] = useState(false);
   const totalPages = Math.ceil(selectedPhotos.length / 2);
 
   const handleSave = async () => {
@@ -97,9 +101,11 @@ export default function Editor({ selectedPhotos, onBack }: EditorProps) {
           <div className="w-px h-6 bg-white/10 mx-2" />
           <button 
             onClick={handleSave}
-            className="gold-button py-2 px-6 text-sm flex items-center gap-2"
+            disabled={loading}
+            className="gold-button py-2 px-6 text-sm flex items-center gap-2 disabled:opacity-50"
           >
-            <Save className="w-4 h-4" /> Salvar
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </header>

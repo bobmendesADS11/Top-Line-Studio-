@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Phone, ArrowRight, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { createClient } from '../utils/supabase/client';
+
+const supabase = createClient();
 
 interface AuthProps {
   onLogin: (user: any) => void;
