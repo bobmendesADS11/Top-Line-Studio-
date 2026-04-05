@@ -228,6 +228,24 @@ const Auth: React.FC = () => {
                   <ArrowRight size={18} />
                 </button>
               </form>
+
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+                  <span className="bg-[#0a0a0a] px-4 text-gray-500">Ou use seu e-mail mestre</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-3"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+                Entrar como Admin com Google
+              </button>
             </div>
           ) : (
             /* Student Login Options */
