@@ -72,7 +72,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-black">
+    <div className="min-h-screen bg-brand-black text-white">
+      <div className="fixed top-2 right-2 text-[10px] text-brand-gold/50 z-[300]">v1.0.2-debug</div>
       {configError && (
         <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] py-1 px-4 text-center z-[200] font-bold uppercase tracking-widest">
           Configuração do Supabase ausente. Verifique as variáveis de ambiente no Vercel.

@@ -20,19 +20,9 @@ export default function Landing({ onStart }: LandingProps) {
       </div>
 
       {/* Content */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 text-center px-4 max-w-4xl"
-      >
+      <div className="relative z-10 text-center px-4 max-w-4xl">
         <div className="flex justify-center mb-6">
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 5 }}
-          >
-            <GraduationCap className="w-20 h-20 text-brand-gold" />
-          </motion.div>
+          <GraduationCap className="w-20 h-20 text-brand-gold" />
         </div>
 
         <h1 className="text-6xl md:text-8xl font-serif mb-4 tracking-tight">
@@ -58,7 +48,7 @@ export default function Landing({ onStart }: LandingProps) {
             <Sparkles className="w-4 h-4" />
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Decorative Elements */}
       <div className="absolute bottom-10 left-10 opacity-20 hidden md:block">

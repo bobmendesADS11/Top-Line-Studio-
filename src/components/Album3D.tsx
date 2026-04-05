@@ -77,7 +77,7 @@ interface Album3DProps {
   isOpen?: boolean;
 }
 
-export default function Album3D({ pages, currentPage, zoom = 1, isOpen = true }: Album3DProps) {
+function AlbumContent({ pages, currentPage, zoom, isOpen }: Album3DProps) {
   const leftPageUrl = pages[currentPage * 2] || 'https://picsum.photos/seed/empty-l/800/1200';
   const rightPageUrl = pages[currentPage * 2 + 1] || 'https://picsum.photos/seed/empty-r/800/1200';
   
@@ -98,44 +98,50 @@ export default function Album3D({ pages, currentPage, zoom = 1, isOpen = true }:
   });
 
   return (
+    <PresentationControls
+      global
+      rotation={[0, 0, 0]}
+      polar={[-Math.PI / 3, Math.PI / 3]}
+      azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
+    >
+      <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+        <group ref={groupRef} rotation={[0.2, 0, 0]}>
+          {/* Left Page */}
+          <Page 
+            textureUrl={leftPageUrl} 
+            position={[-2.05, 0, 0]} 
+            rotation={[0, 0, 0]} 
+            foldAngle={fold}
+          />
+          {/* Right Page */}
+          <Page 
+            textureUrl={rightPageUrl} 
+            position={[2.05, 0, 0]} 
+            rotation={[0, 0, 0]} 
+            isRightPage
+            foldAngle={fold}
+          />
+          
+          {/* Spine */}
+          <mesh position={[0, 0, -0.05]}>
+            <boxGeometry args={[0.1, 5.5, 0.15]} />
+            <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+          </mesh>
+        </group>
+      </Float>
+    </PresentationControls>
+  );
+}
+
+export default function Album3D(props: Album3DProps) {
+  return (
     <div className="w-full h-full min-h-[500px] md:min-h-[600px]">
       <Canvas shadows camera={{ position: [0, 0, 10], fov: 45 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} castShadow />
         <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
         
-        <PresentationControls
-          global
-          rotation={[0, 0, 0]}
-          polar={[-Math.PI / 3, Math.PI / 3]}
-          azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
-        >
-          <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-            <group ref={groupRef} rotation={[0.2, 0, 0]}>
-              {/* Left Page */}
-              <Page 
-                textureUrl={leftPageUrl} 
-                position={[-2.05, 0, 0]} 
-                rotation={[0, 0, 0]} 
-                foldAngle={fold}
-              />
-              {/* Right Page */}
-              <Page 
-                textureUrl={rightPageUrl} 
-                position={[2.05, 0, 0]} 
-                rotation={[0, 0, 0]} 
-                isRightPage
-                foldAngle={fold}
-              />
-              
-              {/* Spine */}
-              <mesh position={[0, 0, -0.05]}>
-                <boxGeometry args={[0.1, 5.5, 0.15]} />
-                <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
-              </mesh>
-            </group>
-          </Float>
-        </PresentationControls>
+        <AlbumContent {...props} />
 
         <ContactShadows position={[0, -4, 0]} opacity={0.4} scale={20} blur={2} far={4.5} />
         <Environment preset="city" />
