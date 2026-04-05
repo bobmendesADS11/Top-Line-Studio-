@@ -52,59 +52,72 @@ function AlbumShowcase() {
       icon: Sparkles,
       content: (
         <div className="relative h-full flex items-center justify-center p-8">
-          <div className="w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-lg border-2 border-brand-gold/30 shadow-2xl relative overflow-hidden p-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
-            
-            {/* Scanning Line */}
-            <motion.div 
-              animate={{ top: ["0%", "100%", "0%"] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              className="absolute left-0 right-0 h-1 bg-brand-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.8)] z-20"
-            />
-
-            <div className="relative z-10 space-y-4">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: "40%" }}
-                transition={{ duration: 1, repeat: Infinity, repeatDelay: 3 }}
-                className="h-4 bg-brand-gold/20 rounded" 
-              />
-              
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.5, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: i * 0.5, duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
-                    className="aspect-square bg-white/5 rounded-lg border border-white/10 overflow-hidden"
-                  >
-                    <img 
-                      src={`https://picsum.photos/seed/design-${i}/300/300`} 
-                      className="w-full h-full object-cover opacity-60"
-                      alt="Design element"
-                      referrerPolicy="no-referrer"
-                    />
-                  </motion.div>
-                ))}
+          <div className="w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-lg border-2 border-brand-gold/30 shadow-2xl relative overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="bg-black/80 border-b border-brand-gold/20 p-4 flex items-center justify-between z-30 backdrop-blur-md">
+              <span className="topline-black text-sm text-brand-gold tracking-widest">Top Line</span>
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-red-500/50" />
+                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
+                <div className="w-2 h-2 rounded-full bg-green-500/50" />
               </div>
+            </div>
+
+            <div className="flex-1 relative overflow-hidden p-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
               
+              {/* Scanning Line */}
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.5, duration: 1, repeat: Infinity, repeatDelay: 1.5 }}
-                className="h-24 w-full bg-white/5 rounded-lg border border-white/10 p-4"
+                animate={{ top: ["0%", "100%", "0%"] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                className="absolute left-0 right-0 h-1 bg-brand-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.8)] z-20"
+              />
+
+              {/* Scrollable Content */}
+              <motion.div 
+                animate={{ y: [0, -300, 0] }}
+                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                className="relative z-10 space-y-6"
               >
-                <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-1/3 bg-brand-gold/20 rounded" />
+                  <div className="h-4 w-8 bg-white/10 rounded" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="aspect-square bg-white/5 rounded-lg border border-white/10 overflow-hidden relative group"
+                    >
+                      <img 
+                        src={`https://picsum.photos/seed/design-scroll-${i}/400/400`} 
+                        className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity"
+                        alt="Design element"
+                        referrerPolicy="no-referrer"
+                      />
+                      <motion.div 
+                        animate={{ opacity: [0, 0.5, 0] }}
+                        transition={{ delay: i * 0.2, duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 border-2 border-brand-gold/30"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="h-32 w-full bg-white/5 rounded-lg border border-white/10 p-6 space-y-4">
                   <div className="h-2 w-full bg-white/10 rounded" />
                   <div className="h-2 w-5/6 bg-white/10 rounded" />
                   <div className="h-2 w-4/6 bg-white/10 rounded" />
+                  <div className="pt-4 flex justify-end">
+                    <div className="h-6 w-20 bg-brand-gold/20 rounded" />
+                  </div>
                 </div>
               </motion.div>
             </div>
 
             {/* Magic Particles */}
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <motion.div
                 key={i}
                 animate={{ 
@@ -112,7 +125,7 @@ function AlbumShowcase() {
                   y: [Math.random() * 300, Math.random() * 300],
                   opacity: [0, 1, 0]
                 }}
-                transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
                 className="absolute w-1 h-1 bg-brand-gold rounded-full blur-[1px]"
               />
             ))}
