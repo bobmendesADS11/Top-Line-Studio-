@@ -52,26 +52,71 @@ function AlbumShowcase() {
       icon: Sparkles,
       content: (
         <div className="relative h-full flex items-center justify-center p-8">
-          <motion.div 
-            animate={{ rotateY: [0, 10, 0], rotateX: [0, 5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-            className="w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-lg border-2 border-brand-gold/30 shadow-2xl relative overflow-hidden"
-          >
+          <div className="w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-lg border-2 border-brand-gold/30 shadow-2xl relative overflow-hidden p-6">
             <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
-            <div className="p-6 space-y-4">
-              <div className="h-4 w-1/3 bg-brand-gold/20 rounded" />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-square bg-white/5 rounded-lg border border-white/10" />
-                <div className="aspect-square bg-white/5 rounded-lg border border-white/10" />
-              </div>
-              <div className="h-20 w-full bg-white/5 rounded-lg border border-white/10" />
-            </div>
+            
+            {/* Scanning Line */}
             <motion.div 
-              animate={{ x: ["-100%", "200%"] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/10 to-transparent w-1/2 -skew-x-12"
+              animate={{ top: ["0%", "100%", "0%"] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              className="absolute left-0 right-0 h-1 bg-brand-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.8)] z-20"
             />
-          </motion.div>
+
+            <div className="relative z-10 space-y-4">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: "40%" }}
+                transition={{ duration: 1, repeat: Infinity, repeatDelay: 3 }}
+                className="h-4 bg-brand-gold/20 rounded" 
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: i * 0.5, duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
+                    className="aspect-square bg-white/5 rounded-lg border border-white/10 overflow-hidden"
+                  >
+                    <img 
+                      src={`https://picsum.photos/seed/design-${i}/300/300`} 
+                      className="w-full h-full object-cover opacity-60"
+                      alt="Design element"
+                      referrerPolicy="no-referrer"
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5, duration: 1, repeat: Infinity, repeatDelay: 1.5 }}
+                className="h-24 w-full bg-white/5 rounded-lg border border-white/10 p-4"
+              >
+                <div className="space-y-2">
+                  <div className="h-2 w-full bg-white/10 rounded" />
+                  <div className="h-2 w-5/6 bg-white/10 rounded" />
+                  <div className="h-2 w-4/6 bg-white/10 rounded" />
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Magic Particles */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <motion.div
+                key={i}
+                animate={{ 
+                  x: [Math.random() * 400, Math.random() * 400],
+                  y: [Math.random() * 300, Math.random() * 300],
+                  opacity: [0, 1, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+                className="absolute w-1 h-1 bg-brand-gold rounded-full blur-[1px]"
+              />
+            ))}
+          </div>
         </div>
       )
     },
@@ -93,10 +138,10 @@ function AlbumShowcase() {
               />
             ))}
 
-            {/* Back Page */}
+            {/* Back Page (Fixed) */}
             <div className="absolute inset-0 bg-white rounded-r-lg shadow-inner overflow-hidden">
               <img 
-                src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800" 
+                src="https://picsum.photos/seed/page-back/800/1000" 
                 className="w-full h-full object-cover opacity-90"
                 alt="Album Page"
                 referrerPolicy="no-referrer"
@@ -107,19 +152,19 @@ function AlbumShowcase() {
             {/* Flipping Page */}
             <motion.div
               initial={{ rotateY: 0 }}
-              animate={{ rotateY: -160 }}
+              animate={{ rotateY: [-5, -170, -5] }}
               transition={{ 
-                duration: 2.5, 
+                duration: 5, 
                 repeat: Infinity, 
-                repeatDelay: 1,
-                ease: "easeInOut"
+                ease: "easeInOut",
+                times: [0, 0.5, 1]
               }}
-              className="absolute inset-0 bg-white rounded-r-lg shadow-2xl origin-left preserve-3d"
+              className="absolute inset-0 bg-white rounded-r-lg shadow-2xl origin-left preserve-3d z-10"
               style={{ backfaceVisibility: 'hidden' }}
             >
               <div className="absolute inset-0 p-1 border-r border-brand-gold/20">
                 <img 
-                  src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800" 
+                  src="https://picsum.photos/seed/page-flip/800/1000" 
                   className="w-full h-full object-cover"
                   alt="Album Page Content"
                   referrerPolicy="no-referrer"
@@ -135,8 +180,12 @@ function AlbumShowcase() {
                     <div className="h-2 w-24 bg-brand-gold/20 rounded" />
                     <div className="h-2 w-32 bg-brand-gold/10 rounded" />
                     <div className="grid grid-cols-2 gap-2 pt-4">
-                      <div className="aspect-square bg-zinc-200 rounded" />
-                      <div className="aspect-square bg-zinc-200 rounded" />
+                      <div className="aspect-square bg-zinc-200 rounded overflow-hidden">
+                        <img src="https://picsum.photos/seed/mini-1/200/200" className="w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="aspect-square bg-zinc-200 rounded overflow-hidden">
+                        <img src="https://picsum.photos/seed/mini-2/200/200" className="w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -146,9 +195,14 @@ function AlbumShowcase() {
             {/* Front Cover */}
             <motion.div
               initial={{ rotateY: 0 }}
-              animate={{ rotateY: -20 }}
-              transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
-              className="absolute inset-0 bg-zinc-950 rounded-r-lg border-2 border-brand-gold/40 shadow-[15px_0_30px_rgba(0,0,0,0.5)] origin-left preserve-3d"
+              animate={{ rotateY: [0, -110, 0] }}
+              transition={{ 
+                duration: 5, 
+                repeat: Infinity, 
+                ease: "easeInOut",
+                times: [0, 0.4, 1]
+              }}
+              className="absolute inset-0 bg-zinc-950 rounded-r-lg border-2 border-brand-gold/40 shadow-[15px_0_30px_rgba(0,0,0,0.5)] origin-left preserve-3d z-20"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
               
@@ -172,13 +226,6 @@ function AlbumShowcase() {
 
               {/* Spine Detail */}
               <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black to-zinc-900 border-r border-white/5" />
-              
-              {/* Shimmer Overlay */}
-              <motion.div 
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-full -skew-x-12 pointer-events-none"
-              />
             </motion.div>
           </div>
 
