@@ -1,7 +1,49 @@
-import { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useTexture, Environment, ContactShadows, Float, PresentationControls } from '@react-three/drei';
+import { useTexture, Environment, ContactShadows, Float, PresentationControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Error Boundary for 3D textures
+class TextureErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <mesh>
+          <boxGeometry args={[4, 5.5, 0.05]} />
+          <meshStandardMaterial color="#333" />
+          <Html center>
+            <div className="bg-black/80 text-white p-2 rounded text-[8px] whitespace-nowrap">
+              Erro ao carregar imagem
+            </div>
+          </Html>
+        </mesh>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function PageContent({ textureUrl, isRightPage, foldAngle = 0 }: { textureUrl: string, isRightPage?: boolean, foldAngle?: number }) {
+  const texture = useTexture(textureUrl);
+  
+  return (
+    <group rotation={[0, isRightPage ? -foldAngle : foldAngle, 0]}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[4, 5.5, 0.05]} />
+        <meshStandardMaterial color="#1a1a1a" />
+      </mesh>
+      <mesh position={[0, 0, 0.03]} castShadow>
+        <planeGeometry args={[3.8, 5.3]} />
+        <meshStandardMaterial map={texture} />
+      </mesh>
+    </group>
+  );
+}
 
 interface PageProps {
   textureUrl: string;
@@ -12,18 +54,18 @@ interface PageProps {
 }
 
 function Page({ textureUrl, position, rotation, isRightPage, foldAngle = 0 }: PageProps) {
-  const texture = useTexture(textureUrl);
-  
   return (
-    <group position={position} rotation={[rotation[0], rotation[1] + (isRightPage ? -foldAngle : foldAngle), rotation[2]]}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[4, 5.5, 0.05]} />
-        <meshStandardMaterial color="#1a1a1a" />
-      </mesh>
-      <mesh position={[0, 0, 0.03]} castShadow>
-        <planeGeometry args={[3.8, 5.3]} />
-        <meshStandardMaterial map={texture} />
-      </mesh>
+    <group position={position} rotation={rotation}>
+      <Suspense fallback={
+        <mesh>
+          <boxGeometry args={[4, 5.5, 0.05]} />
+          <meshStandardMaterial color="#222" />
+        </mesh>
+      }>
+        <TextureErrorBoundary>
+          <PageContent textureUrl={textureUrl} isRightPage={isRightPage} foldAngle={foldAngle} />
+        </TextureErrorBoundary>
+      </Suspense>
     </group>
   );
 }

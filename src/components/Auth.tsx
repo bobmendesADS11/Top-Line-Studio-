@@ -182,12 +182,30 @@ export default function Auth({ onLogin }: AuthProps) {
               className="space-y-6"
             >
               <div className="flex justify-center gap-2">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {[0, 1, 2, 3, 4, 5].map((i) => (
                   <input 
                     key={i}
                     type="text" 
                     maxLength={1}
-                    className="w-12 h-14 bg-white/5 border border-white/10 rounded-xl text-center text-2xl font-bold focus:outline-hidden focus:border-brand-gold transition-colors"
+                    value={otp[i] || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^\d?$/.test(val)) {
+                        const newOtp = otp.split('');
+                        newOtp[i] = val;
+                        setOtp(newOtp.join(''));
+                        // Auto-focus next input
+                        if (val && e.target.nextSibling) {
+                          (e.target.nextSibling as HTMLInputElement).focus();
+                        }
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace' && !otp[i] && (e.target as HTMLInputElement).previousSibling) {
+                        ( (e.target as HTMLInputElement).previousSibling as HTMLInputElement).focus();
+                      }
+                    }}
+                    className="w-12 h-14 bg-white/5 border border-white/10 rounded-xl text-center text-2xl font-bold focus:outline-none focus:border-brand-gold transition-colors"
                     required
                   />
                 ))}

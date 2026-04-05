@@ -21,8 +21,16 @@ export default function App() {
   const [user, setUser] = useState<any>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
   const [sharedAlbumId, setSharedAlbumId] = useState<string | null>(null);
+  const [configError, setConfigError] = useState(false);
 
   useEffect(() => {
+    // Check for Supabase config
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key || url.includes('placeholder')) {
+      setConfigError(true);
+    }
+
     const params = new URLSearchParams(window.location.search);
     const albumId = params.get('albumId');
     if (albumId) {
@@ -65,6 +73,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brand-black">
+      {configError && (
+        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] py-1 px-4 text-center z-[200] font-bold uppercase tracking-widest">
+          Configuração do Supabase ausente. Verifique as variáveis de ambiente no Vercel.
+        </div>
+      )}
       {state === 'landing' && <Landing onStart={handleStart} />}
       {state === 'auth' && <Auth onLogin={handleLogin} />}
       {state === 'onboarding' && <Onboarding onComplete={handleOnboardingComplete} />}
