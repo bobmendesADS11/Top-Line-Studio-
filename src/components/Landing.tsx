@@ -84,51 +84,123 @@ function AlbumShowcase() {
         <div className="flex items-center justify-center h-full p-8">
           <div className="relative w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-2xl border border-brand-gold/30 shadow-2xl shadow-brand-gold/10 overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/10 to-transparent opacity-50" />
-            <div className="p-6 h-full flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <div className="space-y-2 w-1/2">
-                  <motion.div 
-                    animate={{ width: ['40%', '60%', '40%'] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                    className="h-2 bg-brand-gold/30 rounded-full" 
-                  />
-                  <div className="h-2 w-full bg-white/5 rounded-full" />
+            
+            {/* Processing Scan Line */}
+            <motion.div 
+              animate={{ top: ['-10%', '110%'] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent z-20 blur-sm opacity-50"
+            />
+
+            <div className="p-6 h-full flex flex-col relative z-10">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-brand-gold font-bold">Inteligência Artificial</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1 w-24 bg-brand-gold/20 rounded-full overflow-hidden">
+                      <motion.div 
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="h-full w-1/2 bg-brand-gold"
+                      />
+                    </div>
+                    <span className="text-[8px] text-white/40 uppercase tracking-widest">Otimizando Layout...</span>
+                  </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-brand-gold/10 flex items-center justify-center">
-                  <Sparkles size={14} className="text-brand-gold" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
                 <motion.div 
-                  animate={{ y: [0, -20, 0] }}
-                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                  className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative h-[120%]"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  className="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"
                 >
-                  <img src="https://picsum.photos/seed/design1/400/600" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                  <Sparkles size={18} className="text-brand-gold" />
                 </motion.div>
-                <div className="grid grid-rows-2 gap-4 h-full">
-                  <motion.div 
-                    animate={{ y: [-10, 0, -10] }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                    className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative"
-                  >
-                    <img src="https://picsum.photos/seed/design2/400/400" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
-                  </motion.div>
-                  <motion.div 
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative"
-                  >
-                    <img src="https://picsum.photos/seed/design3/400/400" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
-                  </motion.div>
-                </div>
               </div>
               
-              <div className="mt-6 flex justify-center">
-                <div className="px-4 py-1.5 rounded-full bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest">
-                  Layout Gerado por IA
+              <div className="grid grid-cols-12 gap-3 flex-1 relative">
+                {/* Main Spread Simulation */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="col-span-7 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative shadow-2xl"
+                >
+                  <img src="https://picsum.photos/seed/mem1/600/800" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Floating "Memory" particles */}
+                  {[1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ 
+                        y: [0, -40, 0],
+                        opacity: [0, 1, 0]
+                      }}
+                      transition={{ duration: 3, delay: i * 1, repeat: Infinity }}
+                      className="absolute bottom-4 left-4"
+                    >
+                      <Sparkles className="text-brand-gold/40 w-4 h-4" />
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                <div className="col-span-5 flex flex-col gap-3">
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
+                  >
+                    <img src="https://picsum.photos/seed/mem2/400/400" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                  </motion.div>
+                  <motion.div 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.1 }}
+                    className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
+                  >
+                    <img src="https://picsum.photos/seed/mem3/400/400" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                  </motion.div>
+                </div>
+
+                {/* "Flying" memories being sorted */}
+                <AnimatePresence>
+                  {[1, 2, 3, 4].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0, x: -100, y: 100 }}
+                      animate={{ 
+                        opacity: [0, 1, 0],
+                        scale: [0.5, 1, 0.5],
+                        x: [Math.random() * 200, 0],
+                        y: [Math.random() * 200, 0]
+                      }}
+                      transition={{ 
+                        duration: 3, 
+                        delay: i * 0.5, 
+                        repeat: Infinity,
+                        repeatDelay: 1
+                      }}
+                      className="absolute w-12 h-12 rounded-md bg-brand-gold/20 border border-brand-gold/40 backdrop-blur-sm z-30 flex items-center justify-center overflow-hidden"
+                    >
+                      <img src={`https://picsum.photos/seed/sort${i}/100/100`} className="w-full h-full object-cover opacity-40" referrerPolicy="no-referrer" />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+              
+              <div className="mt-8 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-zinc-800 overflow-hidden">
+                      <img src={`https://picsum.photos/seed/face${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+                  ))}
+                  <div className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-brand-gold flex items-center justify-center text-[8px] font-bold text-black">
+                    +12
+                  </div>
+                </div>
+                <div className="px-4 py-1.5 rounded-full bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                  Design Automático
                 </div>
               </div>
             </div>
