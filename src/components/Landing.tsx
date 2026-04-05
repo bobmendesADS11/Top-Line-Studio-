@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Image as ImageIcon, LogIn, Menu, X } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Image as ImageIcon, LogIn, Menu, X, Instagram, Facebook, Phone } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -101,47 +101,49 @@ function ParticleBackground() {
 
 function Logo() {
   return (
-    <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-      <div className="relative w-12 h-12 overflow-hidden rounded-xl bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
+    <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <div className="relative w-10 h-10 overflow-hidden rounded-lg bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
         <motion.div 
           animate={{ y: [0, -120, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           className="absolute inset-0 flex flex-col gap-1 p-1"
         >
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
             <img 
               key={i}
-              src={`https://picsum.photos/seed/logo-scroll-${i}/100/100`} 
-              className="w-full aspect-square object-cover rounded-lg opacity-40 group-hover:opacity-70 transition-opacity"
+              src="https://picsum.photos/seed/grad_small/100/100" 
+              className="w-full aspect-square object-cover rounded-md opacity-30 group-hover:opacity-60 transition-opacity"
               referrerPolicy="no-referrer"
             />
           ))}
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <GraduationCap className="text-brand-gold w-6 h-6 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+          <GraduationCap className="text-brand-gold w-5 h-5 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
         </div>
       </div>
       <div className="flex flex-col">
-        <span className="font-serif text-xl text-white uppercase tracking-[0.3em] leading-none">Top Line</span>
-        <span className="text-[8px] uppercase tracking-[0.4em] font-bold text-brand-gold mt-1">Black Edition</span>
+        <span className="font-serif text-lg text-white uppercase tracking-[0.05em] leading-none">Top Line</span>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[5px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
+          <span className="text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+        </div>
       </div>
     </div>
   );
 }
 
-function AlbumShowcase() {
-  const [step, setStep] = useState(0);
+function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onStepChange: (step: number) => void }) {
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       if (!isHovered) {
-        setStep((prev) => (prev + 1) % 3);
+        onStepChange((currentStep + 1) % 3);
       }
     }, 4000);
     return () => clearInterval(timer);
-  }, [isHovered]);
+  }, [isHovered, currentStep, onStepChange]);
 
   const steps = [
     {
@@ -160,7 +162,7 @@ function AlbumShowcase() {
               <img 
                 src={`https://picsum.photos/seed/grad${i}/400/400`} 
                 alt="Graduation" 
-                className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity"
+                className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -220,7 +222,7 @@ function AlbumShowcase() {
                   transition={{ delay: 0.5 }}
                   className="col-span-7 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative shadow-2xl"
                 >
-                  <img src="https://picsum.photos/seed/mem1/600/800" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                  <img src="https://picsum.photos/seed/grad7/600/800" className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   
                   {/* Floating "Memory" particles */}
@@ -246,7 +248,7 @@ function AlbumShowcase() {
                     transition={{ delay: 0.8 }}
                     className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
                   >
-                    <img src="https://picsum.photos/seed/mem2/400/400" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                    <img src="https://picsum.photos/seed/grad8/400/400" className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   </motion.div>
                   <motion.div 
                     initial={{ opacity: 0, x: 20 }}
@@ -254,7 +256,7 @@ function AlbumShowcase() {
                     transition={{ delay: 1.1 }}
                     className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
                   >
-                    <img src="https://picsum.photos/seed/mem3/400/400" className="w-full h-full object-cover opacity-80" referrerPolicy="no-referrer" />
+                    <img src="https://picsum.photos/seed/grad9/400/400" className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   </motion.div>
                 </div>
 
@@ -278,7 +280,7 @@ function AlbumShowcase() {
                       }}
                       className="absolute w-12 h-12 rounded-md bg-brand-gold/20 border border-brand-gold/40 backdrop-blur-sm z-30 flex items-center justify-center overflow-hidden"
                     >
-                      <img src={`https://picsum.photos/seed/sort${i}/100/100`} className="w-full h-full object-cover opacity-40" referrerPolicy="no-referrer" />
+                      <img src="https://picsum.photos/seed/grad10/100/100" className="w-full h-full object-cover opacity-40" referrerPolicy="no-referrer" />
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -288,7 +290,7 @@ function AlbumShowcase() {
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-zinc-800 overflow-hidden">
-                      <img src={`https://picsum.photos/seed/face${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={`https://picsum.photos/seed/person${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                   ))}
                   <div className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-brand-gold flex items-center justify-center text-[8px] font-bold text-black">
@@ -321,8 +323,8 @@ function AlbumShowcase() {
             {/* Left Page (Full Photo) */}
             <div className="flex-1 bg-[#1a1a1a] rounded-l-sm border-y border-l border-white/5 relative overflow-hidden shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] origin-right">
               <img 
-                src="https://picsum.photos/seed/page1/800/1200" 
-                className="w-full h-full object-cover opacity-90"
+                src="https://picsum.photos/seed/grad11/800/1200" 
+                className="w-full h-full object-cover opacity-100"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
@@ -338,16 +340,16 @@ function AlbumShowcase() {
             <div className="flex-1 bg-[#1a1a1a] rounded-r-sm border-y border-r border-white/5 relative overflow-hidden shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-6">
               <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
                 <img 
-                  src="https://picsum.photos/seed/page2a/800/600" 
-                  className="w-full h-full object-cover opacity-90"
+                  src="https://picsum.photos/seed/grad12/800/600" 
+                  className="w-full h-full object-cover opacity-100"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
               </div>
               <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
                 <img 
-                  src="https://picsum.photos/seed/page2b/800/600" 
-                  className="w-full h-full object-cover opacity-90"
+                  src="https://picsum.photos/seed/grad13/800/600" 
+                  className="w-full h-full object-cover opacity-100"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
@@ -381,10 +383,10 @@ function AlbumShowcase() {
           {steps.map((s, i) => (
             <motion.div
               key={i}
-              className={`flex gap-6 cursor-pointer transition-all duration-500 ${step === i ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-50'}`}
-              onClick={() => setStep(i)}
+              className={`flex gap-6 cursor-pointer transition-all duration-500 ${currentStep === i ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-50'}`}
+              onClick={() => onStepChange(i)}
             >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${step === i ? 'bg-brand-gold text-black' : 'bg-white/5 text-white'}`}>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${currentStep === i ? 'bg-brand-gold text-black' : 'bg-white/5 text-white'}`}>
                 <s.icon size={24} />
               </div>
               <div>
@@ -392,7 +394,7 @@ function AlbumShowcase() {
                 <p className="text-sm text-gray-500 leading-relaxed">
                   {i === 0 && "Selecione as fotos que marcaram sua trajetória de forma simples e intuitiva."}
                   {i === 1 && "Nossa tecnologia organiza suas memórias com o requinte que você merece."}
-                  {i === 2 && "Visualize seu álbum físico em um ambiente 3D antes mesmo de ser impresso."}
+                  {i === 2 && "Visualize seu álbum digitalmente em um ambiente 3D antes mesmo de ser impresso."}
                 </p>
               </div>
             </motion.div>
@@ -404,13 +406,13 @@ function AlbumShowcase() {
       <div className="flex-1 relative bg-black overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
-            key={step}
+            key={currentStep}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             className="h-full"
           >
-            {steps[step].content}
+            {steps[currentStep].content}
           </motion.div>
         </AnimatePresence>
 
@@ -427,6 +429,10 @@ function AlbumShowcase() {
 export default function Landing() {
   const navigate = useNavigate();
   const aboutRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLElement>(null);
+  const contactRef = useRef<HTMLElement>(null);
+  const albumRef = useRef<HTMLElement>(null);
+  const [albumStep, setAlbumStep] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -442,32 +448,45 @@ export default function Landing() {
     aboutRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollToAlbum = () => {
+    albumRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToServices = () => {
+    servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const scrollToContact = () => {
+    contactRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="relative min-h-screen bg-[#050301] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/90 backdrop-blur-2xl border-b border-white/10 py-4 shadow-2xl' : 'bg-transparent py-8 border-b border-white/0'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Logo />
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-12 text-[10px] uppercase tracking-[0.3em] font-bold">
-            <a href="#" className="hover:text-brand-gold transition-colors">Home</a>
+          <div className="hidden md:flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-bold">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
             <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">A Empresa</button>
-            <a href="#" className="hover:text-brand-gold transition-colors">Serviços</a>
-            <a href="#" className="hover:text-brand-gold transition-colors">Contato</a>
+            
+            <div 
+              onClick={scrollToAlbum}
+              className="px-4 py-2 rounded-full border border-brand-gold/50 bg-black/40 backdrop-blur-sm text-brand-gold text-[8px] font-bold uppercase tracking-[0.3em] shadow-[0_0_15px_rgba(212,175,55,0.1)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
+            >
+              3D
+            </div>
+
+            <button onClick={scrollToServices} className="hover:text-brand-gold transition-colors">Serviços</button>
+            <button onClick={scrollToContact} className="hover:text-brand-gold transition-colors">Contato</button>
           </div>
 
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => navigate('/login')}
-              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70 hover:text-brand-gold transition-colors"
-            >
-              <LogIn size={16} />
-              Login
-            </button>
-            <button 
-              onClick={() => navigate('/login')}
-              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-brand-gold/90 transition-all hover:scale-105 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_0_30px_rgba(212,175,55,0.3)] active:scale-95"
             >
               Acessar Studio
             </button>
@@ -489,12 +508,17 @@ export default function Landing() {
               className="md:hidden bg-zinc-950 border-b border-white/5 overflow-hidden"
             >
               <div className="p-8 flex flex-col gap-6 text-[10px] uppercase tracking-[0.3em] font-bold text-center">
-                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
-                <button onClick={() => { scrollToAbout(); setIsMobileMenuOpen(false); }}>A Empresa</button>
-                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Serviços</a>
-                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Contato</a>
-                <div className="h-[1px] bg-white/5 my-2" />
-                <button onClick={() => navigate('/login')} className="text-brand-gold">Acessar Studio</button>
+                <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setIsMobileMenuOpen(false); }}>Home</button>
+              <button onClick={() => { scrollToAbout(); setIsMobileMenuOpen(false); }}>A Empresa</button>
+              <button onClick={() => { scrollToServices(); setIsMobileMenuOpen(false); }}>Serviços</button>
+              <button onClick={() => { scrollToContact(); setIsMobileMenuOpen(false); }}>Contato</button>
+              <div className="h-[1px] bg-white/5 my-2" />
+              <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }} className="bg-brand-gold text-black py-5 rounded-full text-xs font-black uppercase tracking-widest">
+                Acessar Studio
+              </button>
+              <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }} className="text-brand-gold/80 text-[10px] uppercase tracking-[0.2em] mt-2">
+                Área do Aluno
+              </button>
               </div>
             </motion.div>
           )}
@@ -502,7 +526,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center py-32">
         <ParticleBackground />
         
         {/* Background Sparkles Overlay */}
@@ -527,14 +551,27 @@ export default function Landing() {
               <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
             </div>
             
-            <h1 className="flex flex-col items-center mb-10">
-              <span className="font-serif text-5xl md:text-8xl text-white tracking-[0.4em] uppercase leading-none mb-6">Top Line</span>
-              <div className="flex items-center gap-6 w-full max-w-lg">
-                <div className="h-[1px] flex-1 bg-brand-gold/50" />
-                <span className="text-brand-gold text-xl md:text-4xl font-serif tracking-[0.6em] uppercase">Black</span>
-                <div className="h-[1px] flex-1 bg-brand-gold/50" />
+            <div className="flex flex-col items-center mb-10">
+              <div className="flex flex-col items-center mb-4">
+                <h1 className="font-serif text-4xl md:text-7xl text-white tracking-[0.02em] uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                  Top Line
+                </h1>
+                <span className="text-white/50 text-[8px] md:text-xs uppercase tracking-[1.2em] font-light mt-3 ml-[1.2em]">
+                  Formaturas
+                </span>
               </div>
-            </h1>
+              
+              <div className="relative w-full max-w-xl py-3 md:py-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/5 to-transparent border-y border-brand-gold/10 backdrop-blur-[1px]" />
+                <div className="relative z-10 flex items-center justify-center gap-4">
+                  <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
+                  <span className="text-brand-gold text-lg md:text-2xl font-serif tracking-[0.3em] uppercase italic drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                    Black
+                  </span>
+                  <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-brand-gold/30 to-transparent" />
+                </div>
+              </div>
+            </div>
 
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -552,20 +589,21 @@ export default function Landing() {
               Transformamos sonhos em memórias eternas com exclusividade e sofisticação.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-8 items-center">
+            <div className="flex flex-col sm:flex-row gap-6 items-center">
               <button 
                 onClick={() => navigate('/login')}
-                className="gold-button group flex items-center gap-4 text-xl px-12 py-6"
+                className="bg-brand-gold text-black px-12 py-5 rounded-full text-lg font-black uppercase tracking-[0.1em] hover:bg-white transition-all hover:scale-105 shadow-[0_0_40px_rgba(212,175,55,0.4)] active:scale-95 group flex items-center gap-3"
               >
-                Acessar Meu Studio
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                Acessar Studio
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               
               <button 
-                onClick={scrollToAbout}
-                className="px-12 py-6 rounded-full border border-white/20 hover:bg-white/5 transition-all text-sm font-bold tracking-[0.2em] uppercase text-white backdrop-blur-sm"
+                onClick={scrollToAlbum}
+                className="px-12 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-xs font-bold tracking-[0.3em] uppercase text-white/80 backdrop-blur-sm hover:text-white flex items-center gap-3 group"
               >
-                Conhecer a Top Line
+                Monte seu Álbum
+                <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
               </button>
             </div>
           </motion.div>
@@ -574,11 +612,11 @@ export default function Landing() {
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 cursor-pointer"
-          onClick={scrollToAbout}
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-70 cursor-pointer group z-20"
+          onClick={() => albumRef.current?.scrollIntoView({ behavior: 'smooth' })}
         >
-          <p className="text-[10px] uppercase tracking-[0.5em] font-bold">Scroll</p>
-          <ChevronDown className="w-5 h-5" />
+          <p className="text-[10px] uppercase tracking-[0.5em] font-bold text-brand-gold group-hover:text-white transition-colors">Álbum 3D</p>
+          <ChevronDown className="w-6 h-6 text-brand-gold" />
         </motion.div>
       </section>
 
@@ -593,7 +631,7 @@ export default function Landing() {
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-brand-gold/10 border border-white/10">
               <img 
-                src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200" 
+                src="https://picsum.photos/seed/graduate_holding_diploma/1200/800" 
                 alt="Formatura Top Line" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -651,7 +689,7 @@ export default function Landing() {
       </section>
 
       {/* O Processo do Álbum 3D Section */}
-      <section className="py-32 px-6 bg-black relative">
+      <section ref={albumRef} className="py-32 px-6 bg-black relative">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-6xl font-serif mb-6">O Processo do Álbum 3D</h2>
@@ -684,7 +722,11 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2 }}
-                className="relative p-10 rounded-3xl bg-zinc-900/50 border border-white/5 hover:border-brand-gold/20 transition-all group"
+                onClick={() => {
+                  setAlbumStep(i);
+                  albumRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="relative p-10 rounded-3xl bg-zinc-900/50 border border-white/5 hover:border-brand-gold/20 transition-all group cursor-pointer"
               >
                 <div className="text-6xl font-serif text-brand-gold/10 absolute top-6 right-10 group-hover:text-brand-gold/20 transition-colors">
                   {item.step}
@@ -699,12 +741,12 @@ export default function Landing() {
           </div>
 
           {/* Interactive Album Showcase */}
-          <AlbumShowcase />
+          <AlbumShowcase currentStep={albumStep} onStepChange={setAlbumStep} />
         </div>
       </section>
 
       {/* Nossos Serviços Section */}
-      <section className="py-32 px-6 bg-zinc-950">
+      <section ref={servicesRef} className="py-32 px-6 bg-zinc-950">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
             <div>
@@ -780,21 +822,14 @@ export default function Landing() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              "https://images.unsplash.com/photo-1541339907198-e08756eaa589?auto=format&fit=crop&q=80&w=800",
-              "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800",
-              "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800",
-              "https://images.unsplash.com/photo-1505232458567-cc265c599f07?auto=format&fit=crop&q=80&w=800",
-              "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=80&w=800",
-              "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=800"
-            ].map((img, i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <motion.div
                 key={i}
                 whileHover={{ scale: 1.02 }}
                 className="aspect-square rounded-2xl overflow-hidden border border-white/10"
               >
                 <img 
-                  src={img} 
+                  src={`https://picsum.photos/seed/gallery${i}/800/800`} 
                   alt={`Gallery ${i}`} 
                   className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                   referrerPolicy="no-referrer"
@@ -806,26 +841,60 @@ export default function Landing() {
       </section>
 
       {/* Footer / Contact */}
-      <footer className="py-20 px-6 border-t border-white/10 bg-black">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-          <Logo />
+      <footer ref={contactRef} className="py-24 px-6 border-t border-white/10 bg-black relative overflow-hidden">
+        {/* Subtle background element */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent" />
+        
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
+          <div className="flex flex-col items-center md:items-start gap-8">
+            <Logo />
+            <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase leading-relaxed text-center md:text-left max-w-xs">
+              Eternizando momentos com a sofisticação e exclusividade da Top Line Black Edition.
+            </p>
+          </div>
           
-          <div className="flex gap-12 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            <a href="#" className="hover:text-brand-gold transition-colors">Home</a>
-            <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">Empresa</button>
-            <a href="#" className="hover:text-brand-gold transition-colors">Serviços</a>
-            <a href="#" className="hover:text-brand-gold transition-colors">Contato</a>
+          <div className="flex flex-col items-center md:items-start gap-8">
+            <h4 className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">Navegação</h4>
+            <div className="flex flex-col items-center md:items-start gap-4 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
+              <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
+              <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">Empresa</button>
+              <button onClick={scrollToServices} className="hover:text-brand-gold transition-colors">Serviços</button>
+              <button onClick={scrollToContact} className="hover:text-brand-gold transition-colors">Contato</button>
+              <button onClick={() => navigate('/login')} className="text-brand-gold hover:text-white transition-colors">Área do Aluno</button>
+            </div>
           </div>
 
-          <button 
-            onClick={() => navigate('/login')}
-            className="gold-button px-10 py-4 text-sm"
-          >
-            Área do Aluno
-          </button>
+          <div className="flex flex-col items-center md:items-start gap-8">
+            <h4 className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">Contato</h4>
+            <div className="flex flex-col items-center md:items-start gap-6 text-gray-400">
+              <div className="flex items-start gap-4 group">
+                <MapPin size={16} className="text-brand-gold shrink-0 mt-1" />
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white">Florianópolis</span>
+                  <span className="text-[10px] leading-relaxed tracking-wider">Av. Eng. Max de Souza, 1135 - sala 801<br/>Coqueiros, Florianópolis - SC</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 group">
+                <Phone size={16} className="text-brand-gold shrink-0" />
+                <a href="tel:4830280949" className="text-[10px] font-bold tracking-widest hover:text-white transition-colors">(48) 3028-0949</a>
+              </div>
+              <div className="flex items-center gap-6 pt-2">
+                <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-brand-gold hover:border-brand-gold transition-all cursor-pointer">
+                  <Instagram size={18} />
+                </div>
+                <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-500 hover:text-brand-gold hover:border-brand-gold transition-all cursor-pointer">
+                  <Facebook size={18} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 text-center text-gray-600 text-xs tracking-widest uppercase">
-          © 2026 Top Line Formaturas. Todos os direitos reservados.
+        <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-600 text-[9px] tracking-[0.2em] uppercase">
+          <span>© 2026 Top Line Formaturas. Todos os direitos reservados.</span>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-white transition-colors">Privacidade</a>
+            <a href="#" className="hover:text-white transition-colors">Termos</a>
+          </div>
         </div>
       </footer>
     </div>

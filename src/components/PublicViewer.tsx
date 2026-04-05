@@ -62,10 +62,10 @@ export default function PublicViewer({ albumId, onBack }: PublicViewerProps) {
       
       const urls = photosData?.map(p => p.url) || [];
       setPhotos(urls.length > 0 ? urls : [
-        'https://picsum.photos/seed/1/800/1200',
-        'https://picsum.photos/seed/2/800/1200',
-        'https://picsum.photos/seed/3/800/1200',
-        'https://picsum.photos/seed/4/800/1200'
+        'https://picsum.photos/seed/grad1/800/1200',
+        'https://picsum.photos/seed/grad2/800/1200',
+        'https://picsum.photos/seed/grad3/800/1200',
+        'https://picsum.photos/seed/grad4/800/1200'
       ]);
 
     } catch (err: any) {

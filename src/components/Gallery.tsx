@@ -45,8 +45,8 @@ export default function Gallery({ onSelect }: GalleryProps) {
         // Fallback para mock se o banco estiver vazio
         const MOCK_PHOTOS: Photo[] = Array.from({ length: 50 }, (_, i) => ({
           id: `photo-${i}`,
-          url: `https://picsum.photos/seed/grad-${i}/800/1200`,
-          thumbnail: `https://picsum.photos/seed/grad-${i}/200/300`,
+          url: `https://picsum.photos/seed/photo${i}/800/1200`,
+          thumbnail: `https://picsum.photos/seed/photo${i}/200/300`,
         }));
         setPhotos(MOCK_PHOTOS);
       }

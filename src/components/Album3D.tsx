@@ -78,8 +78,8 @@ interface Album3DProps {
 }
 
 function AlbumContent({ pages, currentPage, zoom, isOpen }: Album3DProps) {
-  const leftPageUrl = pages[currentPage * 2] || 'https://picsum.photos/seed/empty-l/800/1200';
-  const rightPageUrl = pages[currentPage * 2 + 1] || 'https://picsum.photos/seed/empty-r/800/1200';
+  const leftPageUrl = pages[currentPage * 2] || 'https://picsum.photos/seed/grad1/800/1200';
+  const rightPageUrl = pages[currentPage * 2 + 1] || 'https://picsum.photos/seed/grad2/800/1200';
   
   const groupRef = useRef<THREE.Group>(null);
   const [fold, setFold] = useState(Math.PI / 2); // Start closed

@@ -12,7 +12,8 @@ import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send } fr
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
-  const [adminAction, setAdminAction] = useState<'login' | 'register'>('login');
+  const [adminMethod, setAdminMethod] = useState<'phone'>('phone');
+  const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [studentMethod, setStudentMethod] = useState<'phone' | 'email_link'>('phone');
   
   // Form states
@@ -34,28 +35,29 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Admin Login/Register (Email/Password)
+  // Admin Login (Phone/Password mapped to Email/Password)
   const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      if (adminAction === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        // Registration
-        if (email.toLowerCase() !== 'gabrielmestrelli@gmail.com') {
-          throw new Error('Apenas o e-mail mestre pode ser registrado como administrador.');
+      const digits = phoneNumber.replace(/\D/g, '');
+      const adminEmail = `${digits}@admin.topline.com`;
+      
+      try {
+        await signInWithEmailAndPassword(auth, adminEmail, password);
+      } catch (err: any) {
+        // If user doesn't exist and it's the master admin, create it
+        if (err.code === 'auth/user-not-found' && digits === '48991764001') {
+          await createUserWithEmailAndPassword(auth, adminEmail, password);
+          setSuccessMessage('Acesso mestre configurado com sucesso!');
+        } else {
+          throw err;
         }
-        await createUserWithEmailAndPassword(auth, email, password);
-        setSuccessMessage('Conta de administrador criada com sucesso!');
-        setAdminAction('login');
       }
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Este e-mail já está cadastrado. Tente fazer login.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('A senha deve ter pelo menos 6 caracteres.');
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError('Telefone ou senha incorretos.');
       } else {
         setError(err.message || 'Erro na autenticação do administrador.');
       }
@@ -74,11 +76,27 @@ const Auth: React.FC = () => {
     const appVerifier = (window as any).recaptchaVerifier;
 
     try {
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      let digits = phoneNumber.replace(/\D/g, '');
+      let formattedNumber = phoneNumber.trim().startsWith('+') ? `+${digits}` : `+55${digits}`;
+      
+      // Basic validation for Brazilian numbers (10 or 11 digits + 55)
+      if (formattedNumber.length < 12) {
+        throw new Error('Número incompleto. Use o formato: 48 99999-9999');
+      }
+
+      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
       setConfirmationResult(confirmation);
     } catch (err: any) {
-      setError('Erro ao enviar SMS. Verifique o número (ex: +5511999999999).');
-      console.error(err);
+      console.error("Phone Auth Error:", err);
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('O login por telefone não está habilitado no Firebase. Por favor, habilite-o no console.');
+      } else if (err.code === 'auth/invalid-phone-number') {
+        setError('Número de telefone inválido. Verifique o formato.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Muitas tentativas. Tente novamente mais tarde.');
+      } else {
+        setError(`Erro ao enviar SMS: ${err.message || 'Verifique o número e tente novamente.'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -136,9 +154,18 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative">
       <div id="recaptcha-container"></div>
       
+      {/* Back Button */}
+      <button 
+        onClick={() => window.location.href = '/'}
+        className="absolute top-8 left-8 text-gray-500 hover:text-white flex items-center gap-2 text-xs uppercase tracking-widest transition-colors group z-50"
+      >
+        <ArrowRight className="rotate-180 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        Voltar ao Início
+      </button>
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -146,7 +173,14 @@ const Auth: React.FC = () => {
       >
         <div className="text-center mb-8">
           <h1 className="topline-black text-3xl text-brand-gold mb-2">Top Line</h1>
-          <p className="text-gray-400 text-sm">Acesse sua área exclusiva</p>
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-gray-400 text-sm">Acesse sua área exclusiva</p>
+            {authMode === 'admin' && (
+              <span className="px-2 py-0.5 rounded bg-brand-gold/10 border border-brand-gold/20 text-brand-gold text-[8px] font-bold uppercase tracking-widest">
+                Admin Mode
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Auth Mode Toggle */}
@@ -181,29 +215,19 @@ const Auth: React.FC = () => {
           {authMode === 'admin' ? (
             /* Admin Login Form */
             <div className="space-y-6">
-              <div className="flex justify-center gap-6 mb-2">
-                <button 
-                  onClick={() => setAdminAction('login')}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Login
-                </button>
-                <button 
-                  onClick={() => setAdminAction('register')}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Criar Senha
-                </button>
+              <div className="text-center mb-2">
+                <h2 className="text-brand-gold font-bold uppercase tracking-[0.2em] text-xs">Login Administrativo</h2>
+                <p className="text-gray-500 text-[10px] mt-1">Entre com seu telefone e senha de acesso</p>
               </div>
 
               <form onSubmit={handleAdminAuth} className="space-y-4">
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                   <input
-                    type="email"
-                    placeholder="E-mail do Admin"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="tel"
+                    placeholder="Telefone (ex: 48 99176-4001)"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
                     required
                   />
@@ -212,7 +236,7 @@ const Auth: React.FC = () => {
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                   <input
                     type="password"
-                    placeholder="Senha"
+                    placeholder="Sua Senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -224,7 +248,7 @@ const Auth: React.FC = () => {
                   disabled={loading}
                   className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Aguarde...' : (adminAction === 'login' ? 'Entrar no Painel' : 'Definir Senha Admin')}
+                  {loading ? 'Autenticando...' : 'Entrar no Painel'}
                   <ArrowRight size={18} />
                 </button>
               </form>
@@ -234,22 +258,34 @@ const Auth: React.FC = () => {
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-                  <span className="bg-[#0a0a0a] px-4 text-gray-500">Ou use seu e-mail mestre</span>
+                  <span className="bg-[#0a0a0a] px-4 text-gray-500">Acesso Restrito</span>
                 </div>
               </div>
-
-              <button
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full bg-white/5 border border-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-3"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-                Entrar como Admin com Google
-              </button>
             </div>
           ) : (
             /* Student Login Options */
             <div className="space-y-6">
+              <div className="text-center mb-2">
+                <h2 className="text-white font-bold uppercase tracking-[0.2em] text-xs">Acesso do Formando</h2>
+                <p className="text-gray-500 text-[10px] mt-1">Identifique-se para receber seu acesso exclusivo</p>
+              </div>
+
+              {/* Student Action Toggle */}
+              <div className="flex justify-center gap-6 mb-2">
+                <button 
+                  onClick={() => setStudentAction('login')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => setStudentAction('register')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                >
+                  Cadastrar
+                </button>
+              </div>
+
               {/* Student Method Toggle */}
               <div className="flex justify-center gap-6 mb-2">
                 <button 
@@ -262,7 +298,7 @@ const Auth: React.FC = () => {
                   onClick={() => setStudentMethod('email_link')}
                   className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'email_link' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
                 >
-                  Link por E-mail
+                  E-mail
                 </button>
               </div>
 
@@ -285,7 +321,7 @@ const Auth: React.FC = () => {
                       disabled={loading}
                       className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      {loading ? 'Enviando...' : 'Receber Código SMS'}
+                      {loading ? 'Enviando...' : (studentAction === 'login' ? 'Receber Código SMS' : 'Solicitar Acesso por SMS')}
                       <ArrowRight size={18} />
                     </button>
                   </form>
@@ -336,7 +372,7 @@ const Auth: React.FC = () => {
                     disabled={loading}
                     className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? 'Enviando...' : 'Enviar Link de Acesso'}
+                    {loading ? 'Enviando...' : (studentAction === 'login' ? 'Enviar Link de Acesso' : 'Solicitar Acesso por E-mail')}
                     <Send size={18} />
                   </button>
                 </form>

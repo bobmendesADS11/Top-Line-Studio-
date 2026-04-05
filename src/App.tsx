@@ -39,11 +39,24 @@ const App: React.FC = () => {
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
-            setRole(userSnap.data().role);
+            const currentData = userSnap.data();
+            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
+                               currentUser.email?.endsWith('@admin.topline.com');
+            const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
+            const shouldBeAdmin = isAdminEmail || isAdminPhone;
+
+            if (shouldBeAdmin && currentData.role !== 'admin') {
+              // Upgrade to admin if needed
+              await setDoc(userRef, { ...currentData, role: 'admin' }, { merge: true });
+              setRole('admin');
+            } else {
+              setRole(currentData.role);
+            }
           } else {
             // Create new student profile if it doesn't exist
             const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com';
-            const newRole = isAdminEmail ? 'admin' : 'student';
+            const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
+            const newRole = (isAdminEmail || isAdminPhone) ? 'admin' : 'student';
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email,

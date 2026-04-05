@@ -10,19 +10,19 @@ const steps = [
     title: "Escolha suas fotos",
     description: "Navegue pela sua galeria e selecione as fotos que mais marcaram sua trajetória.",
     icon: <Camera className="w-8 h-8 text-brand-gold" />,
-    image: "https://picsum.photos/seed/step1/400/300"
+    image: "https://picsum.photos/seed/grad1/400/300"
   },
   {
     title: "Monte seu álbum",
     description: "Arraste as fotos para as páginas e organize do seu jeito no nosso editor 3D.",
     icon: <BookOpen className="w-8 h-8 text-brand-gold" />,
-    image: "https://picsum.photos/seed/step2/400/300"
+    image: "https://picsum.photos/seed/grad2/400/300"
   },
   {
     title: "Visualize e Compartilhe",
     description: "Veja como seu álbum ficou em 3D e compartilhe o link com amigos e familiares.",
     icon: <Share2 className="w-8 h-8 text-brand-gold" />,
-    image: "https://picsum.photos/seed/step3/400/300"
+    image: "https://picsum.photos/seed/grad3/400/300"
   }
 ];
 
@@ -67,7 +67,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         <div className="hidden md:block w-1/3 bg-brand-navy relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-brand-navy to-transparent z-10" />
           <img 
-            src="https://images.unsplash.com/photo-1523050335392-9ae86774929f?auto=format&fit=crop&q=80" 
+            src="https://picsum.photos/seed/grad_hero/800/1200" 
             alt="Graduation" 
             className="h-full w-full object-cover opacity-50"
             referrerPolicy="no-referrer"
