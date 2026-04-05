@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { LogOut, Book, Image as ImageIcon, Clock, User } from 'lucide-react';
+import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Student: React.FC = () => {
@@ -36,7 +36,18 @@ const Student: React.FC = () => {
       <header className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="topline-black text-2xl text-brand-gold">Top Line</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
+                <GraduationCap className="text-brand-gold w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-serif text-lg text-white uppercase tracking-[0.1em] leading-none">Top Line</span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[5px] uppercase tracking-[0.4em] font-light text-white/60">Formaturas</span>
+                  <span className="text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+                </div>
+              </div>
+            </div>
             <div className="h-6 w-[1px] bg-white/10" />
             <span className="text-sm text-gray-400">Área do Aluno</span>
           </div>

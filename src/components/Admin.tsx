@@ -13,7 +13,8 @@ import {
   Trash2,
   Edit2,
   ExternalLink,
-  LayoutDashboard
+  LayoutDashboard,
+  GraduationCap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -76,8 +77,19 @@ const Admin: React.FC = () => {
       {/* Sidebar */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col sticky top-0 h-screen">
         <div className="p-8">
-          <h1 className="topline-black text-2xl text-brand-gold">Top Line</h1>
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Admin Panel</p>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
+              <GraduationCap className="text-brand-gold w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-serif text-sm text-white uppercase tracking-[0.1em] leading-none">Top Line</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="text-[4px] uppercase tracking-[0.4em] font-light text-white/60">Formaturas</span>
+                <span className="text-[4px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-[8px] text-gray-500 uppercase tracking-widest ml-11">Admin Panel</p>
         </div>
 
         <nav className="flex-1 px-4 space-y-2">

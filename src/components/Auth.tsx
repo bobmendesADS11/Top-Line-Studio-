@@ -6,9 +6,10 @@ import {
   signInWithPhoneNumber, 
   RecaptchaVerifier, 
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
-import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock } from 'lucide-react';
+import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
@@ -52,8 +53,9 @@ const Auth: React.FC = () => {
       } catch (err: any) {
         // If user doesn't exist and it's the master admin, create it
         if (err.code === 'auth/user-not-found' && digits === '48991764001') {
-          await createUserWithEmailAndPassword(auth, adminEmail, password);
-          setSuccessMessage('Acesso mestre configurado com sucesso!');
+          const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, password);
+          await updateProfile(userCredential.user, { displayName: 'Gabriel' });
+          setSuccessMessage('Acesso mestre (Gabriel) configurado com sucesso!');
         } else {
           throw err;
         }
@@ -196,10 +198,27 @@ const Auth: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-zinc-900/50 border border-brand-gold/20 rounded-3xl p-8 backdrop-blur-xl shadow-2xl"
       >
-        <div className="text-center mb-8">
-          <h1 className="topline-black text-3xl text-brand-gold mb-2">Top Line</h1>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="relative w-16 h-16 mb-4">
+            <div className="absolute inset-0 bg-brand-gold/20 blur-2xl rounded-full" />
+            <div className="relative w-full h-full bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden group">
+              <motion.div 
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 opacity-20"
+              >
+                <div className="absolute inset-0 bg-[conic-gradient(from_0deg,#D4AF37_0%,transparent_25%,#D4AF37_50%,transparent_75%,#D4AF37_100%)]" />
+              </motion.div>
+              <GraduationCap className="text-brand-gold w-8 h-8 relative z-10 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+            </div>
+          </div>
+          <h1 className="font-serif text-2xl text-white uppercase tracking-[0.1em] mb-1">Top Line</h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-[7px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
+            <span className="text-[7px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+          </div>
           <div className="flex items-center justify-center gap-2">
-            <p className="text-gray-400 text-sm">Acesse sua área exclusiva</p>
+            <p className="text-gray-500 text-[9px] uppercase tracking-[0.2em] font-light">Acesse sua área exclusiva</p>
             {authMode === 'admin' && (
               <span className="px-2 py-0.5 rounded bg-brand-gold/10 border border-brand-gold/20 text-brand-gold text-[8px] font-bold uppercase tracking-widest">
                 Admin Mode
@@ -250,7 +269,7 @@ const Auth: React.FC = () => {
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                   <input
                     type="tel"
-                    placeholder="Telefone (ex: 48 99176-4001)"
+                    placeholder="Telefone (ex: 48 99999-9999)"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -365,7 +384,7 @@ const Auth: React.FC = () => {
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                       <input
                         type="tel"
-                        placeholder="Telefone (ex: 48 99176-4001)"
+                        placeholder="Telefone (ex: 48 99999-9999)"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -422,7 +441,7 @@ const Auth: React.FC = () => {
                           <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                           <input
                             type="tel"
-                            placeholder="+55 (11) 99999-9999"
+                            placeholder="+55 (99) 99999-9999"
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"

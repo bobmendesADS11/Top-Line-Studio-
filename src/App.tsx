@@ -65,12 +65,22 @@ const App: React.FC = () => {
             const pendingData = pendingDataStr ? JSON.parse(pendingDataStr) : {};
             sessionStorage.removeItem('pendingRegistration');
 
+            let extractedPhone = currentUser.phoneNumber || pendingData.phoneNumber || '';
+            if (isAdminEmail && !extractedPhone && currentUser.email?.endsWith('@admin.topline.com')) {
+              extractedPhone = '+' + currentUser.email.split('@')[0];
+            }
+
+            let extractedName = currentUser.displayName || pendingData.fullName || '';
+            if ((isAdminEmail || isAdminPhone) && !extractedName) {
+              extractedName = 'Gabriel';
+            }
+
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email || pendingData.email || '',
-              displayName: currentUser.displayName || pendingData.fullName || '',
+              displayName: extractedName,
               photoURL: currentUser.photoURL || '',
-              phoneNumber: currentUser.phoneNumber || pendingData.phoneNumber || '',
+              phoneNumber: extractedPhone,
               course: pendingData.course || '',
               semester: pendingData.semester || '',
               role: newRole,
