@@ -3,6 +3,37 @@ import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, Ch
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+function Logo() {
+  return (
+    <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+      <div className="relative w-12 h-12 overflow-hidden rounded-xl bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
+        <motion.div 
+          animate={{ y: [0, -120, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 flex flex-col gap-1 p-1"
+        >
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <img 
+              key={i}
+              src={`https://picsum.photos/seed/logo-scroll-${i}/100/100`} 
+              className="w-full aspect-square object-cover rounded-lg opacity-40 group-hover:opacity-70 transition-opacity"
+              referrerPolicy="no-referrer"
+            />
+          ))}
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <GraduationCap className="text-brand-gold w-6 h-6 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <span className="topline-black text-3xl text-brand-gold leading-none tracking-tight">Top Line</span>
+        <span className="text-[9px] uppercase tracking-[0.5em] font-bold text-white/40 mt-1 text-center">Black Edition</span>
+      </div>
+    </div>
+  );
+}
+
 function AlbumShowcase() {
   const [step, setStep] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -109,39 +140,60 @@ function AlbumShowcase() {
       title: "Visualização 3D",
       icon: BookOpen,
       content: (
-        <div className="flex items-center justify-center h-full p-12 perspective-1000">
+        <div className="flex items-center justify-center h-full p-12 perspective-2000">
           <motion.div 
-            initial={{ rotateY: -30, rotateX: 10 }}
+            initial={{ rotateY: -25, rotateX: 10 }}
             animate={{ 
-              rotateY: [-30, 0, -30],
+              rotateY: [-25, -5, -25],
               rotateX: [10, 5, 10],
-              z: [0, 50, 0]
             }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="w-full max-w-md aspect-[16/10] bg-zinc-900 rounded-r-xl border-l-[12px] border-brand-gold shadow-[20px_20px_60px_rgba(0,0,0,0.8)] relative preserve-3d group"
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+            className="relative w-full max-w-2xl aspect-[1.8/1] flex preserve-3d"
           >
-            {/* Cover Texture */}
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/20" />
-            
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-12">
-              <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="mb-4"
-              >
-                <Sparkles className="text-brand-gold w-8 h-8" />
-              </motion.div>
-              <h3 className="topline-black text-5xl text-white tracking-widest mb-2">TOP LINE</h3>
-              <div className="h-[1px] w-24 bg-brand-gold/50 mb-4" />
-              <p className="text-[10px] uppercase tracking-[0.5em] text-brand-gold font-bold">Black Edition</p>
+            {/* Left Page (Full Photo) */}
+            <div className="flex-1 bg-[#1a1a1a] rounded-l-sm border-y border-l border-white/5 relative overflow-hidden shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] origin-right">
+              <img 
+                src="https://picsum.photos/seed/page1/800/1200" 
+                className="w-full h-full object-cover opacity-90"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+              <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black/60 to-transparent" />
             </div>
 
-            {/* Page Effect */}
-            <div className="absolute top-0 right-0 bottom-0 w-1 bg-white/10" />
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[8px] uppercase tracking-widest text-white/40">Renderizando 3D</span>
+            {/* Spine / Gutter */}
+            <div className="w-1 bg-[#111] relative z-10 shadow-[0_0_10px_rgba(0,0,0,0.8)]">
+              <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-white/5" />
+            </div>
+
+            {/* Right Page (2 Photos) */}
+            <div className="flex-1 bg-[#1a1a1a] rounded-r-sm border-y border-r border-white/5 relative overflow-hidden shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-6">
+              <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
+                <img 
+                  src="https://picsum.photos/seed/page2a/800/600" 
+                  className="w-full h-full object-cover opacity-90"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
+              </div>
+              <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
+                <img 
+                  src="https://picsum.photos/seed/page2b/800/600" 
+                  className="w-full h-full object-cover opacity-90"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
+              </div>
+              <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/60 to-transparent" />
+            </div>
+
+            {/* Cover Depth Effect */}
+            <div className="absolute -inset-1 -z-10 bg-brand-gold/20 rounded-lg blur-xl opacity-50" />
+            
+            {/* Decorative "3D Rendering" badge */}
+            <div className="absolute -top-4 -right-4 flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 border border-white/10 backdrop-blur-md z-20">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[8px] uppercase tracking-widest text-white/60">Renderizando 3D</span>
             </div>
           </motion.div>
         </div>
@@ -227,10 +279,7 @@ export default function Landing() {
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            <span className="topline-black text-2xl text-brand-gold">Top Line</span>
-            <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40 mt-1">Black</span>
-          </div>
+          <Logo />
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-12 text-[10px] uppercase tracking-[0.3em] font-bold">
@@ -578,10 +627,7 @@ export default function Landing() {
       {/* Footer / Contact */}
       <footer className="py-20 px-6 border-t border-white/10 bg-black">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col items-center md:items-start">
-            <span className="topline-black text-3xl mb-2 text-brand-gold">Top Line</span>
-            <p className="text-gray-500 text-sm tracking-[0.2em] uppercase font-bold">Black Edition</p>
-          </div>
+          <Logo />
           
           <div className="flex gap-12 text-[10px] font-bold uppercase tracking-widest text-gray-400">
             <a href="#" className="hover:text-brand-gold transition-colors">Home</a>
