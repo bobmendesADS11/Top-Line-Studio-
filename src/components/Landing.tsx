@@ -6,50 +6,89 @@ import { useNavigate } from 'react-router-dom';
 function ParticleBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(50)].map((_, i) => (
+      {/* Dark Gradient Overlay (Black to Deep Brown) */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,25,10,0.2)_0%,rgba(0,0,0,1)_100%)]" />
+      
+      {/* Soft Warm Light Beam on the Right */}
+      <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_85%_35%,rgba(212,175,55,0.07)_0%,transparent_50%)] blur-[80px]" />
+
+      {/* Twinkling Gold Dust (Depth of Field) */}
+      {[...Array(80)].map((_, i) => {
+        const size = Math.random() * 2.5 + 0.5;
+        const blur = size > 1.8 ? 'blur-[1.5px]' : size > 1 ? 'blur-[0.5px]' : 'blur-none';
+        const opacity = Math.random() * 0.4 + 0.2;
+        
+        return (
+          <motion.div
+            key={`dust-${i}`}
+            initial={{ 
+              opacity: 0,
+              scale: Math.random() * 0.5 + 0.5,
+              x: Math.random() * 100 + "%",
+              y: Math.random() * 100 + "%"
+            }}
+            animate={{ 
+              opacity: [0, opacity, 0],
+              scale: [0.8, 1.2, 0.8],
+              y: [null, (Math.random() * -30 - 20) + "px"]
+            }}
+            transition={{ 
+              duration: Math.random() * 6 + 6, 
+              repeat: Infinity,
+              delay: Math.random() * 10,
+            }}
+            className={`absolute rounded-full bg-brand-gold/60 ${blur}`}
+            style={{ width: size, height: size }}
+          />
+        );
+      })}
+
+      {/* Flowing Curved Wave of Particles */}
+      {[...Array(40)].map((_, i) => (
         <motion.div
-          key={i}
+          key={`wave-particle-${i}`}
           initial={{ 
-            opacity: 0, 
-            scale: Math.random() * 0.5 + 0.5,
-            x: Math.random() * 100 + "%",
-            y: "110%"
+            opacity: 0,
+            x: "-10%",
+            y: (45 + Math.sin(i * 0.3) * 10) + "%",
           }}
           animate={{ 
-            opacity: [0, 0.8, 0],
-            y: "-10%",
-            x: (Math.random() * 100 - 10) + "%"
+            opacity: [0, 0.5, 0],
+            x: "110%",
+            y: (45 + Math.sin((i + 15) * 0.3) * 15) + "%",
           }}
           transition={{ 
-            duration: Math.random() * 15 + 10, 
+            duration: 10 + Math.random() * 5,
             repeat: Infinity,
-            delay: Math.random() * 20,
+            delay: i * 0.2,
             ease: "linear"
           }}
-          className="absolute w-1 h-1 bg-brand-gold rounded-full blur-[1px] shadow-[0_0_10px_#D4AF37]"
+          className="absolute w-1 h-1 bg-brand-gold/40 rounded-full blur-[1px] shadow-[0_0_8px_rgba(212,175,55,0.3)]"
         />
       ))}
-      {/* Bokeh circles */}
-      {[...Array(15)].map((_, i) => (
+
+      {/* Cinematic Shooting Stars / Sparkles */}
+      {[...Array(4)].map((_, i) => (
         <motion.div
-          key={`bokeh-${i}`}
+          key={`shooting-star-${i}`}
           initial={{ 
             opacity: 0, 
-            scale: Math.random() * 2 + 1,
-            x: Math.random() * 100 + "%",
-            y: Math.random() * 100 + "%"
+            x: "-20%",
+            y: Math.random() * 70 + "%",
+            rotate: 12
           }}
           animate={{ 
-            opacity: [0, 0.15, 0],
-            scale: [1, 1.5, 1],
+            opacity: [0, 0.7, 0],
+            x: "120%",
+            y: (Math.random() * 70 + 15) + "%",
           }}
           transition={{ 
-            duration: Math.random() * 10 + 10, 
+            duration: 2.5 + Math.random(), 
             repeat: Infinity,
-            delay: Math.random() * 5,
-            ease: "easeInOut"
+            delay: Math.random() * 30,
+            ease: "easeIn"
           }}
-          className="absolute w-32 h-32 bg-brand-gold/10 rounded-full blur-[60px]"
+          className="absolute w-40 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent blur-[1px]"
         />
       ))}
     </div>
@@ -80,8 +119,8 @@ function Logo() {
         </div>
       </div>
       <div className="flex flex-col">
-        <span className="topline-black text-3xl text-brand-gold leading-none tracking-tight">Top Line</span>
-        <span className="text-[9px] uppercase tracking-[0.5em] font-bold text-white/40 mt-1 text-center">Black Edition</span>
+        <span className="font-serif text-xl text-white uppercase tracking-[0.3em] leading-none">Top Line</span>
+        <span className="text-[8px] uppercase tracking-[0.4em] font-bold text-brand-gold mt-1">Black Edition</span>
       </div>
     </div>
   );
@@ -400,7 +439,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-brand-gold/30">
+    <div className="relative min-h-screen bg-[#050301] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -476,43 +515,32 @@ export default function Landing() {
             transition={{ duration: 1 }}
             className="flex flex-col items-center"
           >
-            <div className="flex items-center gap-4 mb-12">
-              <Sparkles className="w-5 h-5 text-brand-gold animate-pulse" />
-              <div className="relative px-10 py-3 rounded-full border border-brand-gold/40 bg-brand-gold/5 text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em] flex items-center gap-3">
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-brand-gold rounded-full flex items-center justify-center text-[6px] text-black border border-black">
-                  <Award size={8} />
-                </div>
-                <span>20 Anos de Excelência em Formaturas</span>
-                <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-brand-gold rounded-full flex items-center justify-center text-[6px] text-black border border-black">
-                  <Award size={8} />
-                </div>
+            <div className="flex items-center gap-6 mb-12">
+              <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
+              <div className="px-6 py-2 rounded-full border border-brand-gold/50 bg-black/40 backdrop-blur-sm text-brand-gold text-[8px] md:text-[10px] font-bold uppercase tracking-[0.3em] shadow-[0_0_15px_rgba(212,175,55,0.1)]">
+                20 Anos de Excelência em Formaturas
               </div>
-              <Sparkles className="w-5 h-5 text-brand-gold animate-pulse" />
+              <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
             </div>
             
-            <h1 className="flex flex-col items-center mb-8">
-              <span className="topline-black text-7xl md:text-[10rem] mb-2 font-serif leading-none tracking-[0.2em]">Top Line</span>
-              <div className="flex items-center gap-8 w-full">
-                <div className="h-[1px] flex-1 bg-brand-gold/40" />
-                <span className="text-brand-gold text-4xl md:text-6xl font-serif italic tracking-[0.8em] uppercase">Black</span>
-                <div className="h-[1px] flex-1 bg-brand-gold/40" />
+            <h1 className="flex flex-col items-center mb-10">
+              <span className="font-serif text-5xl md:text-8xl text-white tracking-[0.4em] uppercase leading-none mb-6">Top Line</span>
+              <div className="flex items-center gap-6 w-full max-w-lg">
+                <div className="h-[1px] flex-1 bg-brand-gold/50" />
+                <span className="text-brand-gold text-xl md:text-4xl font-serif tracking-[0.6em] uppercase">Black</span>
+                <div className="h-[1px] flex-1 bg-brand-gold/50" />
               </div>
             </h1>
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 1 }}
-              className="mb-12 relative"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 1 }}
+              className="mb-12"
             >
-              <span className="font-script text-5xl md:text-7xl text-brand-gold opacity-90 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+              <span className="font-script text-5xl md:text-7xl text-brand-gold/90 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]">
                 Sonhe, acredite, realize!
               </span>
-              <motion.div 
-                animate={{ opacity: [0.2, 0.5, 0.2] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -inset-4 bg-brand-gold/10 blur-2xl -z-10 rounded-full"
-              />
             </motion.div>
             
             <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
