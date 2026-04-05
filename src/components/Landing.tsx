@@ -34,9 +34,10 @@ function AlbumShowcase() {
               className="aspect-square rounded-lg bg-white/10 border border-white/20 overflow-hidden relative group"
             >
               <img 
-                src={`https://images.unsplash.com/photo-${1500000000000 + i * 100000}?auto=format&fit=crop&q=80&w=200`} 
+                src={`https://picsum.photos/seed/album-${i}/400/400`} 
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
                 alt="Selection"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-brand-gold/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <CheckCircle2 className="text-white w-6 h-6" />
@@ -98,6 +99,7 @@ function AlbumShowcase() {
                 src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800" 
                 className="w-full h-full object-cover opacity-90"
                 alt="Album Page"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
             </div>
@@ -120,6 +122,7 @@ function AlbumShowcase() {
                   src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800" 
                   className="w-full h-full object-cover"
                   alt="Album Page Content"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               {/* Back side of the flipping page */}
@@ -202,9 +205,10 @@ function AlbumShowcase() {
               <div className="w-16 h-20 bg-white/5 border border-white/10 rounded shadow-2xl backdrop-blur-sm p-1">
                 <div className="w-full h-full bg-zinc-800 rounded-sm overflow-hidden">
                   <img 
-                    src={`https://images.unsplash.com/photo-${1500000000000 + i * 200000}?auto=format&fit=crop&q=80&w=100`} 
+                    src={`https://picsum.photos/seed/float-${i}/200/300`} 
                     className="w-full h-full object-cover grayscale"
                     alt="Floating memory"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
               </div>
