@@ -16,7 +16,7 @@ export default function Landing({ onStart }: LandingProps) {
           className="w-full h-full object-cover opacity-40"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-linear-to-b from-brand-black/60 via-brand-black/80 to-brand-black"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-black/60 via-brand-black/80 to-brand-black"></div>
       </div>
 
       {/* Content */}
