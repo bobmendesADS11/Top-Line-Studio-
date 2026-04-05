@@ -78,32 +78,138 @@ function AlbumShowcase() {
       title: "Resultado 3D Premium",
       icon: BookOpen,
       content: (
-        <div className="relative h-full flex items-center justify-center perspective-1000">
-          <motion.div
-            initial={{ rotateY: -90 }}
-            animate={{ rotateY: 0 }}
-            className="w-64 h-80 bg-zinc-950 rounded-r-lg border-2 border-brand-gold/50 shadow-[20px_0_50px_rgba(0,0,0,0.8)] relative preserve-3d origin-left"
-          >
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-              <div className="topline-black text-2xl mb-4">Top Line</div>
-              <div className="w-12 h-1 bg-brand-gold mb-4" />
-              <div className="text-[10px] uppercase tracking-[0.4em] text-brand-gold/60">Class of 2026</div>
+        <div className="relative h-full flex items-center justify-center perspective-[2000px]">
+          {/* Ambient Glow */}
+          <div className="absolute w-96 h-96 bg-brand-gold/20 blur-[120px] rounded-full animate-pulse" />
+          
+          <div className="relative w-72 h-96 preserve-3d">
+            {/* Album Stack (Depth Effect) */}
+            {[1, 2, 3, 4].map((i) => (
+              <div 
+                key={i}
+                className="absolute inset-0 bg-zinc-900 border border-white/5 rounded-r-lg shadow-2xl"
+                style={{ transform: `translateZ(${-i * 2}px)` }}
+              />
+            ))}
+
+            {/* Back Page */}
+            <div className="absolute inset-0 bg-white rounded-r-lg shadow-inner overflow-hidden">
+              <img 
+                src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800" 
+                className="w-full h-full object-cover opacity-90"
+                alt="Album Page"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
             </div>
-            <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black to-transparent" />
-          </motion.div>
-          <motion.div
-            initial={{ rotateY: 0 }}
-            animate={{ rotateY: 180 }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 2 }}
-            className="w-64 h-80 bg-white rounded-l-lg border-2 border-brand-gold/20 absolute preserve-3d origin-right"
-            style={{ backfaceVisibility: 'hidden' }}
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=600" 
-              className="w-full h-full object-cover opacity-80"
-              alt="Album Page"
-            />
-          </motion.div>
+
+            {/* Flipping Page */}
+            <motion.div
+              initial={{ rotateY: 0 }}
+              animate={{ rotateY: -160 }}
+              transition={{ 
+                duration: 2.5, 
+                repeat: Infinity, 
+                repeatDelay: 1,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0 bg-white rounded-r-lg shadow-2xl origin-left preserve-3d"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <div className="absolute inset-0 p-1 border-r border-brand-gold/20">
+                <img 
+                  src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800" 
+                  className="w-full h-full object-cover"
+                  alt="Album Page Content"
+                />
+              </div>
+              {/* Back side of the flipping page */}
+              <div 
+                className="absolute inset-0 bg-zinc-100 rotate-y-180"
+                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+              >
+                <div className="h-full w-full p-8 flex flex-col justify-center border-l-4 border-brand-gold/30">
+                  <div className="space-y-4">
+                    <div className="h-2 w-24 bg-brand-gold/20 rounded" />
+                    <div className="h-2 w-32 bg-brand-gold/10 rounded" />
+                    <div className="grid grid-cols-2 gap-2 pt-4">
+                      <div className="aspect-square bg-zinc-200 rounded" />
+                      <div className="aspect-square bg-zinc-200 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Front Cover */}
+            <motion.div
+              initial={{ rotateY: 0 }}
+              animate={{ rotateY: -20 }}
+              transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
+              className="absolute inset-0 bg-zinc-950 rounded-r-lg border-2 border-brand-gold/40 shadow-[15px_0_30px_rgba(0,0,0,0.5)] origin-left preserve-3d"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+              
+              {/* Gold Foil Effect */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                <motion.div 
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="topline-black text-4xl mb-6 bg-gradient-to-b from-brand-gold via-white to-brand-gold bg-clip-text text-transparent"
+                >
+                  Top Line
+                </motion.div>
+                <div className="w-16 h-[1px] bg-brand-gold/50 mb-6" />
+                <div className="text-[10px] uppercase tracking-[0.6em] text-brand-gold font-bold">
+                  Premium Album
+                </div>
+                <div className="mt-2 text-[8px] uppercase tracking-[0.3em] text-brand-gold/40">
+                  Class of 2026
+                </div>
+              </div>
+
+              {/* Spine Detail */}
+              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black to-zinc-900 border-r border-white/5" />
+              
+              {/* Shimmer Overlay */}
+              <motion.div 
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-full -skew-x-12 pointer-events-none"
+              />
+            </motion.div>
+          </div>
+
+          {/* Floating Elements */}
+          {[1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              animate={{ 
+                y: [0, -20, 0],
+                rotate: [0, 5, 0],
+                opacity: [0.3, 0.6, 0.3]
+              }}
+              transition={{ 
+                duration: 4 + i, 
+                repeat: Infinity,
+                delay: i * 0.5
+              }}
+              className="absolute hidden md:block"
+              style={{
+                top: `${20 + i * 20}%`,
+                left: i % 2 === 0 ? '10%' : '80%',
+              }}
+            >
+              <div className="w-16 h-20 bg-white/5 border border-white/10 rounded shadow-2xl backdrop-blur-sm p-1">
+                <div className="w-full h-full bg-zinc-800 rounded-sm overflow-hidden">
+                  <img 
+                    src={`https://images.unsplash.com/photo-${1500000000000 + i * 200000}?auto=format&fit=crop&q=80&w=100`} 
+                    className="w-full h-full object-cover grayscale"
+                    alt="Floating memory"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )
     }
