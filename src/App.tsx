@@ -1,110 +1,103 @@
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from './lib/firebase';
 import Landing from './components/Landing';
 import Auth from './components/Auth';
-import Onboarding from './components/Onboarding';
-import ProfileSetup from './components/ProfileSetup';
-import Gallery from './components/Gallery';
-import Editor from './components/Editor';
-import AdminDashboard from './components/AdminDashboard';
-import PublicViewer from './components/PublicViewer';
+import Admin from './components/Admin';
+import Student from './components/Student';
 
-type AppState = 'landing' | 'auth' | 'onboarding' | 'profile_setup' | 'gallery' | 'editor' | 'admin' | 'public_view';
-
-interface Photo {
-  id: string;
-  url: string;
-  thumbnail: string;
-}
-
-export default function App() {
-  console.log('App component rendering...');
-  const [state, setState] = useState<AppState>('landing');
+const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
-  const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
-  const [sharedAlbumId, setSharedAlbumId] = useState<string | null>(null);
-  const [configError, setConfigError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('App useEffect running...');
-    // Check for Supabase config
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    // Only show error if it's clearly a placeholder or missing
-    if (!url || !key || url.includes('placeholder') || url.includes('xyz.supabase.co')) {
-      setConfigError(true);
-    } else {
-      setConfigError(false);
+    // Handle Email Link Sign-in
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = window.localStorage.getItem('emailForSignIn');
+      if (!email) {
+        email = window.prompt('Por favor, confirme seu e-mail para completar o acesso:');
+      }
+      if (email) {
+        signInWithEmailLink(auth, email, window.location.href)
+          .then(() => {
+            window.localStorage.removeItem('emailForSignIn');
+          })
+          .catch((error) => {
+            console.error("Error signing in with email link:", error);
+          });
+      }
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const albumId = params.get('albumId');
-    if (albumId) {
-      setSharedAlbumId(albumId);
-      setState('public_view');
-    }
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        try {
+          // Check user role in Firestore
+          const userRef = doc(db, 'users', currentUser.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            setRole(userSnap.data().role);
+          } else {
+            // Create new student profile if it doesn't exist
+            const newRole = currentUser.email === 'GabrielMestrelli@gmail.com' ? 'admin' : 'student';
+            await setDoc(userRef, {
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL,
+              phoneNumber: currentUser.phoneNumber,
+              role: newRole,
+              createdAt: serverTimestamp(),
+            });
+            setRole(newRole);
+          }
+          setUser(currentUser);
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setUser(currentUser);
+          setRole('student'); // Fallback
+        }
+      } else {
+        setUser(null);
+        setRole(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleStart = () => {
-    if (user) {
-      setState('gallery');
-    } else {
-      setState('auth');
-    }
-  };
-
-  const handleLogin = (userData: any) => {
-    setUser(userData);
-    // Check if user is admin (using phone as identifier for demo, 
-    // or you can check email if using Google Auth)
-    if (userData.phone === '+5548999999999' || userData.email === 'GabrielMestrelli@gmail.com') {
-      setState('admin');
-    } else {
-      setState('onboarding');
-    }
-  };
-
-  const handleOnboardingComplete = () => {
-    setState('profile_setup');
-  };
-
-  const handleProfileComplete = () => {
-    setState('gallery');
-  };
-
-  const handlePhotoSelection = (photos: Photo[]) => {
-    setSelectedPhotos(photos);
-    setState('editor');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="fixed top-2 right-2 text-[10px] text-yellow-500/50 z-[300]">v1.0.3-debug</div>
-      <div className="fixed bottom-2 left-2 text-[10px] text-green-500 z-[300]">App Running</div>
-      {configError && (
-        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[10px] py-1 px-4 text-center z-[200] font-bold uppercase tracking-widest">
-          Configuração do Supabase ausente. Verifique as variáveis de ambiente no Vercel.
-        </div>
-      )}
-      {state === 'landing' && <Landing onStart={handleStart} />}
-      {state === 'auth' && <Auth onLogin={handleLogin} />}
-      {state === 'onboarding' && <Onboarding onComplete={handleOnboardingComplete} />}
-      {state === 'profile_setup' && user && (
-        <ProfileSetup userId={user.id} onComplete={handleProfileComplete} />
-      )}
-      {state === 'gallery' && <Gallery onSelect={handlePhotoSelection} />}
-      {state === 'editor' && (
-        <Editor 
-          selectedPhotos={selectedPhotos} 
-          onBack={() => setState('gallery')} 
+    <Router>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} /> : <Auth />} 
         />
-      )}
-      {state === 'admin' && (
-        <AdminDashboard onBack={() => setState('landing')} />
-      )}
-      {state === 'public_view' && sharedAlbumId && (
-        <PublicViewer albumId={sharedAlbumId} />
-      )}
-    </div>
+        <Route 
+          path="/admin/*" 
+          element={role === 'admin' ? <Admin /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/area-do-aluno/*" 
+          element={role === 'student' ? <Student /> : <Navigate to="/login" />} 
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Router>
   );
-}
+};
+
+export default App;

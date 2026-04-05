@@ -1,10 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Image as ImageIcon } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Image as ImageIcon, LogIn, Menu, X } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
-
-interface LandingProps {
-  onStart: () => void;
-}
+import { useNavigate } from 'react-router-dom';
 
 function AlbumShowcase() {
   const [step, setStep] = useState(0);
@@ -28,19 +25,21 @@ function AlbumShowcase() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <motion.div
               key={i}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="aspect-square rounded-lg bg-white/10 border border-white/20 overflow-hidden relative group"
+              className="aspect-square rounded-xl bg-zinc-900 border border-white/10 overflow-hidden relative group cursor-pointer"
             >
               <img 
-                src={`https://picsum.photos/seed/album-${i}/400/400`} 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-                alt="Selection"
+                src={`https://picsum.photos/seed/grad${i}/400/400`} 
+                alt="Graduation" 
+                className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-brand-gold/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <CheckCircle2 className="text-white w-6 h-6" />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-8 h-8 rounded-full bg-brand-gold text-black flex items-center justify-center shadow-lg">
+                  <CheckCircle2 size={16} />
+                </div>
               </div>
             </motion.div>
           ))}
@@ -51,229 +50,41 @@ function AlbumShowcase() {
       title: "Design Inteligente",
       icon: Sparkles,
       content: (
-        <div className="relative h-full flex items-center justify-center p-8">
-          <div className="w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-lg border-2 border-brand-gold/30 shadow-2xl relative overflow-hidden flex flex-col">
-            {/* Header */}
-            <div className="bg-black/80 border-b border-brand-gold/20 p-4 flex items-center justify-between z-30 backdrop-blur-md">
-              <span className="topline-black text-sm text-brand-gold tracking-widest">Top Line</span>
-              <div className="flex gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-                <div className="w-2 h-2 rounded-full bg-green-500/50" />
+        <div className="flex items-center justify-center h-full p-12">
+          <div className="relative w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-2xl border border-brand-gold/30 shadow-2xl shadow-brand-gold/10 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
+            <div className="p-8 h-full flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="h-4 w-1/2 bg-brand-gold/20 rounded-full animate-pulse" />
+                <div className="h-4 w-3/4 bg-white/10 rounded-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="aspect-square bg-zinc-800 rounded-lg border border-white/5" />
+                <div className="aspect-square bg-zinc-800 rounded-lg border border-white/5" />
               </div>
             </div>
-
-            <div className="flex-1 relative overflow-hidden p-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
-              
-              {/* Scanning Line */}
-              <motion.div 
-                animate={{ top: ["0%", "100%", "0%"] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="absolute left-0 right-0 h-1 bg-brand-gold/50 shadow-[0_0_15px_rgba(212,175,55,0.8)] z-20"
-              />
-
-              {/* Scrollable Content */}
-              <motion.div 
-                animate={{ y: [0, -300, 0] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className="relative z-10 space-y-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-1/3 bg-brand-gold/20 rounded" />
-                  <div className="h-4 w-8 bg-white/10 rounded" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div
-                      key={i}
-                      className="aspect-square bg-white/5 rounded-lg border border-white/10 overflow-hidden relative group"
-                    >
-                      <img 
-                        src={`https://picsum.photos/seed/design-scroll-${i}/400/400`} 
-                        className="w-full h-full object-cover opacity-40 group-hover:opacity-100 transition-opacity"
-                        alt="Design element"
-                        referrerPolicy="no-referrer"
-                      />
-                      <motion.div 
-                        animate={{ opacity: [0, 0.5, 0] }}
-                        transition={{ delay: i * 0.2, duration: 2, repeat: Infinity }}
-                        className="absolute inset-0 border-2 border-brand-gold/30"
-                      />
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="h-32 w-full bg-white/5 rounded-lg border border-white/10 p-6 space-y-4">
-                  <div className="h-2 w-full bg-white/10 rounded" />
-                  <div className="h-2 w-5/6 bg-white/10 rounded" />
-                  <div className="h-2 w-4/6 bg-white/10 rounded" />
-                  <div className="pt-4 flex justify-end">
-                    <div className="h-6 w-20 bg-brand-gold/20 rounded" />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Magic Particles */}
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <motion.div
-                key={i}
-                animate={{ 
-                  x: [Math.random() * 400, Math.random() * 400],
-                  y: [Math.random() * 300, Math.random() * 300],
-                  opacity: [0, 1, 0]
-                }}
-                transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                className="absolute w-1 h-1 bg-brand-gold rounded-full blur-[1px]"
-              />
-            ))}
           </div>
         </div>
       )
     },
     {
-      title: "Resultado 3D Premium",
+      title: "Visualização 3D",
       icon: BookOpen,
       content: (
-        <div className="relative h-full flex items-center justify-center perspective-[2000px]">
-          {/* Ambient Glow */}
-          <div className="absolute w-96 h-96 bg-brand-gold/20 blur-[120px] rounded-full animate-pulse" />
-          
-          <div className="relative w-72 h-96 preserve-3d">
-            {/* Album Stack (Depth Effect) */}
-            {[1, 2, 3, 4].map((i) => (
-              <div 
-                key={i}
-                className="absolute inset-0 bg-zinc-900 border border-white/5 rounded-r-lg shadow-2xl"
-                style={{ transform: `translateZ(${-i * 2}px)` }}
-              />
-            ))}
-
-            {/* Back Page (Fixed) */}
-            <div className="absolute inset-0 bg-white rounded-r-lg shadow-inner overflow-hidden">
-              <img 
-                src="https://picsum.photos/seed/page-back/800/1000" 
-                className="w-full h-full object-cover opacity-90"
-                alt="Album Page"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+        <div className="flex items-center justify-center h-full p-12">
+          <motion.div 
+            animate={{ 
+              rotateY: [0, 15, -15, 0],
+              rotateX: [0, 5, -5, 0]
+            }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="w-full max-w-md aspect-[16/10] bg-zinc-900 rounded-lg border-l-8 border-brand-gold shadow-2xl relative preserve-3d"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-brand-gold/20 topline-black text-4xl">Top Line</div>
             </div>
-
-            {/* Flipping Page */}
-            <motion.div
-              initial={{ rotateY: 0 }}
-              animate={{ rotateY: [-5, -170, -5] }}
-              transition={{ 
-                duration: 5, 
-                repeat: Infinity, 
-                ease: "easeInOut",
-                times: [0, 0.5, 1]
-              }}
-              className="absolute inset-0 bg-white rounded-r-lg shadow-2xl origin-left preserve-3d z-10"
-              style={{ backfaceVisibility: 'hidden' }}
-            >
-              <div className="absolute inset-0 p-1 border-r border-brand-gold/20">
-                <img 
-                  src="https://picsum.photos/seed/page-flip/800/1000" 
-                  className="w-full h-full object-cover"
-                  alt="Album Page Content"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              {/* Back side of the flipping page */}
-              <div 
-                className="absolute inset-0 bg-zinc-100 rotate-y-180"
-                style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-              >
-                <div className="h-full w-full p-8 flex flex-col justify-center border-l-4 border-brand-gold/30">
-                  <div className="space-y-4">
-                    <div className="h-2 w-24 bg-brand-gold/20 rounded" />
-                    <div className="h-2 w-32 bg-brand-gold/10 rounded" />
-                    <div className="grid grid-cols-2 gap-2 pt-4">
-                      <div className="aspect-square bg-zinc-200 rounded overflow-hidden">
-                        <img src="https://picsum.photos/seed/mini-1/200/200" className="w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" />
-                      </div>
-                      <div className="aspect-square bg-zinc-200 rounded overflow-hidden">
-                        <img src="https://picsum.photos/seed/mini-2/200/200" className="w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Front Cover */}
-            <motion.div
-              initial={{ rotateY: 0 }}
-              animate={{ rotateY: [0, -110, 0] }}
-              transition={{ 
-                duration: 5, 
-                repeat: Infinity, 
-                ease: "easeInOut",
-                times: [0, 0.4, 1]
-              }}
-              className="absolute inset-0 bg-zinc-950 rounded-r-lg border-2 border-brand-gold/40 shadow-[15px_0_30px_rgba(0,0,0,0.5)] origin-left preserve-3d z-20"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-              
-              {/* Gold Foil Effect */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                <motion.div 
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="topline-black text-4xl mb-6 bg-gradient-to-b from-brand-gold via-white to-brand-gold bg-clip-text text-transparent"
-                >
-                  Top Line
-                </motion.div>
-                <div className="w-16 h-[1px] bg-brand-gold/50 mb-6" />
-                <div className="text-[10px] uppercase tracking-[0.6em] text-brand-gold font-bold">
-                  Premium Album
-                </div>
-                <div className="mt-2 text-[8px] uppercase tracking-[0.3em] text-brand-gold/40">
-                  Class of 2026
-                </div>
-              </div>
-
-              {/* Spine Detail */}
-              <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black to-zinc-900 border-r border-white/5" />
-            </motion.div>
-          </div>
-
-          {/* Floating Elements */}
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              animate={{ 
-                y: [0, -20, 0],
-                rotate: [0, 5, 0],
-                opacity: [0.3, 0.6, 0.3]
-              }}
-              transition={{ 
-                duration: 4 + i, 
-                repeat: Infinity,
-                delay: i * 0.5
-              }}
-              className="absolute hidden md:block"
-              style={{
-                top: `${20 + i * 20}%`,
-                left: i % 2 === 0 ? '10%' : '80%',
-              }}
-            >
-              <div className="w-16 h-20 bg-white/5 border border-white/10 rounded shadow-2xl backdrop-blur-sm p-1">
-                <div className="w-full h-full bg-zinc-800 rounded-sm overflow-hidden">
-                  <img 
-                    src={`https://picsum.photos/seed/float-${i}/200/300`} 
-                    className="w-full h-full object-cover grayscale"
-                    alt="Floating memory"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          ))}
+          </motion.div>
         </div>
       )
     }
@@ -281,21 +92,21 @@ function AlbumShowcase() {
 
   return (
     <div 
-      className="mt-24 min-h-[600px] rounded-3xl overflow-hidden relative bg-zinc-950 border border-white/10 flex flex-col lg:flex-row"
+      className="mt-20 flex flex-col lg:flex-row bg-zinc-950 rounded-[40px] border border-white/5 overflow-hidden shadow-2xl"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Left Side: Info */}
-      <div className="lg:w-1/3 p-12 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-white/10 bg-black/50">
+      <div className="lg:w-[400px] p-12 border-b lg:border-b-0 lg:border-r border-white/5 bg-zinc-900/30">
         <div className="space-y-8">
           {steps.map((s, i) => (
             <motion.div
               key={i}
-              className={`flex items-start gap-6 cursor-pointer transition-all ${step === i ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-50'}`}
+              className={`flex gap-6 cursor-pointer transition-all duration-500 ${step === i ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-50'}`}
               onClick={() => setStep(i)}
             >
-              <div className={`p-4 rounded-2xl ${step === i ? 'bg-brand-gold text-black shadow-[0_0_20px_rgba(212,175,55,0.4)]' : 'bg-white/5 text-white'}`}>
-                <s.icon className="w-6 h-6" />
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${step === i ? 'bg-brand-gold text-black' : 'bg-white/5 text-white'}`}>
+                <s.icon size={24} />
               </div>
               <div>
                 <h4 className="text-xl font-serif mb-2">{s.title}</h4>
@@ -334,8 +145,19 @@ function AlbumShowcase() {
   );
 }
 
-export default function Landing({ onStart }: LandingProps) {
+export default function Landing() {
+  const navigate = useNavigate();
   const aboutRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToAbout = () => {
     aboutRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -343,6 +165,66 @@ export default function Landing({ onStart }: LandingProps) {
 
   return (
     <div className="relative min-h-screen bg-black text-white selection:bg-brand-gold/30">
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <span className="topline-black text-2xl text-brand-gold">Top Line</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40 mt-1">Black</span>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-12 text-[10px] uppercase tracking-[0.3em] font-bold">
+            <a href="#" className="hover:text-brand-gold transition-colors">Home</a>
+            <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">A Empresa</button>
+            <a href="#" className="hover:text-brand-gold transition-colors">Serviços</a>
+            <a href="#" className="hover:text-brand-gold transition-colors">Contato</a>
+          </div>
+
+          <div className="hidden md:flex items-center gap-6">
+            <button 
+              onClick={() => navigate('/login')}
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold text-white/70 hover:text-brand-gold transition-colors"
+            >
+              <LogIn size={16} />
+              Login
+            </button>
+            <button 
+              onClick={() => navigate('/login')}
+              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-brand-gold/90 transition-all hover:scale-105 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+            >
+              Acessar Studio
+            </button>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button className="md:hidden p-2 text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-zinc-950 border-b border-white/5 overflow-hidden"
+            >
+              <div className="p-8 flex flex-col gap-6 text-[10px] uppercase tracking-[0.3em] font-bold text-center">
+                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
+                <button onClick={() => { scrollToAbout(); setIsMobileMenuOpen(false); }}>A Empresa</button>
+                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Serviços</a>
+                <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Contato</a>
+                <div className="h-[1px] bg-white/5 my-2" />
+                <button onClick={() => navigate('/login')} className="text-brand-gold">Acessar Studio</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
         {/* Background Sparkles Overlay */}
@@ -383,7 +265,7 @@ export default function Landing({ onStart }: LandingProps) {
 
             <div className="flex flex-col sm:flex-row gap-8 items-center">
               <button 
-                onClick={onStart}
+                onClick={() => navigate('/login')}
                 className="gold-button group flex items-center gap-4 text-xl px-12 py-6"
               >
                 Acessar Meu Studio
@@ -638,19 +520,19 @@ export default function Landing({ onStart }: LandingProps) {
       <footer className="py-20 px-6 border-t border-white/10 bg-black">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start">
-            <span className="topline-black text-3xl mb-2">Top Line</span>
+            <span className="topline-black text-3xl mb-2 text-brand-gold">Top Line</span>
             <p className="text-gray-500 text-sm tracking-[0.2em] uppercase font-bold">Black Edition</p>
           </div>
           
-          <div className="flex gap-12 text-sm font-bold uppercase tracking-widest text-gray-400">
+          <div className="flex gap-12 text-[10px] font-bold uppercase tracking-widest text-gray-400">
             <a href="#" className="hover:text-brand-gold transition-colors">Home</a>
-            <a href="#" className="hover:text-brand-gold transition-colors">Empresa</a>
+            <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">Empresa</button>
             <a href="#" className="hover:text-brand-gold transition-colors">Serviços</a>
             <a href="#" className="hover:text-brand-gold transition-colors">Contato</a>
           </div>
 
           <button 
-            onClick={onStart}
+            onClick={() => navigate('/login')}
             className="gold-button px-10 py-4 text-sm"
           >
             Área do Aluno

@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user information and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "student"] },
+        "phoneNumber": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Album": {
+      "title": "Album",
+      "description": "Represents a graduation album.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "published", "archived"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "price", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "An order for a graduation album.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentUid": { "type": "string" },
+        "albumId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "processing", "completed", "cancelled"] },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentUid", "albumId", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profiles collection."
+    },
+    "/albums/{albumId}": {
+      "schema": "Album",
+      "description": "Graduation albums collection."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Album orders collection."
+    }
+  }
+}
