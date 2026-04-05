@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -53,16 +54,25 @@ const App: React.FC = () => {
               setRole(currentData.role);
             }
           } else {
-            // Create new student profile if it doesn't exist
-            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com';
+            // Create new pending profile if it doesn't exist
+            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
+                               currentUser.email?.endsWith('@admin.topline.com');
             const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
-            const newRole = (isAdminEmail || isAdminPhone) ? 'admin' : 'student';
+            const newRole = (isAdminEmail || isAdminPhone) ? 'admin' : 'pending';
+            
+            // Pick up pending registration data if available
+            const pendingDataStr = sessionStorage.getItem('pendingRegistration');
+            const pendingData = pendingDataStr ? JSON.parse(pendingDataStr) : {};
+            sessionStorage.removeItem('pendingRegistration');
+
             await setDoc(userRef, {
               uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
-              phoneNumber: currentUser.phoneNumber,
+              email: currentUser.email || pendingData.email || '',
+              displayName: currentUser.displayName || pendingData.fullName || '',
+              photoURL: currentUser.photoURL || '',
+              phoneNumber: currentUser.phoneNumber || pendingData.phoneNumber || '',
+              course: pendingData.course || '',
+              semester: pendingData.semester || '',
               role: newRole,
               createdAt: serverTimestamp(),
             });
@@ -106,11 +116,42 @@ const App: React.FC = () => {
         />
         <Route 
           path="/area-do-aluno/*" 
-          element={role === 'student' ? <Student /> : <Navigate to="/login" />} 
+          element={
+            role === 'student' ? <Student /> : 
+            role === 'pending' ? <PendingAccess /> : 
+            <Navigate to="/login" />
+          } 
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
+  );
+};
+
+const PendingAccess: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md w-full bg-zinc-900/50 border border-brand-gold/20 rounded-3xl p-12 text-center backdrop-blur-xl"
+      >
+        <div className="w-20 h-20 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-brand-gold/20">
+          <div className="w-10 h-10 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
+        </div>
+        <h1 className="topline-black text-3xl text-brand-gold mb-4">Acesso em Processamento</h1>
+        <p className="text-gray-400 mb-8 leading-relaxed">
+          Olá! Recebemos sua solicitação. Sua conta está sendo configurada pela nossa equipe. 
+          Em breve você terá acesso total à sua área exclusiva Top Line.
+        </p>
+        <button 
+          onClick={() => auth.signOut()}
+          className="text-brand-gold text-xs font-bold uppercase tracking-widest hover:underline"
+        >
+          Sair e Voltar depois
+        </button>
+      </motion.div>
+    </div>
   );
 };
 

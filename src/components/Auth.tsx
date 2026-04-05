@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send } from 'lucide-react';
+import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
@@ -20,6 +20,9 @@ const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [course, setCourse] = useState('');
+  const [semester, setSemester] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   
@@ -84,6 +87,17 @@ const Auth: React.FC = () => {
         throw new Error('Número incompleto. Use o formato: 48 99999-9999');
       }
 
+      // Store registration info in session storage to be picked up after verification
+      if (studentAction === 'register') {
+        sessionStorage.setItem('pendingRegistration', JSON.stringify({
+          fullName,
+          course,
+          semester,
+          email,
+          phoneNumber: formattedNumber
+        }));
+      }
+
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
       setConfirmationResult(confirmation);
     } catch (err: any) {
@@ -129,6 +143,17 @@ const Auth: React.FC = () => {
     };
 
     try {
+      // Store registration info in session storage to be picked up after verification
+      if (studentAction === 'register') {
+        sessionStorage.setItem('pendingRegistration', JSON.stringify({
+          fullName,
+          course,
+          semester,
+          email,
+          phoneNumber
+        }));
+      }
+
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
       setSuccessMessage('Link de acesso enviado! Verifique sua caixa de entrada.');
@@ -273,128 +298,202 @@ const Auth: React.FC = () => {
               {/* Student Action Toggle */}
               <div className="flex justify-center gap-6 mb-2">
                 <button 
-                  onClick={() => setStudentAction('login')}
+                  onClick={() => { setStudentAction('login'); setError(null); }}
                   className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
                 >
                   Login
                 </button>
                 <button 
-                  onClick={() => setStudentAction('register')}
+                  onClick={() => { setStudentAction('register'); setError(null); }}
                   className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
                 >
                   Cadastrar
                 </button>
               </div>
 
-              {/* Student Method Toggle */}
-              <div className="flex justify-center gap-6 mb-2">
-                <button 
-                  onClick={() => { setStudentMethod('phone'); setConfirmationResult(null); }}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'phone' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Telefone
-                </button>
-                <button 
-                  onClick={() => setStudentMethod('email_link')}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'email_link' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  E-mail
-                </button>
-              </div>
-
-              {studentMethod === 'phone' ? (
-                !confirmationResult ? (
-                  <form onSubmit={handlePhoneLogin} className="space-y-4">
+              {studentAction === 'register' ? (
+                /* Student Registration Form */
+                <form onSubmit={(e) => { e.preventDefault(); studentMethod === 'phone' ? handlePhoneLogin(e) : handleEmailLinkLogin(e); }} className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Nome Completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="relative">
+                        <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                          type="text"
+                          placeholder="Curso"
+                          value={course}
+                          onChange={(e) => setCourse(e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                          required
+                        />
+                      </div>
+                      <div className="relative">
+                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                          type="text"
+                          placeholder="Semestre"
+                          value={semester}
+                          onChange={(e) => setSemester(e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <input
+                        type="email"
+                        placeholder="E-mail"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        required
+                      />
+                    </div>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                       <input
                         type="tel"
-                        placeholder="+55 (11) 99999-9999"
+                        placeholder="Telefone (ex: 48 99176-4001)"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
                         required
                       />
                     </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {loading ? 'Enviando...' : (studentAction === 'login' ? 'Receber Código SMS' : 'Solicitar Acesso por SMS')}
-                      <ArrowRight size={18} />
-                    </button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyCode} className="space-y-4">
-                    <div className="relative">
-                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="text"
-                        placeholder="Código de 6 dígitos"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
-                    >
-                      {loading ? 'Verificando...' : 'Confirmar Código'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmationResult(null)}
-                      className="w-full text-gray-500 text-xs hover:text-white transition-colors"
-                    >
-                      Voltar
-                    </button>
-                  </form>
-                )
-              ) : (
-                <form onSubmit={handleEmailLinkLogin} className="space-y-4">
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                    <input
-                      type="email"
-                      placeholder="Seu e-mail cadastrado"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                      required
-                    />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {loading ? 'Enviando...' : (studentAction === 'login' ? 'Enviar Link de Acesso' : 'Solicitar Acesso por E-mail')}
-                    <Send size={18} />
-                  </button>
+
+                  <div className="flex flex-col gap-3 pt-2">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest text-center mb-1">Como deseja receber seu acesso?</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={(e) => { setStudentMethod('phone'); handlePhoneLogin(e); }}
+                        disabled={loading}
+                        className="bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+                      >
+                        <Phone size={16} /> SMS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { setStudentMethod('email_link'); handleEmailLinkLogin(e); }}
+                        disabled={loading}
+                        className="bg-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+                      >
+                        <Mail size={16} /> E-mail
+                      </button>
+                    </div>
+                  </div>
                 </form>
+              ) : (
+                /* Student Login Form */
+                <div className="space-y-6">
+                  {/* Student Method Toggle */}
+                  <div className="flex justify-center gap-6 mb-2">
+                    <button 
+                      onClick={() => { setStudentMethod('phone'); setConfirmationResult(null); }}
+                      className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'phone' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                    >
+                      Telefone
+                    </button>
+                    <button 
+                      onClick={() => setStudentMethod('email_link')}
+                      className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'email_link' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                    >
+                      E-mail
+                    </button>
+                  </div>
+
+                  {studentMethod === 'phone' ? (
+                    !confirmationResult ? (
+                      <form onSubmit={handlePhoneLogin} className="space-y-4">
+                        <div className="relative">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <input
+                            type="tel"
+                            placeholder="+55 (11) 99999-9999"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                          {loading ? 'Enviando...' : 'Receber Código SMS'}
+                          <ArrowRight size={18} />
+                        </button>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleVerifyCode} className="space-y-4">
+                        <div className="relative">
+                          <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <input
+                            type="text"
+                            placeholder="Código de 6 dígitos"
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
+                        >
+                          {loading ? 'Verificando...' : 'Confirmar Código'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmationResult(null)}
+                          className="w-full text-gray-500 text-xs hover:text-white transition-colors"
+                        >
+                          Voltar
+                        </button>
+                      </form>
+                    )
+                  ) : (
+                    <form onSubmit={handleEmailLinkLogin} className="space-y-4">
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                          type="email"
+                          placeholder="Seu e-mail cadastrado"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {loading ? 'Enviando...' : 'Enviar Link de Acesso'}
+                        <Send size={18} />
+                      </button>
+                    </form>
+                  )}
+                </div>
               )}
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/5"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase">
-                  <span className="bg-zinc-900 px-2 text-gray-500">Ou continue com</span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
-              >
-                <UserCircle size={20} />
-                Google
-              </button>
+              {/* Google login removed for students to force registration path */}
             </div>
           )}
         </div>

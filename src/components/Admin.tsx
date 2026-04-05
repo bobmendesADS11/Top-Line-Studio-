@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { 
   Users, 
   Book, 
@@ -60,6 +60,14 @@ const Admin: React.FC = () => {
       } catch (error) {
         console.error("Error deleting document:", error);
       }
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'users', id), { role: 'student' });
+    } catch (error) {
+      console.error("Error approving student:", error);
     }
   };
 
@@ -158,6 +166,12 @@ const Admin: React.FC = () => {
               <tr className="border-b border-white/5 bg-white/5">
                 <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500">Item</th>
                 <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500">Status / Info</th>
+                {activeTab === 'students' && (
+                  <>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500">Curso</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500">Semestre</th>
+                  </>
+                )}
                 <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500">Data</th>
                 <th className="p-6 text-xs font-bold uppercase tracking-widest text-gray-500 text-right">Ações</th>
               </tr>
@@ -249,15 +263,33 @@ const Admin: React.FC = () => {
                     </div>
                   </td>
                   <td className="p-6">
-                    <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                      student.role === 'admin' ? 'bg-brand-gold/10 text-brand-gold' : 
+                      student.role === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : 
+                      'bg-green-500/10 text-green-500'
+                    }`}>
                       {student.role}
                     </span>
+                  </td>
+                  <td className="p-6 text-sm text-gray-400">
+                    {student.course || '-'}
+                  </td>
+                  <td className="p-6 text-sm text-gray-400">
+                    {student.semester || '-'}
                   </td>
                   <td className="p-6 text-sm text-gray-400">
                     {student.createdAt?.toDate().toLocaleDateString()}
                   </td>
                   <td className="p-6 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {student.role === 'pending' && (
+                        <button 
+                          onClick={() => handleApprove(student.id)}
+                          className="bg-brand-gold text-black px-3 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-brand-gold/90 transition-all"
+                        >
+                          Aprovar
+                        </button>
+                      )}
                       <button className="p-2 hover:bg-white/10 rounded-lg transition-colors"><MoreVertical size={18} /></button>
                     </div>
                   </td>

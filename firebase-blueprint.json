@@ -9,8 +9,10 @@
         "email": { "type": "string", "format": "email" },
         "displayName": { "type": "string" },
         "photoURL": { "type": "string" },
-        "role": { "type": "string", "enum": ["admin", "student"] },
+        "role": { "type": "string", "enum": ["admin", "student", "pending"] },
         "phoneNumber": { "type": "string" },
+        "course": { "type": "string" },
+        "semester": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role"]
