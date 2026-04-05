@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import Landing from './components/Landing';
 import Auth from './components/Auth';
+import Onboarding from './components/Onboarding';
 import Gallery from './components/Gallery';
 import Editor from './components/Editor';
+import AdminDashboard from './components/AdminDashboard';
 
-type AppState = 'landing' | 'auth' | 'gallery' | 'editor';
+type AppState = 'landing' | 'auth' | 'onboarding' | 'gallery' | 'editor' | 'admin';
 
 interface Photo {
   id: string;
@@ -27,6 +29,16 @@ export default function App() {
 
   const handleLogin = (userData: any) => {
     setUser(userData);
+    // Check if user is admin (using phone as identifier for demo, 
+    // or you can check email if using Google Auth)
+    if (userData.phone === '+5548999999999' || userData.email === 'GabrielMestrelli@gmail.com') {
+      setState('admin');
+    } else {
+      setState('onboarding');
+    }
+  };
+
+  const handleOnboardingComplete = () => {
     setState('gallery');
   };
 
@@ -39,12 +51,16 @@ export default function App() {
     <div className="min-h-screen bg-brand-black">
       {state === 'landing' && <Landing onStart={handleStart} />}
       {state === 'auth' && <Auth onLogin={handleLogin} />}
+      {state === 'onboarding' && <Onboarding onComplete={handleOnboardingComplete} />}
       {state === 'gallery' && <Gallery onSelect={handlePhotoSelection} />}
       {state === 'editor' && (
         <Editor 
           selectedPhotos={selectedPhotos} 
           onBack={() => setState('gallery')} 
         />
+      )}
+      {state === 'admin' && (
+        <AdminDashboard onBack={() => setState('landing')} />
       )}
     </div>
   );

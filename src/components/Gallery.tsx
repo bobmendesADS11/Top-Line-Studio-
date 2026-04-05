@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Image as ImageIcon, Check, Search, Filter, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart } from 'lucide-react';
 import { createClient } from '../utils/supabase/client';
 const supabase = createClient();
 
@@ -17,6 +17,7 @@ interface GalleryProps {
 export default function Gallery({ onSelect }: GalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const PHOTOS_PER_PAGE = 24;
@@ -64,6 +65,17 @@ export default function Gallery({ onSelect }: GalleryProps) {
       newSelected.add(id);
     }
     setSelectedIds(newSelected);
+  };
+
+  const toggleFavorite = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const newFavorites = new Set(favoriteIds);
+    if (newFavorites.has(id)) {
+      newFavorites.delete(id);
+    } else {
+      newFavorites.add(id);
+    }
+    setFavoriteIds(newFavorites);
   };
 
   const handleContinue = () => {
@@ -135,6 +147,15 @@ export default function Gallery({ onSelect }: GalleryProps) {
               }`}>
                 <Check className="w-4 h-4 text-brand-navy" />
               </div>
+
+              <button 
+                onClick={(e) => toggleFavorite(e, photo.id)}
+                className={`absolute bottom-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all ${
+                  favoriteIds.has(photo.id) ? 'bg-red-500 text-white scale-110' : 'bg-black/20 text-white/70 hover:text-white'
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${favoriteIds.has(photo.id) ? 'fill-current' : ''}`} />
+              </button>
             </motion.div>
           ))}
         </div>
