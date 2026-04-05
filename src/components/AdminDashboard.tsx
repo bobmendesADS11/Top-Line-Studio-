@@ -18,6 +18,8 @@ interface Album {
   user_id: string;
   profiles?: {
     phone: string;
+    course?: string;
+    class_year?: string;
   };
 }
 
@@ -42,7 +44,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         .from('albums')
         .select(`
           *,
-          profiles:user_id (phone)
+          profiles:user_id (phone, course, class_year)
         `)
         .order('created_at', { ascending: false });
 
@@ -197,6 +199,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
               <thead>
                 <tr className="bg-white/5 text-gray-500 text-xs uppercase tracking-widest">
                   <th className="px-6 py-4 font-bold">Formando</th>
+                  <th className="px-6 py-4 font-bold">Curso / Turma</th>
                   <th className="px-6 py-4 font-bold">Álbum</th>
                   <th className="px-6 py-4 font-bold">Páginas</th>
                   <th className="px-6 py-4 font-bold">Status</th>
@@ -225,6 +228,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                           {album.profiles?.phone?.slice(-2) || '??'}
                         </div>
                         <p className="font-bold">{album.profiles?.phone || 'Sem Telefone'}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <p className="text-sm font-bold text-brand-gold">{album.profiles?.course || 'Não informado'}</p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-widest">{album.profiles?.class_year || 'Sem Turma'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">

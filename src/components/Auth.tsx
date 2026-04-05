@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Phone, ArrowRight, Loader2 } from 'lucide-react';
+import { Phone, ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
 import { createClient } from '../utils/supabase/client';
 
 const supabase = createClient();
@@ -10,29 +10,52 @@ interface AuthProps {
 }
 
 export default function Auth({ onLogin }: AuthProps) {
+  const [method, setMethod] = useState<'phone' | 'email'>('phone');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`,
-      });
+      if (method === 'phone') {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: phone.startsWith('+') ? phone : `+55${phone.replace(/\D/g, '')}`,
+        });
 
-      if (error) throw error;
-      setStep('otp');
+        if (error) throw error;
+        setStep('otp');
+      } else {
+        // Email login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          // Try signup if login fails (for demo purposes)
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          if (signUpError) throw signUpError;
+          if (signUpData.user) onLogin(signUpData.user);
+        } else {
+          if (data.user) onLogin(data.user);
+        }
+      }
     } catch (err: any) {
-      console.error('Erro ao enviar OTP:', err);
-      setError(err.message || 'Erro ao enviar código.');
-      // Fallback para demo se não houver provedor de SMS configurado
-      if (err.message?.includes('SMS provider')) {
+      console.error('Erro na autenticação:', err);
+      setError(err.message || 'Erro ao processar.');
+      // Fallback para demo
+      if (method === 'phone' && err.message?.includes('SMS provider')) {
         setStep('otp');
       }
     } finally {
@@ -75,31 +98,78 @@ export default function Auth({ onLogin }: AuthProps) {
         <p className="text-gray-400 text-center mb-8">Acesse seu estúdio de formaturas</p>
 
         <AnimatePresence mode="wait">
+          <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/10">
+            <button 
+              onClick={() => setMethod('phone')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${method === 'phone' ? 'bg-brand-gold text-brand-navy shadow-lg' : 'text-gray-400 hover:text-white'}`}
+            >
+              Telefone
+            </button>
+            <button 
+              onClick={() => setMethod('email')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${method === 'email' ? 'bg-brand-gold text-brand-navy shadow-lg' : 'text-gray-400 hover:text-white'}`}
+            >
+              E-mail
+            </button>
+          </div>
+
           {step === 'phone' ? (
             <motion.form 
               key="phone"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              onSubmit={handleSendOtp}
+              onSubmit={handleAuth}
               className="space-y-6"
             >
-              <div className="relative">
-                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gold w-5 h-5" />
-                <input 
-                  type="tel" 
-                  placeholder="(00) 00000-0000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-hidden focus:border-brand-gold transition-colors"
-                  required
-                />
-              </div>
+              {method === 'phone' ? (
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gold w-5 h-5" />
+                  <input 
+                    type="tel" 
+                    placeholder="(00) 00000-0000"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-hidden focus:border-brand-gold transition-colors"
+                    required
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gold w-5 h-5" />
+                    <input 
+                      type="email" 
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-hidden focus:border-brand-gold transition-colors"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-gold w-5 h-5" />
+                    <input 
+                      type="password" 
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:outline-hidden focus:border-brand-gold transition-colors"
+                      required
+                    />
+                  </div>
+                </>
+              )}
               <button 
                 disabled={loading}
                 className="gold-button w-full flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Receber Código <ArrowRight className="w-5 h-5" /></>}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                  <>
+                    {method === 'phone' ? 'Receber Código' : 'Entrar no Studio'} 
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
             </motion.form>
           ) : (

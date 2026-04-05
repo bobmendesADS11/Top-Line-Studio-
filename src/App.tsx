@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Landing from './components/Landing';
 import Auth from './components/Auth';
 import Onboarding from './components/Onboarding';
+import ProfileSetup from './components/ProfileSetup';
 import Gallery from './components/Gallery';
 import Editor from './components/Editor';
 import AdminDashboard from './components/AdminDashboard';
+import PublicViewer from './components/PublicViewer';
 
-type AppState = 'landing' | 'auth' | 'onboarding' | 'gallery' | 'editor' | 'admin';
+type AppState = 'landing' | 'auth' | 'onboarding' | 'profile_setup' | 'gallery' | 'editor' | 'admin' | 'public_view';
 
 interface Photo {
   id: string;
@@ -18,6 +20,16 @@ export default function App() {
   const [state, setState] = useState<AppState>('landing');
   const [user, setUser] = useState<any>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([]);
+  const [sharedAlbumId, setSharedAlbumId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const albumId = params.get('albumId');
+    if (albumId) {
+      setSharedAlbumId(albumId);
+      setState('public_view');
+    }
+  }, []);
 
   const handleStart = () => {
     if (user) {
@@ -39,6 +51,10 @@ export default function App() {
   };
 
   const handleOnboardingComplete = () => {
+    setState('profile_setup');
+  };
+
+  const handleProfileComplete = () => {
     setState('gallery');
   };
 
@@ -52,6 +68,9 @@ export default function App() {
       {state === 'landing' && <Landing onStart={handleStart} />}
       {state === 'auth' && <Auth onLogin={handleLogin} />}
       {state === 'onboarding' && <Onboarding onComplete={handleOnboardingComplete} />}
+      {state === 'profile_setup' && user && (
+        <ProfileSetup userId={user.id} onComplete={handleProfileComplete} />
+      )}
       {state === 'gallery' && <Gallery onSelect={handlePhotoSelection} />}
       {state === 'editor' && (
         <Editor 
@@ -61,6 +80,9 @@ export default function App() {
       )}
       {state === 'admin' && (
         <AdminDashboard onBack={() => setState('landing')} />
+      )}
+      {state === 'public_view' && sharedAlbumId && (
+        <PublicViewer albumId={sharedAlbumId} />
       )}
     </div>
   );
