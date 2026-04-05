@@ -50,17 +50,55 @@ function AlbumShowcase() {
       title: "Design Inteligente",
       icon: Sparkles,
       content: (
-        <div className="flex items-center justify-center h-full p-12">
-          <div className="relative w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-2xl border border-brand-gold/30 shadow-2xl shadow-brand-gold/10 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent" />
-            <div className="p-8 h-full flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="h-4 w-1/2 bg-brand-gold/20 rounded-full animate-pulse" />
-                <div className="h-4 w-3/4 bg-white/10 rounded-full" />
+        <div className="flex items-center justify-center h-full p-8">
+          <div className="relative w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-2xl border border-brand-gold/30 shadow-2xl shadow-brand-gold/10 overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/10 to-transparent opacity-50" />
+            <div className="p-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <div className="space-y-2 w-1/2">
+                  <motion.div 
+                    animate={{ width: ['40%', '60%', '40%'] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="h-2 bg-brand-gold/30 rounded-full" 
+                  />
+                  <div className="h-2 w-full bg-white/5 rounded-full" />
+                </div>
+                <div className="w-8 h-8 rounded-full bg-brand-gold/10 flex items-center justify-center">
+                  <Sparkles size={14} className="text-brand-gold" />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-square bg-zinc-800 rounded-lg border border-white/5" />
-                <div className="aspect-square bg-zinc-800 rounded-lg border border-white/5" />
+              
+              <div className="grid grid-cols-2 gap-4 flex-1 overflow-hidden">
+                <motion.div 
+                  animate={{ y: [0, -20, 0] }}
+                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                  className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative h-[120%]"
+                >
+                  <img src="https://picsum.photos/seed/design1/400/600" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                </motion.div>
+                <div className="grid grid-rows-2 gap-4 h-full">
+                  <motion.div 
+                    animate={{ y: [-10, 0, -10] }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative"
+                  >
+                    <img src="https://picsum.photos/seed/design2/400/400" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
+                  </motion.div>
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                    className="rounded-xl bg-zinc-800 border border-white/5 overflow-hidden relative"
+                  >
+                    <img src="https://picsum.photos/seed/design3/400/400" className="w-full h-full object-cover opacity-60" referrerPolicy="no-referrer" />
+                  </motion.div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-center">
+                <div className="px-4 py-1.5 rounded-full bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest">
+                  Layout Gerado por IA
+                </div>
               </div>
             </div>
           </div>
@@ -71,18 +109,39 @@ function AlbumShowcase() {
       title: "Visualização 3D",
       icon: BookOpen,
       content: (
-        <div className="flex items-center justify-center h-full p-12">
+        <div className="flex items-center justify-center h-full p-12 perspective-1000">
           <motion.div 
+            initial={{ rotateY: -30, rotateX: 10 }}
             animate={{ 
-              rotateY: [0, 15, -15, 0],
-              rotateX: [0, 5, -5, 0]
+              rotateY: [-30, 0, -30],
+              rotateX: [10, 5, 10],
+              z: [0, 50, 0]
             }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-full max-w-md aspect-[16/10] bg-zinc-900 rounded-lg border-l-8 border-brand-gold shadow-2xl relative preserve-3d"
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="w-full max-w-md aspect-[16/10] bg-zinc-900 rounded-r-xl border-l-[12px] border-brand-gold shadow-[20px_20px_60px_rgba(0,0,0,0.8)] relative preserve-3d group"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-brand-gold/20 topline-black text-4xl">Top Line</div>
+            {/* Cover Texture */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/20" />
+            
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-12">
+              <motion.div
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="mb-4"
+              >
+                <Sparkles className="text-brand-gold w-8 h-8" />
+              </motion.div>
+              <h3 className="topline-black text-5xl text-white tracking-widest mb-2">TOP LINE</h3>
+              <div className="h-[1px] w-24 bg-brand-gold/50 mb-4" />
+              <p className="text-[10px] uppercase tracking-[0.5em] text-brand-gold font-bold">Black Edition</p>
+            </div>
+
+            {/* Page Effect */}
+            <div className="absolute top-0 right-0 bottom-0 w-1 bg-white/10" />
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[8px] uppercase tracking-widest text-white/40">Renderizando 3D</span>
             </div>
           </motion.div>
         </div>

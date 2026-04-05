@@ -12,6 +12,7 @@ import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send } fr
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
+  const [adminAction, setAdminAction] = useState<'login' | 'register'>('login');
   const [studentMethod, setStudentMethod] = useState<'phone' | 'email_link'>('phone');
   
   // Form states
@@ -33,15 +34,31 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Admin Login (Email/Password)
-  const handleAdminLogin = async (e: React.FormEvent) => {
+  // Admin Login/Register (Email/Password)
+  const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (adminAction === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        // Registration
+        if (email.toLowerCase() !== 'gabrielmestrelli@gmail.com') {
+          throw new Error('Apenas o e-mail mestre pode ser registrado como administrador.');
+        }
+        await createUserWithEmailAndPassword(auth, email, password);
+        setSuccessMessage('Conta de administrador criada com sucesso!');
+        setAdminAction('login');
+      }
     } catch (err: any) {
-      setError('E-mail ou senha incorretos para o administrador.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Este e-mail já está cadastrado. Tente fazer login.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('A senha deve ter pelo menos 6 caracteres.');
+      } else {
+        setError(err.message || 'Erro na autenticação do administrador.');
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -163,38 +180,55 @@ const Auth: React.FC = () => {
         <div className="space-y-6">
           {authMode === 'admin' ? (
             /* Admin Login Form */
-            <form onSubmit={handleAdminLogin} className="space-y-4">
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                <input
-                  type="email"
-                  placeholder="E-mail do Admin"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                  required
-                />
+            <div className="space-y-6">
+              <div className="flex justify-center gap-6 mb-2">
+                <button 
+                  onClick={() => setAdminAction('login')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => setAdminAction('register')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                >
+                  Criar Senha
+                </button>
               </div>
-              <div className="relative">
-                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                <input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? 'Acessando...' : 'Entrar no Painel'}
-                <ArrowRight size={18} />
-              </button>
-            </form>
+
+              <form onSubmit={handleAdminAuth} className="space-y-4">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <input
+                    type="email"
+                    placeholder="E-mail do Admin"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <input
+                    type="password"
+                    placeholder="Senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? 'Aguarde...' : (adminAction === 'login' ? 'Entrar no Painel' : 'Definir Senha Admin')}
+                  <ArrowRight size={18} />
+                </button>
+              </form>
+            </div>
           ) : (
             /* Student Login Options */
             <div className="space-y-6">

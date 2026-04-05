@@ -42,7 +42,8 @@ const App: React.FC = () => {
             setRole(userSnap.data().role);
           } else {
             // Create new student profile if it doesn't exist
-            const newRole = currentUser.email === 'GabrielMestrelli@gmail.com' ? 'admin' : 'student';
+            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com';
+            const newRole = isAdminEmail ? 'admin' : 'student';
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email,
