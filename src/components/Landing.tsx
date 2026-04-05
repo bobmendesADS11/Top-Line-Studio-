@@ -3,6 +3,59 @@ import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, Ch
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+function ParticleBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(50)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ 
+            opacity: 0, 
+            scale: Math.random() * 0.5 + 0.5,
+            x: Math.random() * 100 + "%",
+            y: "110%"
+          }}
+          animate={{ 
+            opacity: [0, 0.8, 0],
+            y: "-10%",
+            x: (Math.random() * 100 - 10) + "%"
+          }}
+          transition={{ 
+            duration: Math.random() * 15 + 10, 
+            repeat: Infinity,
+            delay: Math.random() * 20,
+            ease: "linear"
+          }}
+          className="absolute w-1 h-1 bg-brand-gold rounded-full blur-[1px] shadow-[0_0_10px_#D4AF37]"
+        />
+      ))}
+      {/* Bokeh circles */}
+      {[...Array(15)].map((_, i) => (
+        <motion.div
+          key={`bokeh-${i}`}
+          initial={{ 
+            opacity: 0, 
+            scale: Math.random() * 2 + 1,
+            x: Math.random() * 100 + "%",
+            y: Math.random() * 100 + "%"
+          }}
+          animate={{ 
+            opacity: [0, 0.15, 0],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{ 
+            duration: Math.random() * 10 + 10, 
+            repeat: Infinity,
+            delay: Math.random() * 5,
+            ease: "easeInOut"
+          }}
+          className="absolute w-32 h-32 bg-brand-gold/10 rounded-full blur-[60px]"
+        />
+      ))}
+    </div>
+  );
+}
+
 function Logo() {
   return (
     <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -407,6 +460,8 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
+        <ParticleBackground />
+        
         {/* Background Sparkles Overlay */}
         <div className="absolute inset-0 opacity-30 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-gold/20 blur-[150px] rounded-full" />
@@ -423,22 +478,44 @@ export default function Landing() {
           >
             <div className="flex items-center gap-4 mb-12">
               <Sparkles className="w-5 h-5 text-brand-gold animate-pulse" />
-              <div className="px-8 py-2.5 rounded-full border border-brand-gold/40 bg-brand-gold/5 text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">
-                20 Anos de Excelência em Formaturas
+              <div className="relative px-10 py-3 rounded-full border border-brand-gold/40 bg-brand-gold/5 text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em] flex items-center gap-3">
+                <div className="absolute -top-2 -left-2 w-4 h-4 bg-brand-gold rounded-full flex items-center justify-center text-[6px] text-black border border-black">
+                  <Award size={8} />
+                </div>
+                <span>20 Anos de Excelência em Formaturas</span>
+                <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-brand-gold rounded-full flex items-center justify-center text-[6px] text-black border border-black">
+                  <Award size={8} />
+                </div>
               </div>
               <Sparkles className="w-5 h-5 text-brand-gold animate-pulse" />
             </div>
             
-            <h1 className="flex flex-col items-center mb-12">
-              <span className="topline-black text-6xl md:text-8xl mb-4">Top Line</span>
-              <div className="flex items-center gap-4">
-                <div className="h-[2px] w-12 md:w-20 bg-brand-gold/50" />
-                <span className="text-brand-gold text-2xl md:text-4xl font-serif italic tracking-[0.5em] uppercase">Black</span>
-                <div className="h-[2px] w-12 md:w-20 bg-brand-gold/50" />
+            <h1 className="flex flex-col items-center mb-8">
+              <span className="topline-black text-7xl md:text-[10rem] mb-2 font-serif leading-none tracking-[0.2em]">Top Line</span>
+              <div className="flex items-center gap-8 w-full">
+                <div className="h-[1px] flex-1 bg-brand-gold/40" />
+                <span className="text-brand-gold text-4xl md:text-6xl font-serif italic tracking-[0.8em] uppercase">Black</span>
+                <div className="h-[1px] flex-1 bg-brand-gold/40" />
               </div>
             </h1>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 1 }}
+              className="mb-12 relative"
+            >
+              <span className="font-script text-5xl md:text-7xl text-brand-gold opacity-90 drop-shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                Sonhe, acredite, realize!
+              </span>
+              <motion.div 
+                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute -inset-4 bg-brand-gold/10 blur-2xl -z-10 rounded-full"
+              />
+            </motion.div>
             
-            <p className="text-gray-400 text-xl md:text-2xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
+            <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
               A experiência definitiva em formaturas premium. 
               Transformamos sonhos em memórias eternas com exclusividade e sofisticação.
             </p>
