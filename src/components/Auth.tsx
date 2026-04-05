@@ -94,8 +94,11 @@ export default function Auth({ onLogin }: AuthProps) {
         animate={{ opacity: 1, scale: 1 }}
         className="glass p-8 rounded-3xl w-full max-w-md"
       >
-        <h2 className="text-3xl font-serif mb-2 text-center">Boas-vindas</h2>
-        <p className="text-gray-400 text-center mb-8">Acesse seu estúdio de formaturas</p>
+        <div className="text-center mb-8">
+          <h2 className="topline-black text-xl mb-1">Top Line</h2>
+          <h3 className="gold-gradient italic text-3xl font-serif">Black Studio</h3>
+          <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest">Acesse seu estúdio exclusivo</p>
+        </div>
 
         <AnimatePresence mode="wait">
           <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/10">

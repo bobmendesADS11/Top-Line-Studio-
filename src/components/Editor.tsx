@@ -157,9 +157,9 @@ export default function Editor({ selectedPhotos, onBack }: EditorProps) {
           </button>
           <div className="h-8 w-px bg-white/10 mx-2" />
           <div>
-            <h1 className="text-lg font-serif tracking-tight">Editor <span className="gold-gradient">Premium</span></h1>
+            <h1 className="topline-black text-sm tracking-[0.3em]">Top Line <span className="gold-gradient italic lowercase tracking-normal text-lg">Black</span></h1>
             <div className="flex items-center gap-2">
-              <p className="text-[10px] text-brand-gold uppercase tracking-widest font-bold">Top Line Studio</p>
+              <p className="text-[10px] text-brand-gold uppercase tracking-widest font-bold">20 Anos de Experiência</p>
               <span className="w-1 h-1 rounded-full bg-brand-gold/40" />
               <p className="text-[10px] text-gray-500 uppercase tracking-widest">Projeto: Formatura 2026</p>
             </div>

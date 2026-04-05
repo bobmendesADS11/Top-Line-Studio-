@@ -25,6 +25,10 @@
   @apply bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-transparent bg-clip-text;
 }
 
+.topline-black {
+  @apply font-serif tracking-[0.2em] uppercase text-white;
+}
+
 .gold-button {
-  @apply bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-brand-navy font-bold py-3 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg;
+  @apply bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-brand-navy font-bold py-3 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.3)];
 }

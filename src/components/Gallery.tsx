@@ -97,10 +97,10 @@ export default function Gallery({ onSelect }: GalleryProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-4xl font-serif">Sua Galeria</h2>
-              <span className="bg-brand-gold/20 text-brand-gold text-xs px-2 py-1 rounded-full font-bold border border-brand-gold/30">20 ANOS</span>
+              <h2 className="topline-black text-2xl">Top Line <span className="gold-gradient italic lowercase tracking-normal">Black</span></h2>
+              <span className="bg-brand-gold/20 text-brand-gold text-[10px] px-2 py-1 rounded-full font-bold border border-brand-gold/30">20 ANOS</span>
             </div>
-            <p className="text-gray-400">Selecione as fotos que farão parte do seu álbum</p>
+            <p className="text-gray-500 text-sm">Selecione as fotos que farão parte do seu álbum exclusivo</p>
           </div>
           
           <div className="flex items-center gap-4">
