@@ -27,7 +27,7 @@ export default function App() {
     // Check for Supabase config
     const url = import.meta.env.VITE_SUPABASE_URL;
     const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (!url || !key || url.includes('placeholder')) {
+    if (!url || !key || url.includes('placeholder') || url.includes('xyz.supabase.co')) {
       setConfigError(true);
     }
 
