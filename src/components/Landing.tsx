@@ -5,91 +5,122 @@ import { useNavigate } from 'react-router-dom';
 
 function ParticleBackground() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Dark Gradient Overlay (Black to Deep Brown) */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,25,10,0.2)_0%,rgba(0,0,0,1)_100%)]" />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#050301]">
+      {/* Deep Dark Gradient Overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,25,10,0.3)_0%,rgba(0,0,0,1)_100%)]" />
       
-      {/* Soft Warm Light Beam on the Right */}
-      <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_85%_35%,rgba(212,175,55,0.07)_0%,transparent_50%)] blur-[80px]" />
+      {/* Strong Warm Light Rays from the Right */}
+      <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_90%_40%,rgba(212,175,55,0.15)_0%,transparent_60%)] blur-[100px]" />
+      <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[140%] bg-[conic-gradient(from_200deg_at_100%_50%,transparent_0deg,rgba(212,175,55,0.05)_10deg,transparent_20deg)] blur-[40px] opacity-50" />
 
-      {/* Twinkling Gold Dust (Depth of Field) */}
-      {[...Array(80)].map((_, i) => {
-        const size = Math.random() * 2.5 + 0.5;
-        const blur = size > 1.8 ? 'blur-[1.5px]' : size > 1 ? 'blur-[0.5px]' : 'blur-none';
-        const opacity = Math.random() * 0.4 + 0.2;
+      {/* High Density Flowing Curved Wave of Particles */}
+      {[...Array(120)].map((_, i) => {
+        const size = Math.random() * 4 + 1.5;
+        const delay = i * 0.08;
+        const duration = 10 + Math.random() * 5;
+        const blur = size > 3.5 ? 'blur-[3px]' : size > 2.5 ? 'blur-[1px]' : 'blur-none';
+        const hasSparkle = Math.random() > 0.85;
+        const glowIntensity = size > 2.5 ? 'shadow-[0_0_15px_rgba(212,175,55,0.8)]' : 'shadow-[0_0_8px_rgba(212,175,55,0.5)]';
         
         return (
           <motion.div
-            key={`dust-${i}`}
+            key={`wave-particle-${i}`}
             initial={{ 
               opacity: 0,
-              scale: Math.random() * 0.5 + 0.5,
+              x: "-10%",
+              y: (40 + Math.sin(i * 0.2) * 15) + "%",
+              scale: size / 4
+            }}
+            animate={{ 
+              opacity: [0, 1, 1, 0],
+              x: "110%",
+              y: (40 + Math.sin((i + 25) * 0.2) * 25) + "%",
+              scale: [size / 4, size / 2, size / 4]
+            }}
+            transition={{ 
+              duration: duration,
+              repeat: Infinity,
+              delay: delay,
+              ease: "linear"
+            }}
+            className={`absolute rounded-full bg-brand-gold ${glowIntensity} ${blur}`}
+            style={{ width: size, height: size }}
+          >
+            {hasSparkle && (
+              <motion.div
+                animate={{ 
+                  opacity: [0, 1, 0],
+                  scale: [0.5, 2, 0.5],
+                  rotate: [0, 90, 180]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  delay: Math.random() * 2
+                }}
+                className="absolute inset-[-8px] flex items-center justify-center"
+              >
+                <div className="absolute w-[1.5px] h-full bg-white/90 blur-[1px]" />
+                <div className="absolute h-[1.5px] w-full bg-white/90 blur-[1px]" />
+              </motion.div>
+            )}
+          </motion.div>
+        );
+      })}
+
+      {/* Background Gold Dust (Bokeh) */}
+      {[...Array(50)].map((_, i) => {
+        const size = Math.random() * 8 + 3;
+        const opacity = Math.random() * 0.25 + 0.1;
+        
+        return (
+          <motion.div
+            key={`bokeh-${i}`}
+            initial={{ 
+              opacity: 0,
               x: Math.random() * 100 + "%",
               y: Math.random() * 100 + "%"
             }}
             animate={{ 
               opacity: [0, opacity, 0],
-              scale: [0.8, 1.2, 0.8],
-              y: [null, (Math.random() * -30 - 20) + "px"]
+              scale: [1, 1.3, 1],
+              y: [null, (Math.random() * -60 - 30) + "px"]
             }}
             transition={{ 
-              duration: Math.random() * 6 + 6, 
+              duration: Math.random() * 12 + 12, 
               repeat: Infinity,
               delay: Math.random() * 10,
             }}
-            className={`absolute rounded-full bg-brand-gold/60 ${blur}`}
+            className="absolute rounded-full bg-brand-gold/40 blur-[5px]"
             style={{ width: size, height: size }}
           />
         );
       })}
 
-      {/* Flowing Curved Wave of Particles */}
-      {[...Array(40)].map((_, i) => (
+      {/* Sharp Sparkles Scattered */}
+      {[...Array(15)].map((_, i) => (
         <motion.div
-          key={`wave-particle-${i}`}
+          key={`sparkle-${i}`}
           initial={{ 
             opacity: 0,
-            x: "-10%",
-            y: (45 + Math.sin(i * 0.3) * 10) + "%",
+            x: Math.random() * 100 + "%",
+            y: Math.random() * 100 + "%",
+            scale: 0
           }}
           animate={{ 
-            opacity: [0, 0.5, 0],
-            x: "110%",
-            y: (45 + Math.sin((i + 15) * 0.3) * 15) + "%",
+            opacity: [0, 1, 0],
+            scale: [0, 1.2, 0],
+            rotate: [0, 180]
           }}
           transition={{ 
-            duration: 10 + Math.random() * 5,
+            duration: Math.random() * 4 + 3, 
             repeat: Infinity,
-            delay: i * 0.2,
-            ease: "linear"
+            delay: Math.random() * 20,
           }}
-          className="absolute w-1 h-1 bg-brand-gold/40 rounded-full blur-[1px] shadow-[0_0_8px_rgba(212,175,55,0.3)]"
-        />
-      ))}
-
-      {/* Cinematic Shooting Stars / Sparkles */}
-      {[...Array(4)].map((_, i) => (
-        <motion.div
-          key={`shooting-star-${i}`}
-          initial={{ 
-            opacity: 0, 
-            x: "-20%",
-            y: Math.random() * 70 + "%",
-            rotate: 12
-          }}
-          animate={{ 
-            opacity: [0, 0.7, 0],
-            x: "120%",
-            y: (Math.random() * 70 + 15) + "%",
-          }}
-          transition={{ 
-            duration: 2.5 + Math.random(), 
-            repeat: Infinity,
-            delay: Math.random() * 30,
-            ease: "easeIn"
-          }}
-          className="absolute w-40 h-[1px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent blur-[1px]"
-        />
+          className="absolute"
+        >
+          <Sparkles className="text-brand-gold w-4 h-4 drop-shadow-[0_0_8px_rgba(212,175,55,1)]" />
+        </motion.div>
       ))}
     </div>
   );
