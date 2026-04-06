@@ -48,7 +48,6 @@ const Auth: React.FC = () => {
     
     try {
       let digits = phoneNumber.replace(/\D/g, '');
-      console.log("Admin Auth - Digits:", digits);
       const isMaster = digits === '48991764001' || digits === '5548991764001';
       
       // Normalize primary digits to include 55
@@ -59,7 +58,6 @@ const Auth: React.FC = () => {
       
       const primaryEmail = `${normalizedDigits}@admin.topline.com`;
       const secondaryEmail = `${normalizedDigits.startsWith('55') ? normalizedDigits.substring(2) : normalizedDigits}@admin.topline.com`;
-      console.log("Admin Auth - Trying emails:", primaryEmail, secondaryEmail);
 
       const tryLogin = async (email: string) => {
         try {
@@ -250,16 +248,16 @@ const Auth: React.FC = () => {
       {/* Back Button */}
       <button 
         onClick={() => window.location.href = '/'}
-        className="absolute top-8 left-8 text-gray-500 hover:text-white flex items-center gap-2 text-xs uppercase tracking-widest transition-colors group z-50"
+        className="absolute top-4 left-4 sm:top-8 sm:left-8 text-gray-500 hover:text-white flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest transition-colors group z-50 bg-black/20 backdrop-blur-md p-2 rounded-lg sm:bg-transparent sm:p-0"
       >
-        <ArrowRight className="rotate-180 w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Voltar ao Início
+        <ArrowRight className="rotate-180 w-3 h-3 sm:w-4 sm:h-4 group-hover:-translate-x-1 transition-transform" />
+        Voltar
       </button>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-zinc-900/50 border border-brand-gold/20 rounded-3xl p-8 backdrop-blur-xl shadow-2xl"
+        className="w-full max-w-md bg-zinc-900/50 border border-brand-gold/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl mt-12 sm:mt-0"
       >
         <div className="text-center mb-8 flex flex-col items-center">
           <div className="relative w-16 h-16 mb-4">
@@ -479,7 +477,7 @@ const Auth: React.FC = () => {
                         required
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="relative">
                         <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                         <input
