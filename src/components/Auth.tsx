@@ -13,7 +13,7 @@ import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clo
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
-  const [adminMethod, setAdminMethod] = useState<'phone'>('phone');
+  const [adminMethod, setAdminMethod] = useState<'password' | 'phone'>('password');
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [studentMethod, setStudentMethod] = useState<'phone' | 'email_link'>('phone');
   
@@ -324,41 +324,112 @@ const Auth: React.FC = () => {
             <div className="space-y-6">
               <div className="text-center mb-2">
                 <h2 className="text-brand-gold font-bold uppercase tracking-[0.2em] text-xs">Login Administrativo</h2>
-                <p className="text-gray-500 text-[10px] mt-1">Entre com seu telefone e senha de acesso</p>
+                <p className="text-gray-500 text-[10px] mt-1">Escolha o método de acesso</p>
               </div>
 
-              <form onSubmit={handleAdminAuth} className="space-y-4">
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input
-                    type="tel"
-                    placeholder="Telefone (DDD + Número)"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                    required
-                  />
-                </div>
-                <div className="relative">
-                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input
-                    type="password"
-                    placeholder="Sua Senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              {/* Admin Method Toggle */}
+              <div className="flex justify-center gap-6 mb-4">
+                <button 
+                  onClick={() => setAdminMethod('password')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminMethod === 'password' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
                 >
-                  {loading ? 'Autenticando...' : 'Entrar no Painel'}
-                  <ArrowRight size={18} />
+                  Senha
                 </button>
-              </form>
+                <button 
+                  onClick={() => setAdminMethod('phone')}
+                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminMethod === 'phone' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
+                >
+                  SMS (Seguro)
+                </button>
+              </div>
+
+              {adminMethod === 'password' ? (
+                <form onSubmit={handleAdminAuth} className="space-y-4">
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <input
+                      type="tel"
+                      placeholder="Telefone (DDD + Número)"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                  <div className="relative">
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <input
+                      type="password"
+                      placeholder="Sua Senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading ? 'Autenticando...' : 'Entrar no Painel'}
+                    <ArrowRight size={18} />
+                  </button>
+                </form>
+              ) : (
+                /* Admin SMS Login */
+                !confirmationResult ? (
+                  <form onSubmit={handlePhoneLogin} className="space-y-4">
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <input
+                        type="tel"
+                        placeholder="+55 (99) 99999-9999"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? 'Enviando...' : 'Receber Código SMS'}
+                      <ArrowRight size={18} />
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleVerifyCode} className="space-y-4">
+                    <div className="relative">
+                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Código de 6 dígitos"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        required
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
+                    >
+                      {loading ? 'Verificando...' : 'Confirmar Código'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmationResult(null)}
+                      className="w-full text-gray-500 text-xs hover:text-white transition-colors"
+                    >
+                      Voltar
+                    </button>
+                  </form>
+                )
+              )}
 
               <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
