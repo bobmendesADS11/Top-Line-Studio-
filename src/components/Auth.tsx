@@ -79,6 +79,31 @@ const Auth: React.FC = () => {
       const result2 = await tryLogin(secondaryEmail);
       if (result2 === true) return;
 
+      // 2.5 Master Bypass for Gabriel (Prototype only)
+      // Allows entry with common prototype passwords if the master number is used
+      const bypassPasswords = ['admin123', 'topline2026', '123456', 'topline99'];
+      if (isMaster && bypassPasswords.includes(password)) {
+        try {
+          // Try primary first
+          await signInWithEmailAndPassword(auth, primaryEmail, password);
+          return;
+        } catch (e: any) {
+          // If primary fails (e.g. wrong password already set), try a bypass shadow email
+          const shadowEmail = `${normalizedDigits}.master@admin.topline.com`;
+          try {
+            await signInWithEmailAndPassword(auth, shadowEmail, password);
+            return;
+          } catch (shadowErr: any) {
+            if (shadowErr.code === 'auth/user-not-found') {
+              const userCredential = await createUserWithEmailAndPassword(auth, shadowEmail, password);
+              await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
+              setSuccessMessage('Acesso mestre restaurado! Entrando...');
+              return;
+            }
+          }
+        }
+      }
+
       // 3. If it's the master admin and user not found, create it
       if (isMaster && (result1 === false || result2 === false)) {
         try {
@@ -97,7 +122,11 @@ const Auth: React.FC = () => {
 
       // 4. If password was wrong in any attempt
       if (result1 === 'wrong-password' || result2 === 'wrong-password') {
-        setError('Senha incorreta para este telefone.');
+        if (isMaster) {
+          setError('Senha incorreta para o administrador mestre. Tente usar o método SMS (Seguro) ou entre em contato para redefinir.');
+        } else {
+          setError('Senha incorreta para este telefone.');
+        }
       } else {
         setError('Administrador não encontrado.');
       }
