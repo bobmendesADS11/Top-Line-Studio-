@@ -45,14 +45,20 @@ const Auth: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const digits = phoneNumber.replace(/\D/g, '');
+      let digits = phoneNumber.replace(/\D/g, '');
+      // Normalize to include 55 if it's a standard Brazilian number without it (10 or 11 digits)
+      if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
+        digits = '55' + digits;
+      }
+      
       const adminEmail = `${digits}@admin.topline.com`;
       
       try {
         await signInWithEmailAndPassword(auth, adminEmail, password);
       } catch (err: any) {
         // If user doesn't exist and it's the master admin, create it
-        if (err.code === 'auth/user-not-found' && digits === '48991764001') {
+        // Master admin is Gabriel: 55 48 99176-4001
+        if (err.code === 'auth/user-not-found' && (digits === '5548991764001' || digits === '48991764001')) {
           const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, password);
           await updateProfile(userCredential.user, { displayName: 'Gabriel' });
           setSuccessMessage('Acesso mestre (Gabriel) configurado com sucesso!');
@@ -82,7 +88,15 @@ const Auth: React.FC = () => {
 
     try {
       let digits = phoneNumber.replace(/\D/g, '');
-      let formattedNumber = phoneNumber.trim().startsWith('+') ? `+${digits}` : `+55${digits}`;
+      let formattedNumber = '';
+      
+      if (phoneNumber.trim().startsWith('+')) {
+        formattedNumber = `+${digits}`;
+      } else if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
+        formattedNumber = `+55${digits}`;
+      } else {
+        formattedNumber = `+${digits}`;
+      }
       
       // Basic validation for Brazilian numbers (10 or 11 digits + 55)
       if (formattedNumber.length < 12) {
@@ -284,7 +298,7 @@ const Auth: React.FC = () => {
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                   <input
                     type="tel"
-                    placeholder="Telefone (ex: 48 99999-9999)"
+                    placeholder="Telefone (DDD + Número)"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -399,7 +413,7 @@ const Auth: React.FC = () => {
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                       <input
                         type="tel"
-                        placeholder="Telefone (ex: 48 99999-9999)"
+                        placeholder="Telefone (DDD + Número)"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
