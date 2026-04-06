@@ -48,6 +48,7 @@ const Auth: React.FC = () => {
     
     try {
       let digits = phoneNumber.replace(/\D/g, '');
+      console.log("Admin Auth - Digits:", digits);
       const isMaster = digits === '48991764001' || digits === '5548991764001';
       
       // Normalize primary digits to include 55
@@ -58,6 +59,7 @@ const Auth: React.FC = () => {
       
       const primaryEmail = `${normalizedDigits}@admin.topline.com`;
       const secondaryEmail = `${normalizedDigits.startsWith('55') ? normalizedDigits.substring(2) : normalizedDigits}@admin.topline.com`;
+      console.log("Admin Auth - Trying emails:", primaryEmail, secondaryEmail);
 
       const tryLogin = async (email: string) => {
         try {
