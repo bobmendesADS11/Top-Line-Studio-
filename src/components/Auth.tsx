@@ -81,25 +81,31 @@ const Auth: React.FC = () => {
 
       // 2.5 Master Bypass for Gabriel (Prototype only)
       // Allows entry with common prototype passwords if the master number is used
-      const bypassPasswords = ['admin123', 'topline2026', '123456', 'topline99'];
+      const bypassPasswords = ['admin123', 'topline2026', '123456', 'topline99', 'topline2025'];
       if (isMaster && bypassPasswords.includes(password)) {
-        try {
-          // Try primary first
-          await signInWithEmailAndPassword(auth, primaryEmail, password);
-          return;
-        } catch (e: any) {
-          // If primary fails (e.g. wrong password already set), try a bypass shadow email
-          const shadowEmail = `${normalizedDigits}.master@admin.topline.com`;
+        const bypassEmails = [
+          primaryEmail,
+          secondaryEmail,
+          `${normalizedDigits}.master@admin.topline.com`,
+          `${normalizedDigits}.emergency@admin.topline.com`
+        ];
+
+        for (const email of bypassEmails) {
           try {
-            await signInWithEmailAndPassword(auth, shadowEmail, password);
+            await signInWithEmailAndPassword(auth, email, password);
             return;
-          } catch (shadowErr: any) {
-            if (shadowErr.code === 'auth/user-not-found') {
-              const userCredential = await createUserWithEmailAndPassword(auth, shadowEmail, password);
-              await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
-              setSuccessMessage('Acesso mestre restaurado! Entrando...');
-              return;
+          } catch (e: any) {
+            if (e.code === 'auth/user-not-found') {
+              try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
+                setSuccessMessage('Acesso mestre restaurado! Entrando...');
+                return;
+              } catch (createErr) {
+                // Continue to next email if creation fails
+              }
             }
+            // If it's wrong password, we continue to the next bypass email
           }
         }
       }
@@ -179,7 +185,9 @@ const Auth: React.FC = () => {
       setConfirmationResult(confirmation);
     } catch (err: any) {
       console.error("Phone Auth Error:", err);
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.code === 'auth/operation-not-allowed' && err.message.includes('region')) {
+        setError('O login por telefone para o Brasil (+55) precisa ser habilitado no Console do Firebase. Vá em: Authentication > Settings > SMS Region Policy e adicione o Brasil.');
+      } else if (err.code === 'auth/operation-not-allowed') {
         setError('O login por telefone não está habilitado no Firebase. Por favor, habilite-o no console.');
       } else if (err.code === 'auth/invalid-phone-number') {
         setError('Número de telefone inválido. Verifique o formato.');
