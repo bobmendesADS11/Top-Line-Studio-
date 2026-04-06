@@ -14,7 +14,8 @@ import {
   Edit2,
   ExternalLink,
   LayoutDashboard,
-  GraduationCap
+  GraduationCap,
+  MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +71,12 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error("Error approving student:", error);
     }
+  };
+
+  const sendWhatsApp = (phone: string, name: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const message = encodeURIComponent(`Olá ${name}! Seu acesso ao Top Line Black Edition foi aprovado. 🎓\n\nAgora você já pode acessar o site, conferir suas fotos e criar o seu álbum 3D exclusivo! ✨\n\nAcesse aqui: ${window.location.origin}/login`);
+    window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
   return (
@@ -294,13 +301,24 @@ const Admin: React.FC = () => {
                   </td>
                   <td className="p-6 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {student.role === 'pending' && (
+                      {student.role === 'pending' ? (
                         <button 
                           onClick={() => handleApprove(student.id)}
                           className="bg-brand-gold text-black px-3 py-1 rounded-lg text-[10px] font-bold uppercase hover:bg-brand-gold/90 transition-all"
                         >
                           Aprovar
                         </button>
+                      ) : (
+                        student.role === 'student' && (
+                          <button 
+                            onClick={() => sendWhatsApp(student.phoneNumber || '', student.displayName || 'Formando')}
+                            className="bg-green-500/10 text-green-500 p-2 rounded-lg hover:bg-green-500/20 transition-all flex items-center gap-2 text-[10px] font-bold uppercase"
+                            title="Enviar confirmação via WhatsApp"
+                          >
+                            <MessageCircle size={16} />
+                            <span className="hidden md:inline">WhatsApp</span>
+                          </button>
+                        )
                       )}
                       <button className="p-2 hover:bg-white/10 rounded-lg transition-colors"><MoreVertical size={18} /></button>
                     </div>
