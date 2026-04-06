@@ -44,35 +44,67 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
+    
     try {
       let digits = phoneNumber.replace(/\D/g, '');
-      // Normalize to include 55 if it's a standard Brazilian number without it (10 or 11 digits)
+      const isMaster = digits === '48991764001' || digits === '5548991764001';
+      
+      // Normalize primary digits to include 55
+      let normalizedDigits = digits;
       if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
-        digits = '55' + digits;
+        normalizedDigits = '55' + digits;
       }
       
-      const adminEmail = `${digits}@admin.topline.com`;
+      const primaryEmail = `${normalizedDigits}@admin.topline.com`;
+      const secondaryEmail = `${normalizedDigits.startsWith('55') ? normalizedDigits.substring(2) : normalizedDigits}@admin.topline.com`;
+
+      const tryLogin = async (email: string) => {
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          return true;
+        } catch (err: any) {
+          if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+            return 'wrong-password';
+          }
+          return false;
+        }
+      };
+
+      // 1. Try primary email
+      const result1 = await tryLogin(primaryEmail);
+      if (result1 === true) return;
       
-      try {
-        await signInWithEmailAndPassword(auth, adminEmail, password);
-      } catch (err: any) {
-        // If user doesn't exist and it's the master admin, create it
-        // Master admin is Gabriel: 55 48 99176-4001
-        if (err.code === 'auth/user-not-found' && (digits === '5548991764001' || digits === '48991764001')) {
-          const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, password);
+      // 2. Try secondary email
+      const result2 = await tryLogin(secondaryEmail);
+      if (result2 === true) return;
+
+      // 3. If it's the master admin and user not found, create it
+      if (isMaster && (result1 === false || result2 === false)) {
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, primaryEmail, password);
           await updateProfile(userCredential.user, { displayName: 'Gabriel' });
-          setSuccessMessage('Acesso mestre (Gabriel) configurado com sucesso!');
-        } else {
-          throw err;
+          setSuccessMessage('Acesso mestre configurado! Entrando...');
+          return;
+        } catch (createErr: any) {
+          if (createErr.code === 'auth/email-already-in-use') {
+            setError('Senha incorreta para o administrador mestre.');
+            return;
+          }
+          throw createErr;
         }
       }
-    } catch (err: any) {
-      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError('Telefone ou senha incorretos.');
+
+      // 4. If password was wrong in any attempt
+      if (result1 === 'wrong-password' || result2 === 'wrong-password') {
+        setError('Senha incorreta para este telefone.');
       } else {
-        setError(err.message || 'Erro na autenticação do administrador.');
+        setError('Administrador não encontrado.');
       }
-      console.error(err);
+
+    } catch (err: any) {
+      console.error("Admin Auth Error:", err);
+      setError(err.message || 'Erro na autenticação do administrador.');
     } finally {
       setLoading(false);
     }
