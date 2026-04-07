@@ -7,7 +7,8 @@ import {
   RecaptchaVerifier, 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
@@ -317,13 +318,22 @@ const Auth: React.FC = () => {
           try {
             await signInWithEmailAndPassword(auth, testStudentEmail, password);
           } catch (err: any) {
+            // Firebase v9+ returns 'auth/invalid-credential' for both wrong password and user not found
             if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
               const allowedPasswords = ['topline2026', 'admin123', '123456'];
               if (allowedPasswords.includes(password)) {
-                await createUserWithEmailAndPassword(auth, testStudentEmail, password);
-                await updateProfile(auth.currentUser!, { 
-                  displayName: normalizedEmail === 'bielmaestrelli@hotmail.com' ? 'Biel Maestrelli' : 'Gabriel (Teste Aluno)' 
-                });
+                try {
+                  await createUserWithEmailAndPassword(auth, testStudentEmail, password);
+                  await updateProfile(auth.currentUser!, { 
+                    displayName: normalizedEmail === 'bielmaestrelli@hotmail.com' ? 'Biel Maestrelli' : 'Gabriel (Teste Aluno)' 
+                  });
+                } catch (createErr: any) {
+                  if (createErr.code === 'auth/email-already-in-use') {
+                    // If creation fails because email exists, but sign-in failed, then the password is wrong
+                    throw new Error('Senha incorreta para este e-mail. Tente admin123 ou topline2026.');
+                  }
+                  throw createErr;
+                }
               } else {
                 throw new Error('Senha de acesso rápido incorreta.');
               }
@@ -654,7 +664,7 @@ const Auth: React.FC = () => {
                           <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                           <input
                             type="password"
-                            placeholder="Sua senha de acesso"
+                            placeholder={email.toLowerCase().includes('bielmaestrelli') ? "Sua senha (admin123)" : "Sua senha (topline2026)"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -664,19 +674,91 @@ const Auth: React.FC = () => {
                         </div>
                         
                         {email.toLowerCase().includes('bielmaestrelli') && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPassword('topline2026');
-                              setTimeout(() => {
-                                const form = document.querySelector('form');
-                                if (form) form.requestSubmit();
-                              }, 100);
-                            }}
-                            className="w-full bg-white/10 text-brand-gold py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-all border border-brand-gold/20"
-                          >
-                            Entrar com Senha Padrão (topline2026)
-                          </button>
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setLoading(true);
+                                setError(null);
+                                const passwords = ['admin123', 'topline2026', '123456', '12345678', 'topline'];
+                                let success = false;
+                                
+                                for (const p of passwords) {
+                                  try {
+                                    await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), p);
+                                    success = true;
+                                    break;
+                                  } catch (e) {
+                                    continue;
+                                  }
+                                }
+                                
+                                if (!success) {
+                                  // If all sign-ins fail, try to create with admin123
+                                  try {
+                                    await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), 'admin123');
+                                    await updateProfile(auth.currentUser!, { displayName: 'Biel Maestrelli' });
+                                    success = true;
+                                  } catch (e: any) {
+                                    if (e.code === 'auth/email-already-in-use') {
+                                      setError('A senha atual do seu e-mail não é nenhuma das padrões. Use o botão "Enviar Link sem Senha" abaixo para entrar e resetar sua senha.');
+                                    } else {
+                                      setError('Não foi possível entrar automaticamente. Tente o link por e-mail.');
+                                    }
+                                  }
+                                }
+                                
+                                setLoading(false);
+                              }}
+                              className="w-full bg-white/10 text-brand-gold py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-all border border-brand-gold/20"
+                            >
+                              {loading ? 'Tentando Acesso...' : 'Tentar Acesso Automático'}
+                            </button>
+                            
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setLoading(true);
+                                setError(null);
+                                try {
+                                  const actionCodeSettings = {
+                                    url: window.location.origin + '/login',
+                                    handleCodeInApp: true,
+                                  };
+                                  await sendSignInLinkToEmail(auth, email.trim().toLowerCase(), actionCodeSettings);
+                                  window.localStorage.setItem('emailForSignIn', email.trim().toLowerCase());
+                                  setSuccessMessage('Link enviado! Verifique seu e-mail para entrar sem senha agora mesmo.');
+                                  setShowTestPassword(false);
+                                } catch (err: any) {
+                                  setError('Erro ao enviar link: ' + err.message);
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                              className="w-full bg-brand-gold/5 text-brand-gold/60 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-brand-gold/10 transition-all border border-brand-gold/10"
+                            >
+                              Entrar via E-mail (Sem Senha)
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setLoading(true);
+                                setError(null);
+                                try {
+                                  await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+                                  setSuccessMessage('E-mail de redefinição enviado! Use-o para trocar sua senha para admin123.');
+                                } catch (err: any) {
+                                  setError('Erro ao enviar redefinição: ' + err.message);
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                              className="w-full bg-red-500/5 text-red-500/60 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-red-500/10 transition-all border border-red-500/10"
+                            >
+                              Redefinir Senha (Esqueci a Senha)
+                            </button>
+                          </div>
                         )}
                       </motion.div>
                     )}
