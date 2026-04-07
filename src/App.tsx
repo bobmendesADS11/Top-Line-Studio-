@@ -35,17 +35,18 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
+          const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
+                             currentUser.email?.toLowerCase().endsWith('@admin.topline.com');
+          const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
+          const shouldBeAdmin = isAdminEmail || isAdminPhone;
+
           // Check user role in Firestore
           const userRef = doc(db, 'users', currentUser.uid);
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
             const currentData = userSnap.data();
-            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
-                               currentUser.email?.endsWith('@admin.topline.com');
-            const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
-            const shouldBeAdmin = isAdminEmail || isAdminPhone;
-
+            
             if (shouldBeAdmin && currentData.role !== 'admin') {
               // Upgrade to admin if needed
               await setDoc(userRef, { ...currentData, role: 'admin' }, { merge: true });
@@ -54,11 +55,8 @@ const App: React.FC = () => {
               setRole(currentData.role);
             }
           } else {
-            // Create new pending profile if it doesn't exist
-            const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
-                               currentUser.email?.endsWith('@admin.topline.com');
-            const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
-            const newRole = (isAdminEmail || isAdminPhone) ? 'admin' : 'pending';
+            // Create new profile
+            const newRole = shouldBeAdmin ? 'admin' : 'pending';
             
             // Pick up pending registration data if available
             const pendingDataStr = sessionStorage.getItem('pendingRegistration');
@@ -71,7 +69,7 @@ const App: React.FC = () => {
             }
 
             let extractedName = currentUser.displayName || pendingData.fullName || '';
-            if ((isAdminEmail || isAdminPhone) && !extractedName) {
+            if (shouldBeAdmin && !extractedName) {
               extractedName = 'Gabriel';
             }
 
@@ -91,14 +89,25 @@ const App: React.FC = () => {
           setUser(currentUser);
         } catch (error) {
           console.error("Error fetching user role:", error);
+          
+          // Critical: If it's a master account, force admin role even if Firestore fails
+          const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
+                             currentUser.email?.toLowerCase().endsWith('@admin.topline.com');
+          const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
+          
+          if (isAdminEmail || isAdminPhone) {
+            setRole('admin');
+          } else {
+            setRole('student'); // Fallback for others
+          }
           setUser(currentUser);
-          setRole('student'); // Fallback
         }
+        setLoading(false);
       } else {
         setUser(null);
         setRole(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -127,6 +136,7 @@ const App: React.FC = () => {
         <Route 
           path="/area-do-aluno/*" 
           element={
+            role === 'admin' ? <Navigate to="/admin" /> :
             role === 'student' ? <Student /> : 
             role === 'pending' ? <PendingAccess /> : 
             <Navigate to="/login" />

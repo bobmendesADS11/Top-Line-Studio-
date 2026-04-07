@@ -25,6 +25,16 @@ const Student: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
+    // Safety redirect for admins who end up here
+    const isAdminEmail = user.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
+                       user.email?.toLowerCase().endsWith('@admin.topline.com');
+    const isAdminPhone = user.phoneNumber === '+5548991764001';
+    
+    if (isAdminEmail || isAdminPhone) {
+      navigate('/admin');
+      return;
+    }
+
     const q = query(
       collection(db, 'orders'), 
       where('studentUid', '==', user.uid)

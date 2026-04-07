@@ -47,6 +47,28 @@ const Auth: React.FC = () => {
     setSuccessMessage(null);
     
     try {
+      const loginInput = phoneNumber.trim().toLowerCase();
+      
+      // Direct Username Bypass for Gabriel
+      if (loginInput === 'gabriel' && (password === 'admin123' || password === '123456')) {
+        const masterEmail = 'gabriel@admin.topline.com';
+        try {
+          await signInWithEmailAndPassword(auth, masterEmail, password);
+          return;
+        } catch (err: any) {
+          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+            try {
+              const userCredential = await createUserWithEmailAndPassword(auth, masterEmail, password);
+              await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
+              setSuccessMessage('Acesso mestre configurado! Entrando...');
+              return;
+            } catch (createErr) {
+              // Fall through to normal logic if creation fails
+            }
+          }
+        }
+      }
+
       let digits = phoneNumber.replace(/\D/g, '');
       const isMaster = digits === '48991764001' || digits === '5548991764001';
       
@@ -381,10 +403,10 @@ const Auth: React.FC = () => {
               {adminMethod === 'password' ? (
                 <form onSubmit={handleAdminAuth} className="space-y-4">
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
-                      type="tel"
-                      placeholder="Telefone (DDD + Número)"
+                      type="text"
+                      placeholder="Usuário (ex: gabriel)"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
