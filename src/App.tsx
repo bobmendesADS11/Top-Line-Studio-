@@ -38,6 +38,7 @@ const App: React.FC = () => {
           const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
                              currentUser.email?.toLowerCase().endsWith('@admin.topline.com');
           const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
+          const isImmediateStudent = currentUser.email?.toLowerCase() === 'bielmaestrelli@hotmail.com';
           const shouldBeAdmin = isAdminEmail || isAdminPhone;
 
           // Check user role in Firestore
@@ -51,12 +52,16 @@ const App: React.FC = () => {
               // Upgrade to admin if needed
               await setDoc(userRef, { ...currentData, role: 'admin' }, { merge: true });
               setRole('admin');
+            } else if (isImmediateStudent && currentData.role === 'pending') {
+              // Upgrade to student if needed
+              await setDoc(userRef, { ...currentData, role: 'student' }, { merge: true });
+              setRole('student');
             } else {
               setRole(currentData.role);
             }
           } else {
             // Create new profile
-            const newRole = shouldBeAdmin ? 'admin' : 'pending';
+            const newRole = shouldBeAdmin ? 'admin' : (isImmediateStudent ? 'student' : 'pending');
             
             // Pick up pending registration data if available
             const pendingDataStr = sessionStorage.getItem('pendingRegistration');

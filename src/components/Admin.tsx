@@ -494,7 +494,13 @@ const Admin: React.FC = () => {
                             </button>
                           )
                         )}
-                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors"><MoreVertical size={16} /></button>
+                        <button 
+                          onClick={() => handleDelete('users', student.id)}
+                          className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
+                          title="Excluir Aluno"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>

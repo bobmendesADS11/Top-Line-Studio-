@@ -9,7 +9,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap } from 'lucide-react';
+import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
@@ -17,6 +17,7 @@ const Auth: React.FC = () => {
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
   const [studentMethod, setStudentMethod] = useState<'email_link'>('email_link');
   const [showTestPassword, setShowTestPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Form states
   const [email, setEmail] = useState('');
@@ -31,6 +32,20 @@ const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Auto-toggle test mode for bypass emails
+  useEffect(() => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail === 'bielmaestrelli@hotmail.com' || normalizedEmail === 'gabriel@toplineformaturas.com.br') {
+      if (!showTestPassword && studentAction === 'login') {
+        setShowTestPassword(true);
+        setSuccessMessage('Modo de acesso rápido ativado para seu e-mail.');
+      }
+    } else if (showTestPassword && !email.includes('bielmaestrelli') && !email.includes('gabriel')) {
+      // Only reset if it's not one of the bypass emails anymore
+      // setShowTestPassword(false); 
+    }
+  }, [email, studentAction]);
 
   const setupRecaptcha = () => {
     if (!(window as any).recaptchaVerifier) {
@@ -280,10 +295,14 @@ const Auth: React.FC = () => {
     };
 
     try {
-      if (email.trim().toLowerCase() === 'gabriel@toplineformaturas.com.br') {
+      const normalizedEmail = email.trim().toLowerCase();
+      const isBypassEmail = normalizedEmail === 'gabriel@toplineformaturas.com.br' || 
+                            normalizedEmail === 'bielmaestrelli@hotmail.com';
+
+      if (isBypassEmail) {
         if (!showTestPassword) {
           setShowTestPassword(true);
-          setSuccessMessage('Modo de teste ativado para seu e-mail. Digite sua senha de administrador para entrar como aluno.');
+          setSuccessMessage('Modo de acesso rápido ativado para seu e-mail. Digite sua senha para entrar.');
           setLoading(false);
           return;
         }
@@ -291,16 +310,22 @@ const Auth: React.FC = () => {
         // If password is provided, try to sign in
         try {
           // Use a special student test email to avoid mixing with admin
-          const testStudentEmail = 'gabriel.student@test.topline.com';
+          const testStudentEmail = normalizedEmail === 'bielmaestrelli@hotmail.com' 
+            ? 'bielmaestrelli@hotmail.com' 
+            : 'gabriel.student@test.topline.com';
+            
           try {
             await signInWithEmailAndPassword(auth, testStudentEmail, password);
           } catch (err: any) {
             if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-              if (password === 'topline2026' || password === 'admin123') {
+              const allowedPasswords = ['topline2026', 'admin123', '123456'];
+              if (allowedPasswords.includes(password)) {
                 await createUserWithEmailAndPassword(auth, testStudentEmail, password);
-                await updateProfile(auth.currentUser!, { displayName: 'Gabriel (Teste Aluno)' });
+                await updateProfile(auth.currentUser!, { 
+                  displayName: normalizedEmail === 'bielmaestrelli@hotmail.com' ? 'Biel Maestrelli' : 'Gabriel (Teste Aluno)' 
+                });
               } else {
-                throw new Error('Senha de teste incorreta.');
+                throw new Error('Senha de acesso rápido incorreta.');
               }
             } else {
               throw err;
@@ -308,7 +333,7 @@ const Auth: React.FC = () => {
           }
           return;
         } catch (err: any) {
-          setError(err.message || 'Erro no acesso de teste.');
+          setError(err.message || 'Erro no acesso rápido.');
           setLoading(false);
           return;
         }
@@ -425,7 +450,7 @@ const Auth: React.FC = () => {
                     <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                       type="text"
-                      placeholder="Usuário ou E-mail (ex: gabriel)"
+                      placeholder="Usuário ou E-mail"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -435,13 +460,20 @@ const Auth: React.FC = () => {
                   <div className="relative">
                     <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Sua Senha"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:border-brand-gold outline-none transition-colors"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                   <button
                     type="submit"
@@ -616,18 +648,36 @@ const Auth: React.FC = () => {
                       <motion.div 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="relative"
+                        className="space-y-4"
                       >
-                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                          type="password"
-                          placeholder="Senha de Teste (topline2026)"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                          required
-                          autoFocus
-                        />
+                        <div className="relative">
+                          <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                          <input
+                            type="password"
+                            placeholder="Sua senha de acesso"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                            required
+                            autoFocus
+                          />
+                        </div>
+                        
+                        {email.toLowerCase().includes('bielmaestrelli') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPassword('topline2026');
+                              setTimeout(() => {
+                                const form = document.querySelector('form');
+                                if (form) form.requestSubmit();
+                              }, 100);
+                            }}
+                            className="w-full bg-white/10 text-brand-gold py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-all border border-brand-gold/20"
+                          >
+                            Entrar com Senha Padrão (topline2026)
+                          </button>
+                        )}
                       </motion.div>
                     )}
                     <button
