@@ -16,6 +16,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Services
 export const auth = getAuth(app);
+auth.languageCode = 'pt-br';
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 // Auth Providers & Helpers

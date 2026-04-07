@@ -291,7 +291,7 @@ const Auth: React.FC = () => {
 
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
-      setSuccessMessage('Link de acesso enviado! Verifique sua caixa de entrada.');
+      setSuccessMessage('O link de acesso foi enviado para o seu e-mail! Por favor, verifique sua caixa de entrada (e também o spam).');
     } catch (err: any) {
       setError('Erro ao enviar link. Verifique seu e-mail.');
       console.error(err);
