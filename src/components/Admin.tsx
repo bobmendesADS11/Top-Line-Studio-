@@ -108,6 +108,14 @@ const Admin: React.FC = () => {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
+  const handleUpdatePackage = async (id: string, newPackage: string) => {
+    try {
+      await updateDoc(doc(db, 'users', id), { package: newPackage });
+    } catch (error) {
+      console.error("Error updating package:", error);
+    }
+  };
+
   const SidebarContent = () => (
     <>
       <div className="p-8">
@@ -254,6 +262,7 @@ const Admin: React.FC = () => {
                   <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Status / Info</th>
                   {activeTab === 'students' && (
                     <>
+                      <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Pacote</th>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Curso</th>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Semestre</th>
                     </>
@@ -356,6 +365,18 @@ const Admin: React.FC = () => {
                       }`}>
                         {student.role}
                       </span>
+                    </td>
+                    <td className="p-4 md:p-6">
+                      <select 
+                        value={student.package || 'link'} 
+                        onChange={(e) => handleUpdatePackage(student.id, e.target.value)}
+                        className={`bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase transition-all outline-none ${
+                          student.package === 'black' ? 'text-brand-gold border-brand-gold/30' : 'text-blue-400 border-blue-400/30'
+                        }`}
+                      >
+                        <option value="link">Link Edition</option>
+                        <option value="black">Black Edition</option>
+                      </select>
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
                       {student.course || '-'}

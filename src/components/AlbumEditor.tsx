@@ -14,7 +14,10 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Download,
-  Clock
+  Clock,
+  ChevronLeft,
+  Settings2,
+  Box
 } from 'lucide-react';
 import Album3D from './Album3D';
 
@@ -28,27 +31,59 @@ interface AlbumEditorProps {
   photos: Photo[];
   onSave?: (pages: string[]) => void;
   onBack?: () => void;
+  hasPurchasedAlbum?: boolean;
 }
 
-type LayoutType = 'minimalist' | 'grid' | 'collage' | 'editorial';
+type LayoutType = 'minimalist' | 'grid' | 'collage' | 'editorial' | 'spread';
 type EffectType = 'none' | 'bw' | 'sepia' | 'vintage' | 'vibrant';
+type AlbumSize = '20x30' | '30x30' | '30x40';
 
-const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => {
-  const [layoutType, setLayoutType] = useState<LayoutType>('minimalist');
+const PRICES = {
+  photo: 34.90,
+  size: {
+    '20x30': 0,
+    '30x30': 50,
+    '30x40': 100
+  }
+};
+
+const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false }) => {
+  const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
   const [effect, setEffect] = useState<EffectType>('none');
+  const [albumSize, setAlbumSize] = useState<AlbumSize>('30x30');
   const [pages, setPages] = useState<string[]>([]);
+  const [pageLayouts, setPageLayouts] = useState<LayoutType[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Generate pages whenever photos, layout, or effect changes
+  const totalPrice = (photos.length * PRICES.photo) + PRICES.size[albumSize];
+  
+  // Initialize page layouts when photos change
   useEffect(() => {
-    if (photos.length > 0) {
+    const photosPerPage = 1; // Default
+    const numPages = Math.ceil(photos.length / photosPerPage);
+    setPageLayouts(new Array(numPages).fill(globalLayout));
+  }, [photos.length]);
+
+  // Update all layouts when global layout changes
+  const handleGlobalLayoutChange = (newLayout: LayoutType) => {
+    setGlobalLayout(newLayout);
+    setPageLayouts(pageLayouts.map(() => newLayout));
+  };
+
+  const handlePageLayoutChange = (index: number, newLayout: LayoutType) => {
+    const newLayouts = [...pageLayouts];
+    newLayouts[index] = newLayout;
+    setPageLayouts(newLayouts);
+  };
+
+  // Generate pages whenever photos, layouts, or effect changes
+  useEffect(() => {
+    if (photos.length > 0 && pageLayouts.length > 0) {
       generateAllPages();
     }
-  }, [photos, layoutType, effect]);
+  }, [photos, pageLayouts, effect, albumSize]);
 
   const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     if (effect === 'none') return;
@@ -73,7 +108,6 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
         data[i + 1] = g * 0.8;
         data[i + 2] = b * 0.7;
       } else if (effect === 'vibrant') {
-        // Simple saturation boost
         const max = Math.max(r, g, b);
         data[i] += (max - r) * 0.2;
         data[i + 1] += (max - g) * 0.2;
@@ -83,22 +117,25 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
     ctx.putImageData(imageData, 0, 0);
   };
 
-  const drawPage = async (pagePhotos: Photo[]): Promise<string> => {
+  const drawPage = async (pagePhotos: Photo[], layout: LayoutType): Promise<string> => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
 
-    // High resolution for quality (A4-ish ratio)
-    const width = 1200;
-    const height = 1800;
+    // Resolution based on size
+    let width = 1200;
+    let height = 1200;
+    if (albumSize === '20x30') { width = 800; height = 1200; }
+    if (albumSize === '30x40') { width = 1200; height = 1600; }
+    
     canvas.width = width;
     canvas.height = height;
 
-    // Background
-    ctx.fillStyle = '#0a0a0a';
+    // Background - use a slightly off-black for luxury feel
+    ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, width, height);
 
-    // Load all images for this page
+    // Load images
     const loadedImages = await Promise.all(
       pagePhotos.map(p => new Promise<HTMLImageElement>((resolve) => {
         const img = new Image();
@@ -108,33 +145,34 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
       }))
     );
 
-    // Diagramming logic
-    if (layoutType === 'minimalist') {
-      // One big photo with margins
+    if (layout === 'minimalist') {
       if (loadedImages[0]) {
         const img = loadedImages[0];
-        const margin = 100;
+        const margin = width * 0.12;
         const drawW = width - margin * 2;
         const drawH = (img.height / img.width) * drawW;
         const y = (height - drawH) / 2;
+        
+        // Shadow for the photo
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 30;
         ctx.drawImage(img, margin, y, drawW, drawH);
       }
-    } else if (layoutType === 'grid') {
-      // 2 or 4 photos in a grid
-      const margin = 60;
-      const gap = 40;
-      const cols = pagePhotos.length > 2 ? 2 : 1;
-      const rows = Math.ceil(pagePhotos.length / cols);
-      const cellW = (width - margin * 2 - (cols - 1) * gap) / cols;
-      const cellH = (height - margin * 2 - (rows - 1) * gap) / rows;
+    } else if (layout === 'grid') {
+      const margin = width * 0.06;
+      const gap = width * 0.04;
+      const cols = 2;
+      const rows = 2;
+      const cellW = (width - margin * 2 - gap) / cols;
+      const cellH = (height - margin * 2 - gap) / rows;
 
       loadedImages.forEach((img, i) => {
+        if (i >= 4) return;
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = margin + col * (cellW + gap);
         const y = margin + row * (cellH + gap);
         
-        // Object-fit: cover logic
         const imgRatio = img.width / img.height;
         const cellRatio = cellW / cellH;
         let sw, sh, sx, sy;
@@ -151,29 +189,67 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
         }
         ctx.drawImage(img, sx, sy, sw, sh, x, y, cellW, cellH);
       });
-    } else if (layoutType === 'editorial') {
-      // One main photo + text or small accent
+    } else if (layout === 'spread') {
       if (loadedImages[0]) {
-        ctx.drawImage(loadedImages[0], 0, 0, width, height * 0.7);
-        ctx.fillStyle = '#D4AF37';
-        ctx.font = 'bold 40px serif';
-        ctx.fillText('TOP LINE BLACK EDITION', 100, height * 0.8);
-        ctx.fillStyle = '#666';
-        ctx.font = '20px sans-serif';
-        ctx.fillText('MEMÓRIAS ETERNAS • 2026', 100, height * 0.85);
+        const img = loadedImages[0];
+        const imgRatio = img.width / img.height;
+        const canvasRatio = width / height;
+        let sw, sh, sx, sy;
+        if (imgRatio > canvasRatio) {
+          sh = img.height;
+          sw = sh * canvasRatio;
+          sx = (img.width - sw) / 2;
+          sy = 0;
+        } else {
+          sw = img.width;
+          sh = sw / canvasRatio;
+          sx = 0;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
       }
-    } else if (layoutType === 'collage') {
-      // Overlapping or dynamic placement
+    } else if (layout === 'editorial') {
+      if (loadedImages[0]) {
+        const img = loadedImages[0];
+        ctx.drawImage(img, 0, 0, width, height * 0.7);
+        
+        // Gold line
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.1, height * 0.75);
+        ctx.lineTo(width * 0.9, height * 0.75);
+        ctx.stroke();
+
+        ctx.fillStyle = '#D4AF37';
+        ctx.font = `bold ${width * 0.05}px serif`;
+        ctx.fillText('TOP LINE', width * 0.1, height * 0.82);
+        ctx.fillStyle = '#fff';
+        ctx.font = `italic ${width * 0.03}px serif`;
+        ctx.fillText('Black Edition', width * 0.1, height * 0.87);
+        
+        ctx.fillStyle = '#666';
+        ctx.font = `${width * 0.02}px sans-serif`;
+        ctx.fillText('DIAGRAMAÇÃO EXCLUSIVA • 2026', width * 0.1, height * 0.92);
+      }
+    } else if (layout === 'collage') {
       loadedImages.forEach((img, i) => {
+        if (i >= 2) return;
         ctx.save();
         const w = width * 0.6;
         const h = (img.height / img.width) * w;
-        const x = i === 0 ? 50 : width - w - 50;
-        const y = i === 0 ? 100 : height - h - 100;
+        const x = i === 0 ? width * 0.05 : width - w - width * 0.05;
+        const y = i === 0 ? height * 0.15 : height - h - height * 0.15;
+        
         ctx.translate(x + w/2, y + h/2);
-        ctx.rotate((i === 0 ? -5 : 5) * Math.PI / 180);
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowBlur = 30;
+        ctx.rotate((i === 0 ? -3 : 3) * Math.PI / 180);
+        
+        // White border for collage look
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-w/2 - 10, -h/2 - 10, w + 20, h + 20);
+        
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 20;
         ctx.drawImage(img, -w/2, -h/2, w, h);
         ctx.restore();
       });
@@ -187,16 +263,19 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
     setIsGenerating(true);
     const newPages: string[] = [];
     
-    // Group photos into pages based on layout
-    const photosPerPage = layoutType === 'grid' ? 4 : (layoutType === 'collage' ? 2 : 1);
-    const groups: Photo[][] = [];
-    for (let i = 0; i < photos.length; i += photosPerPage) {
-      groups.push(photos.slice(i, i + photosPerPage));
-    }
-
-    for (const group of groups) {
-      const pageData = await drawPage(group);
+    let photoIdx = 0;
+    for (let i = 0; i < pageLayouts.length; i++) {
+      const layout = pageLayouts[i];
+      let photosPerPage = 1;
+      if (layout === 'grid') photosPerPage = 4;
+      if (layout === 'collage') photosPerPage = 2;
+      
+      const pagePhotos = photos.slice(photoIdx, photoIdx + photosPerPage);
+      if (pagePhotos.length === 0) break;
+      
+      const pageData = await drawPage(pagePhotos, layout);
       newPages.push(pageData);
+      photoIdx += photosPerPage;
     }
 
     setPages(newPages);
@@ -206,23 +285,62 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
   return (
     <div className="flex flex-col lg:flex-row h-full bg-black overflow-hidden">
       {/* Sidebar Controls */}
-      <div className="w-full lg:w-80 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-8 overflow-y-auto">
+      <div className="w-full lg:w-80 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto">
+        <div className="flex items-center justify-between mb-2">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-[10px] uppercase tracking-widest font-bold"
+          >
+            <ChevronLeft size={14} /> Voltar
+          </button>
+          
+          <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest border ${
+            hasPurchasedAlbum 
+              ? 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold' 
+              : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+          }`}>
+            {hasPurchasedAlbum ? 'Black Edition' : 'Link Edition'}
+          </div>
+        </div>
+
         <div>
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Layout size={14} /> Diagramação Automática
+            <Box size={14} /> Tamanho do Álbum
+          </h3>
+          <div className="grid grid-cols-3 gap-2">
+            {(['20x30', '30x30', '30x40'] as AlbumSize[]).map((size) => (
+              <button
+                key={size}
+                onClick={() => setAlbumSize(size)}
+                className={`py-2 rounded-lg border text-[9px] font-bold tracking-widest transition-all ${
+                  albumSize === size 
+                    ? 'bg-brand-gold border-brand-gold text-black' 
+                    : 'bg-black/40 border-white/10 text-gray-400'
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
+            <Layout size={14} /> Estilo Global
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {[
               { id: 'minimalist', icon: Maximize, label: 'Minimalista' },
-              { id: 'grid', icon: Grid, label: 'Grade' },
-              { id: 'editorial', icon: Type, label: 'Editorial' },
-              { id: 'collage', icon: Layers, label: 'Colagem' }
+              { id: 'grid', icon: Grid, label: 'Grade (4)' },
+              { id: 'spread', icon: ImageIcon, label: 'Sangrado' },
+              { id: 'collage', icon: Layers, label: 'Artístico' },
+              { id: 'editorial', icon: Type, label: 'Revista' }
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setLayoutType(item.id as LayoutType)}
+                onClick={() => handleGlobalLayoutChange(item.id as LayoutType)}
                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                  layoutType === item.id 
+                  globalLayout === item.id 
                     ? 'bg-brand-gold border-brand-gold text-black' 
                     : 'bg-black/40 border-white/10 text-gray-400 hover:border-brand-gold/50'
                 }`}
@@ -231,6 +349,48 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
                 <span className="text-[9px] uppercase font-bold tracking-widest">{item.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-3">
+          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+            <Palette size={14} /> {hasPurchasedAlbum ? 'Black Edition Ativo' : 'Link Edition - Prévia'}
+          </h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-[10px] text-gray-400">
+              <span>{photos.length} Fotos (R$ {PRICES.photo.toFixed(2)}/un)</span>
+              <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${(photos.length * PRICES.photo).toFixed(2)}`}</span>
+            </div>
+            <div className="flex justify-between text-[10px] text-gray-400">
+              <span>{pages.length} Páginas Diagramadas</span>
+              <span className="text-brand-gold/60">Grátis</span>
+            </div>
+            {PRICES.size[albumSize] > 0 && (
+              <div className="flex justify-between text-[10px] text-gray-400">
+                <span>Adicional Tamanho {albumSize}</span>
+                <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${PRICES.size[albumSize].toFixed(2)}`}</span>
+              </div>
+            )}
+            <div className="pt-2 border-t border-white/5 flex justify-between text-xs font-bold text-white">
+              <span className="uppercase tracking-widest">{hasPurchasedAlbum ? 'Status do Álbum' : 'Valor do Álbum'}</span>
+              <span className="text-brand-gold">
+                {hasPurchasedAlbum ? 'PAGO' : `R$ ${totalPrice.toFixed(2)}`}
+              </span>
+            </div>
+            
+            {!hasPurchasedAlbum && (
+              <div className="mt-2 p-3 bg-brand-gold/10 border border-brand-gold/30 rounded-xl">
+                <p className="text-[9px] text-brand-gold uppercase tracking-wider font-bold mb-2">
+                  ✨ Upgrade Disponível
+                </p>
+                <p className="text-[8px] text-gray-400 leading-relaxed mb-3">
+                  Transforme seu link digital em um álbum físico **Black Edition** com diagramação profissional.
+                </p>
+                <button className="w-full bg-brand-gold text-black py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                  Adquirir Álbum Físico
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -265,8 +425,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
         <div className="mt-auto pt-6 border-t border-white/5 space-y-3">
           <button
             onClick={() => {
-              setLayoutType('minimalist');
+              handleGlobalLayoutChange('minimalist');
               setEffect('none');
+              setAlbumSize('30x30');
             }}
             className="w-full bg-white/5 text-gray-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/5"
           >
@@ -288,7 +449,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
             className="w-full bg-brand-gold text-black py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-gold/90 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(212,175,55,0.3)]"
           >
             <Download size={16} />
-            Finalizar Álbum
+            {hasPurchasedAlbum ? 'Finalizar Diagramação' : 'Finalizar e Comprar Álbum'}
           </button>
         </div>
       </div>
@@ -366,6 +527,32 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack }) => 
                       >
                         <div className="aspect-[2/3] bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-white/5 transition-transform group-hover:scale-[1.02]">
                           <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
+                          
+                          {/* Individual Page Layout Controls */}
+                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 gap-4">
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-brand-gold mb-2">Mudar Layout desta Página</p>
+                            <div className="grid grid-cols-2 gap-2 w-full">
+                              {[
+                                { id: 'minimalist', label: 'Minimalista' },
+                                { id: 'grid', label: 'Grade (4)' },
+                                { id: 'spread', label: 'Sangrado' },
+                                { id: 'collage', label: 'Artístico' },
+                                { id: 'editorial', label: 'Revista' }
+                              ].map(l => (
+                                <button
+                                  key={l.id}
+                                  onClick={() => handlePageLayoutChange(i, l.id as LayoutType)}
+                                  className={`py-2 rounded-lg border text-[8px] font-bold tracking-widest transition-all ${
+                                    pageLayouts[i] === l.id 
+                                      ? 'bg-brand-gold border-brand-gold text-black' 
+                                      : 'bg-white/5 border-white/10 text-white hover:border-brand-gold/50'
+                                  }`}
+                                >
+                                  {l.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                         <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border border-white/10">
                           Página {i + 1}

@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useTexture, Environment, ContactShadows, Float, PresentationControls, Html } from '@react-three/drei';
+import { useTexture, Environment, ContactShadows, Float, OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Error Boundary for 3D textures
@@ -98,14 +98,16 @@ function AlbumContent({ pages, currentPage, zoom, isOpen }: Album3DProps) {
   });
 
   return (
-    <PresentationControls
-      global
-      rotation={[0, 0, 0]}
-      polar={[-Math.PI / 3, Math.PI / 3]}
-      azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
-    >
-      <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-        <group ref={groupRef} rotation={[0.2, 0, 0]}>
+    <>
+      <OrbitControls 
+        enablePan={false} 
+        minDistance={5} 
+        maxDistance={15} 
+        minPolarAngle={Math.PI / 4} 
+        maxPolarAngle={Math.PI / 1.5} 
+      />
+      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
+        <group ref={groupRef} rotation={[0, 0, 0]}>
           {/* Left Page */}
           <Page 
             textureUrl={leftPageUrl} 
@@ -129,7 +131,7 @@ function AlbumContent({ pages, currentPage, zoom, isOpen }: Album3DProps) {
           </mesh>
         </group>
       </Float>
-    </PresentationControls>
+    </>
   );
 }
 

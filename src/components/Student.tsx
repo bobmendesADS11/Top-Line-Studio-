@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
@@ -11,6 +11,7 @@ import AlbumEditor from './AlbumEditor';
 const Student: React.FC = () => {
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
+  const [studentData, setStudentData] = useState<any>(null);
   const navigate = useNavigate();
   const user = auth.currentUser;
 
@@ -25,6 +26,11 @@ const Student: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
+
+    // Fetch student data for package info
+    const unsubStudent = onSnapshot(doc(db, 'users', user.uid), (doc) => {
+      setStudentData(doc.data());
+    });
 
     // Safety redirect for admins who end up here
     const isAdminEmail = user.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
@@ -45,13 +51,21 @@ const Student: React.FC = () => {
       setMyOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubStudent();
+    };
   }, [user]);
 
   const handleLogout = () => {
     auth.signOut();
     navigate('/');
   };
+
+  const hasPurchasedAlbum = studentData?.package === 'black' || myOrders.some(order => 
+    (order.type === 'album' || order.type === 'premium' || order.type === 'black_edition') && 
+    (order.status === 'pago' || order.status === 'concluido')
+  );
 
   const Dashboard = () => (
     <main className="max-w-7xl mx-auto px-6 py-12">
@@ -240,6 +254,7 @@ const Student: React.FC = () => {
             <AlbumEditor 
               photos={selectedPhotos.length > 0 ? selectedPhotos : albumPages.map((url, i) => ({ id: String(i), url }))} 
               onBack={() => navigate('/area-do-aluno')}
+              hasPurchasedAlbum={hasPurchasedAlbum}
               onSave={(finalPages) => {
                 console.log('Saving album...', finalPages);
                 navigate('/area-do-aluno/album');
