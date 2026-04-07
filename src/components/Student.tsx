@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft } from 'lucide-react';
+import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
 import Album3D from './Album3D';
+import AlbumEditor from './AlbumEditor';
 
 const Student: React.FC = () => {
   const [myOrders, setMyOrders] = useState<any[]>([]);
@@ -138,6 +139,16 @@ const Student: React.FC = () => {
                 <p className="text-xs text-gray-500">Visualizar prévia</p>
               </div>
             </Link>
+
+            <Link to="editor" className="w-full bg-zinc-900/50 border border-brand-gold/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-brand-gold/5 transition-colors text-left group border-dashed">
+              <div className="w-10 h-10 bg-brand-gold/10 rounded-lg flex items-center justify-center text-brand-gold group-hover:bg-brand-gold group-hover:text-black transition-colors">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <p className="font-medium">Editor de Diagramação</p>
+                <p className="text-xs text-gray-500">Criar layout automático</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
@@ -202,7 +213,7 @@ const Student: React.FC = () => {
             </button>
             <Gallery onSelect={(photos) => {
               setSelectedPhotos(photos);
-              navigate('/area-do-aluno/album');
+              navigate('/area-do-aluno/editor');
             }} />
           </div>
         } />
@@ -222,6 +233,18 @@ const Student: React.FC = () => {
                 isOpen={true} 
               />
             </div>
+          </div>
+        } />
+        <Route path="editor" element={
+          <div className="h-[calc(100vh-80px)]">
+            <AlbumEditor 
+              photos={selectedPhotos.length > 0 ? selectedPhotos : albumPages.map((url, i) => ({ id: String(i), url }))} 
+              onBack={() => navigate('/area-do-aluno')}
+              onSave={(finalPages) => {
+                console.log('Saving album...', finalPages);
+                navigate('/area-do-aluno/album');
+              }}
+            />
           </div>
         } />
       </Routes>

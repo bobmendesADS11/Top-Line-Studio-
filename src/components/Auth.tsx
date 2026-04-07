@@ -13,9 +13,10 @@ import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clo
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
-  const [adminMethod, setAdminMethod] = useState<'password' | 'phone'>('password');
+  const [adminMethod, setAdminMethod] = useState<'password'>('password');
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
-  const [studentMethod, setStudentMethod] = useState<'phone' | 'email_link'>('phone');
+  const [studentMethod, setStudentMethod] = useState<'email_link'>('email_link');
+  const [showTestPassword, setShowTestPassword] = useState(false);
   
   // Form states
   const [email, setEmail] = useState('');
@@ -50,7 +51,8 @@ const Auth: React.FC = () => {
       const loginInput = phoneNumber.trim().toLowerCase();
       
       // Direct Username Bypass for Gabriel
-      if (loginInput === 'gabriel' && (password === 'admin123' || password === '123456')) {
+      const isGabrielMaster = loginInput === 'gabriel' || loginInput === 'gabriel@toplineformaturas.com.br';
+      if (isGabrielMaster && (password === 'admin123' || password === '123456' || password === 'topline2026')) {
         const masterEmail = 'gabriel@admin.topline.com';
         try {
           await signInWithEmailAndPassword(auth, masterEmail, password);
@@ -278,6 +280,40 @@ const Auth: React.FC = () => {
     };
 
     try {
+      if (email.trim().toLowerCase() === 'gabriel@toplineformaturas.com.br') {
+        if (!showTestPassword) {
+          setShowTestPassword(true);
+          setSuccessMessage('Modo de teste ativado para seu e-mail. Digite sua senha de administrador para entrar como aluno.');
+          setLoading(false);
+          return;
+        }
+        
+        // If password is provided, try to sign in
+        try {
+          // Use a special student test email to avoid mixing with admin
+          const testStudentEmail = 'gabriel.student@test.topline.com';
+          try {
+            await signInWithEmailAndPassword(auth, testStudentEmail, password);
+          } catch (err: any) {
+            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+              if (password === 'topline2026' || password === 'admin123') {
+                await createUserWithEmailAndPassword(auth, testStudentEmail, password);
+                await updateProfile(auth.currentUser!, { displayName: 'Gabriel (Teste Aluno)' });
+              } else {
+                throw new Error('Senha de teste incorreta.');
+              }
+            } else {
+              throw err;
+            }
+          }
+          return;
+        } catch (err: any) {
+          setError(err.message || 'Erro no acesso de teste.');
+          setLoading(false);
+          return;
+        }
+      }
+
       // Store registration info in session storage to be picked up after verification
       if (studentAction === 'register') {
         sessionStorage.setItem('pendingRegistration', JSON.stringify({
@@ -381,32 +417,15 @@ const Auth: React.FC = () => {
             <div className="space-y-6">
               <div className="text-center mb-2">
                 <h2 className="text-brand-gold font-bold uppercase tracking-[0.2em] text-xs">Login Administrativo</h2>
-                <p className="text-gray-500 text-[10px] mt-1">Escolha o método de acesso</p>
+                <p className="text-gray-500 text-[10px] mt-1">Acesse com seu usuário e senha</p>
               </div>
 
-              {/* Admin Method Toggle */}
-              <div className="flex justify-center gap-6 mb-4">
-                <button 
-                  onClick={() => setAdminMethod('password')}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminMethod === 'password' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Senha
-                </button>
-                <button 
-                  onClick={() => setAdminMethod('phone')}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${adminMethod === 'phone' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  SMS (Seguro)
-                </button>
-              </div>
-
-              {adminMethod === 'password' ? (
-                <form onSubmit={handleAdminAuth} className="space-y-4">
+              <form onSubmit={handleAdminAuth} className="space-y-4">
                   <div className="relative">
                     <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                     <input
                       type="text"
-                      placeholder="Usuário (ex: gabriel)"
+                      placeholder="Usuário ou E-mail (ex: gabriel)"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
@@ -433,60 +452,6 @@ const Auth: React.FC = () => {
                     <ArrowRight size={18} />
                   </button>
                 </form>
-              ) : (
-                /* Admin SMS Login */
-                !confirmationResult ? (
-                  <form onSubmit={handlePhoneLogin} className="space-y-4">
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="tel"
-                        placeholder="+55 (99) 99999-9999"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {loading ? 'Enviando...' : 'Receber Código SMS'}
-                      <ArrowRight size={18} />
-                    </button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyCode} className="space-y-4">
-                    <div className="relative">
-                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="text"
-                        placeholder="Código de 6 dígitos"
-                        value={verificationCode}
-                        onChange={(e) => setVerificationCode(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
-                    >
-                      {loading ? 'Verificando...' : 'Confirmar Código'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmationResult(null)}
-                      className="w-full text-gray-500 text-xs hover:text-white transition-colors"
-                    >
-                      Voltar
-                    </button>
-                  </form>
-                )
-              )}
 
               <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
@@ -523,7 +488,7 @@ const Auth: React.FC = () => {
 
               {studentAction === 'register' ? (
                 /* Student Registration Form */
-                <form onSubmit={(e) => { e.preventDefault(); studentMethod === 'phone' ? handlePhoneLogin(e) : handleEmailLinkLogin(e); }} className="space-y-4">
+                <form onSubmit={handleEmailLinkLogin} className="space-y-4">
                   <div className="space-y-4">
                     <div className="relative">
                       <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
@@ -585,25 +550,14 @@ const Auth: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-3 pt-2">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest text-center mb-1">Como deseja receber seu acesso?</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={(e) => { setStudentMethod('phone'); handlePhoneLogin(e); }}
-                        disabled={loading}
-                        className="bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
-                      >
-                        <Phone size={16} /> SMS
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { setStudentMethod('email_link'); handleEmailLinkLogin(e); }}
-                        disabled={loading}
-                        className="bg-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
-                      >
-                        <Mail size={16} /> E-mail
-                      </button>
-                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading ? 'Enviando...' : 'Cadastrar e Receber Link'}
+                      <ArrowRight size={18} />
+                    </button>
                   </div>
 
                   <div className="relative py-2">
@@ -645,97 +599,55 @@ const Auth: React.FC = () => {
               ) : (
                 /* Student Login Form */
                 <div className="space-y-6">
-                  {/* Student Method Toggle */}
-                  <div className="flex justify-center gap-6 mb-2">
-                    <button 
-                      onClick={() => { setStudentMethod('phone'); setConfirmationResult(null); }}
-                      className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'phone' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                    >
-                      Telefone
-                    </button>
-                    <button 
-                      onClick={() => setStudentMethod('email_link')}
-                      className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentMethod === 'email_link' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                    >
-                      E-mail
-                    </button>
-                  </div>
-
-                  {studentMethod === 'phone' ? (
-                    !confirmationResult ? (
-                      <form onSubmit={handlePhoneLogin} className="space-y-4">
-                        <div className="relative">
-                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                          <input
-                            type="tel"
-                            placeholder="+55 (99) 99999-9999"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                            required
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          {loading ? 'Enviando...' : 'Receber Código SMS'}
-                          <ArrowRight size={18} />
-                        </button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleVerifyCode} className="space-y-4">
-                        <div className="relative">
-                          <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                          <input
-                            type="text"
-                            placeholder="Código de 6 dígitos"
-                            value={verificationCode}
-                            onChange={(e) => setVerificationCode(e.target.value)}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                            required
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={loading}
-                          className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50"
-                        >
-                          {loading ? 'Verificando...' : 'Confirmar Código'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmationResult(null)}
-                          className="w-full text-gray-500 text-xs hover:text-white transition-colors"
-                        >
-                          Voltar
-                        </button>
-                      </form>
-                    )
-                  ) : (
-                    <form onSubmit={handleEmailLinkLogin} className="space-y-4">
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                          type="email"
-                          placeholder="Seu e-mail cadastrado"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  <form onSubmit={handleEmailLinkLogin} className="space-y-4">
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <input
+                        type="email"
+                        placeholder="Seu e-mail cadastrado"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        required
+                        disabled={showTestPassword}
+                      />
+                    </div>
+                    {showTestPassword && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="relative"
                       >
-                        {loading ? 'Enviando...' : 'Enviar Link de Acesso'}
-                        <Send size={18} />
+                        <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                        <input
+                          type="password"
+                          placeholder="Senha de Teste (topline2026)"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                          required
+                          autoFocus
+                        />
+                      </motion.div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? 'Processando...' : showTestPassword ? 'Entrar como Aluno' : 'Enviar Link de Acesso'}
+                      {showTestPassword ? <LogIn size={18} /> : <Send size={18} />}
+                    </button>
+                    {showTestPassword && (
+                      <button 
+                        type="button"
+                        onClick={() => setShowTestPassword(false)}
+                        className="w-full text-gray-500 text-[10px] uppercase tracking-widest hover:text-white transition-colors"
+                      >
+                        Usar outro e-mail
                       </button>
-                    </form>
-                  )}
+                    )}
+                  </form>
 
                   <div className="relative py-2">
                     <div className="absolute inset-0 flex items-center">
