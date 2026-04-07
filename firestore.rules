@@ -57,8 +57,14 @@ service cloud.firestore {
     // User Rules
     match /users/{userId} {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow create: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow update: if isAuthenticated() && (isAdmin() || isOwner(userId));
+
+      // Photos Sub-collection
+      match /photos/{photoId} {
+        allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+        allow write: if isAdmin();
+      }
     }
 
     // Album Rules

@@ -688,6 +688,64 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Como Funciona Section */}
+      <section className="py-32 px-6 bg-black relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-6xl font-serif mb-6">Como Funciona</h2>
+            <p className="text-gray-400 text-xl max-w-2xl mx-auto font-light">
+              Sua jornada do clique à memória eterna em apenas 3 passos simples.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connecting Line (Desktop) */}
+            <div className="hidden md:block absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent -translate-y-1/2 z-0" />
+            
+            {[
+              {
+                icon: LogIn,
+                title: "Acesse seu Studio",
+                desc: "Faça login na sua área exclusiva para gerenciar suas fotos e pedidos com total segurança.",
+                step: "01"
+              },
+              {
+                icon: ImageIcon,
+                title: "Selecione suas Fotos",
+                desc: "Navegue pela sua galeria premium e escolha os momentos que mais marcaram sua trajetória.",
+                step: "02"
+              },
+              {
+                icon: Sparkles,
+                title: "Crie seu Álbum 3D",
+                desc: "Use nosso editor inteligente para diagramar e visualizar seu álbum físico em tempo real.",
+                step: "03"
+              }
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2 }}
+                className="relative z-10 bg-zinc-900/50 border border-white/5 p-10 rounded-[32px] hover:border-brand-gold/30 transition-all group"
+              >
+                <div className="w-16 h-16 bg-brand-gold/10 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-brand-gold group-hover:text-black transition-all duration-500">
+                  <item.icon size={32} className="text-brand-gold group-hover:text-black transition-colors" />
+                </div>
+                <div className="absolute top-10 right-10 text-4xl font-serif text-white/5 group-hover:text-brand-gold/10 transition-colors">
+                  {item.step}
+                </div>
+                <h3 className="text-2xl font-serif mb-4">{item.title}</h3>
+                <p className="text-gray-500 leading-relaxed font-light">
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* O Processo do Álbum 3D Section */}
       <section ref={albumRef} className="py-32 px-6 bg-black relative">
         <div className="max-w-7xl mx-auto">

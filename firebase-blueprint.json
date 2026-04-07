@@ -10,12 +10,23 @@
         "displayName": { "type": "string" },
         "photoURL": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "student", "pending"] },
+        "package": { "type": "string", "enum": ["prospect", "link", "black"] },
         "phoneNumber": { "type": "string" },
         "course": { "type": "string" },
         "semester": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role"]
+    },
+    "Photo": {
+      "title": "Photo",
+      "description": "A photo uploaded for a student.",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url"]
     },
     "Album": {
       "title": "Album",
@@ -51,6 +62,10 @@
     "/users/{uid}": {
       "schema": "UserProfile",
       "description": "User profiles collection."
+    },
+    "/users/{uid}/photos/{photoId}": {
+      "schema": "Photo",
+      "description": "Photos for a specific student."
     },
     "/albums/{albumId}": {
       "schema": "Album",

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
-import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles } from 'lucide-react';
+import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
 import Album3D from './Album3D';
@@ -12,6 +12,7 @@ const Student: React.FC = () => {
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
   const [studentData, setStudentData] = useState<any>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const user = auth.currentUser;
 
@@ -29,7 +30,15 @@ const Student: React.FC = () => {
 
     // Fetch student data for package info
     const unsubStudent = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      setStudentData(doc.data());
+      const data = doc.data();
+      setStudentData(data);
+      
+      // Show welcome message only once per session
+      const hasSeenWelcome = sessionStorage.getItem(`welcome_${user.uid}`);
+      if (!hasSeenWelcome && data?.role === 'student') {
+        setShowWelcome(true);
+        sessionStorage.setItem(`welcome_${user.uid}`, 'true');
+      }
     });
 
     // Safety redirect for admins who end up here
@@ -51,9 +60,16 @@ const Student: React.FC = () => {
       setMyOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // Fetch student photos from sub-collection
+    const photosRef = collection(db, 'users', user.uid, 'photos');
+    const unsubPhotos = onSnapshot(photosRef, (snapshot) => {
+      setSelectedPhotos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribe();
       unsubStudent();
+      unsubPhotos();
     };
   }, [user]);
 
@@ -65,6 +81,66 @@ const Student: React.FC = () => {
   const hasPurchasedAlbum = studentData?.package === 'black' || myOrders.some(order => 
     (order.type === 'album' || order.type === 'premium' || order.type === 'black_edition') && 
     (order.status === 'pago' || order.status === 'concluido')
+  );
+
+  const hasPurchasedLink = studentData?.package === 'link' || studentData?.package === 'black' || myOrders.some(order => 
+    (order.type === 'link' || order.type === 'album') && 
+    (order.status === 'pago' || order.status === 'concluido')
+  );
+
+  const userTier = hasPurchasedAlbum ? 'BLACK' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
+
+  const WelcomeOverlay = () => (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="max-w-lg w-full bg-zinc-900 border border-brand-gold/30 rounded-[40px] p-10 text-center relative overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.2)]"
+      >
+        {/* Background Sparkles */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-gold/20 blur-[80px] rounded-full" />
+        </div>
+
+        <div className="relative z-10">
+          <div className="w-20 h-20 bg-brand-gold/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-brand-gold/20">
+            {hasPurchasedAlbum ? (
+              <Sparkles className="text-brand-gold w-10 h-10 animate-pulse" />
+            ) : (
+              <ImageIcon className="text-brand-gold w-10 h-10" />
+            )}
+          </div>
+
+          <h2 className="topline-black text-4xl text-brand-gold mb-4">
+            {userTier === 'BLACK' ? 'Bem-vindo ao Black Edition' : 
+             userTier === 'LINK' ? 'Bem-vindo ao Link Edition' : 
+             'Bem-vindo à Experiência Top Line'}
+          </h2>
+
+          <p className="text-gray-400 text-sm leading-relaxed mb-10">
+            {userTier === 'BLACK' 
+              ? 'Sua jornada premium começou! Sua diagramação profissional já está liberada e pronta para ser eternizada no seu álbum físico exclusivo.'
+              : userTier === 'LINK'
+                ? 'Suas fotos chegaram! Explore suas memórias em 3D, selecione suas favoritas e veja como seu álbum físico pode ficar incrível.'
+                : 'Conheça o futuro das recordações! Experimente nosso editor 3D com fotos de demonstração e descubra o poder do Black Edition.'
+            }
+          </p>
+
+          <button 
+            onClick={() => setShowWelcome(false)}
+            className="w-full bg-brand-gold text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(212,175,55,0.3)]"
+          >
+            Começar Experiência
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 
   const Dashboard = () => (
@@ -81,11 +157,29 @@ const Student: React.FC = () => {
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Olá, {user?.displayName?.split(' ')[0] || 'Formando'}! 👋</h2>
             <p className="text-gray-400 text-base md:text-lg mb-8">
-              Bem-vindo à sua jornada de memórias. Aqui você pode acompanhar seus pedidos, selecionar fotos e visualizar seu álbum 3D.
+              {userTier === 'BLACK' 
+                ? 'Suas fotos estão prontas! Agora é hora de criar seu álbum eterno e eternizar seus melhores momentos.'
+                : userTier === 'LINK'
+                  ? 'Suas fotos estão disponíveis! Explore nossas opções premium e veja como elas ficariam no seu álbum físico.'
+                  : 'Sua formatura está sendo preparada com todo carinho. Enquanto as fotos não chegam, explore nossas opções premium e planeje seu álbum.'}
             </p>
-            <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
-              Começar Seleção de Fotos
-            </Link>
+            {userTier !== 'BLACK' ? (
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="editor" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
+                  {userTier === 'PROSPECT' ? 'Experimentar Modelos 3D' : 'Ver Minhas Fotos no Álbum'}
+                </Link>
+                <button 
+                  onClick={() => navigate('/area-do-aluno')} // In a real app, this would open a checkout
+                  className="inline-block bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all"
+                >
+                  {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Black Edition'}
+                </button>
+              </div>
+            ) : (
+              <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
+                Começar Seleção de Fotos
+              </Link>
+            )}
           </div>
         </motion.div>
       </section>
@@ -126,6 +220,66 @@ const Student: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Premium Showcase Section */}
+          {!hasPurchasedAlbum && (
+            <div className="space-y-6 pt-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Sparkles className="text-brand-gold" size={20} /> Modelos Premium Black Edition
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-[40px] relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4">
+                    <span className="bg-brand-gold text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Mais Vendido</span>
+                  </div>
+                  <div className="w-full aspect-video bg-black rounded-2xl mb-4 overflow-hidden border border-white/5">
+                    <img 
+                      src="https://picsum.photos/seed/leather/800/450" 
+                      alt="Leather Edition" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <h4 className="text-brand-gold font-bold text-lg mb-2">Leather Edition</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                    Acabamento em couro legítimo com costura artesanal e gravação a laser. O clássico que nunca sai de moda.
+                  </p>
+                  <button 
+                    onClick={() => navigate('editor')}
+                    className="text-brand-gold text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
+                  >
+                    Testar Modelo <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                <div className="bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-[40px] relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4">
+                    <span className="bg-white/10 text-white text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Exclusivo</span>
+                  </div>
+                  <div className="w-full aspect-video bg-black rounded-2xl mb-4 overflow-hidden border border-white/5">
+                    <img 
+                      src="https://picsum.photos/seed/acrylic/800/450" 
+                      alt="Acrylic Edition" 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <h4 className="text-brand-gold font-bold text-lg mb-2">Acrylic & Video Edition</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                    Capa em acrílico cristal de alta resistência com tela de vídeo integrada na primeira página. Tecnologia e luxo.
+                  </p>
+                  <button 
+                    onClick={() => navigate('editor')}
+                    className="text-brand-gold text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
+                  >
+                    Testar Modelo <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -171,6 +325,10 @@ const Student: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <AnimatePresence>
+        {showWelcome && <WelcomeOverlay />}
+      </AnimatePresence>
+      
       {/* Header */}
       <header className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
@@ -252,9 +410,10 @@ const Student: React.FC = () => {
         <Route path="editor" element={
           <div className="h-[calc(100vh-80px)]">
             <AlbumEditor 
-              photos={selectedPhotos.length > 0 ? selectedPhotos : albumPages.map((url, i) => ({ id: String(i), url }))} 
+              photos={selectedPhotos} 
               onBack={() => navigate('/area-do-aluno')}
               hasPurchasedAlbum={hasPurchasedAlbum}
+              userTier={userTier}
               onSave={(finalPages) => {
                 console.log('Saving album...', finalPages);
                 navigate('/area-do-aluno/album');

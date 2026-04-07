@@ -32,11 +32,13 @@ interface AlbumEditorProps {
   onSave?: (pages: string[]) => void;
   onBack?: () => void;
   hasPurchasedAlbum?: boolean;
+  userTier?: 'PROSPECT' | 'LINK' | 'BLACK';
 }
 
 type LayoutType = 'minimalist' | 'grid' | 'collage' | 'editorial' | 'spread';
 type EffectType = 'none' | 'bw' | 'sepia' | 'vintage' | 'vibrant';
 type AlbumSize = '20x30' | '30x30' | '30x40';
+type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 'photo';
 
 const PRICES = {
   photo: 34.90,
@@ -44,27 +46,49 @@ const PRICES = {
     '20x30': 0,
     '30x30': 50,
     '30x40': 100
+  },
+  material: {
+    'standard': 0,
+    'premium': 150,
+    'leather': 250,
+    'acrylic': 400,
+    'velvet': 300,
+    'photo': 200
   }
 };
 
-const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false }) => {
+const DEMO_PHOTOS: Photo[] = [
+  { id: 'demo1', url: 'https://picsum.photos/seed/grad1/800/1200' },
+  { id: 'demo2', url: 'https://picsum.photos/seed/grad2/800/1200' },
+  { id: 'demo3', url: 'https://picsum.photos/seed/grad3/800/1200' },
+  { id: 'demo4', url: 'https://picsum.photos/seed/grad4/800/1200' },
+  { id: 'demo5', url: 'https://picsum.photos/seed/grad5/800/1200' },
+  { id: 'demo6', url: 'https://picsum.photos/seed/grad6/800/1200' },
+];
+
+const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
+
+const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
+  const activePhotos = photos.length > 0 ? photos : DEMO_PHOTOS;
   const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
   const [effect, setEffect] = useState<EffectType>('none');
   const [albumSize, setAlbumSize] = useState<AlbumSize>('30x30');
+  const [materialType, setMaterialType] = useState<MaterialType>('standard');
+  const [videoUrl, setVideoUrl] = useState<string>(DEFAULT_VIDEO);
   const [pages, setPages] = useState<string[]>([]);
   const [pageLayouts, setPageLayouts] = useState<LayoutType[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   
-  const totalPrice = (photos.length * PRICES.photo) + PRICES.size[albumSize];
+  const totalPrice = (activePhotos.length * PRICES.photo) + PRICES.size[albumSize] + PRICES.material[materialType];
   
   // Initialize page layouts when photos change
   useEffect(() => {
     const photosPerPage = 1; // Default
-    const numPages = Math.ceil(photos.length / photosPerPage);
+    const numPages = Math.ceil(activePhotos.length / photosPerPage);
     setPageLayouts(new Array(numPages).fill(globalLayout));
-  }, [photos.length]);
+  }, [activePhotos.length]);
 
   // Update all layouts when global layout changes
   const handleGlobalLayoutChange = (newLayout: LayoutType) => {
@@ -80,10 +104,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   // Generate pages whenever photos, layouts, or effect changes
   useEffect(() => {
-    if (photos.length > 0 && pageLayouts.length > 0) {
+    if (activePhotos.length > 0 && pageLayouts.length > 0) {
       generateAllPages();
     }
-  }, [photos, pageLayouts, effect, albumSize]);
+  }, [activePhotos, pageLayouts, effect, albumSize]);
 
   const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     if (effect === 'none') return;
@@ -270,7 +294,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       if (layout === 'grid') photosPerPage = 4;
       if (layout === 'collage') photosPerPage = 2;
       
-      const pagePhotos = photos.slice(photoIdx, photoIdx + photosPerPage);
+      const pagePhotos = activePhotos.slice(photoIdx, photoIdx + photosPerPage);
       if (pagePhotos.length === 0) break;
       
       const pageData = await drawPage(pagePhotos, layout);
@@ -295,13 +319,28 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </button>
           
           <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest border ${
-            hasPurchasedAlbum 
+            userTier === 'BLACK' 
               ? 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold' 
-              : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+              : userTier === 'LINK'
+                ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                : 'bg-white/5 border-white/10 text-gray-400'
           }`}>
-            {hasPurchasedAlbum ? 'Black Edition' : 'Link Edition'}
+            {userTier === 'BLACK' ? 'Black Edition' : userTier === 'LINK' ? 'Link Edition' : 'Modo Demonstração'}
           </div>
         </div>
+
+        {userTier !== 'BLACK' && (
+          <div className="p-4 bg-brand-gold/10 border border-brand-gold/30 rounded-2xl">
+            <p className="text-[10px] text-brand-gold font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+              <Sparkles size={12} /> {userTier === 'PROSPECT' ? 'Modo de Demonstração' : 'Prévia Premium'}
+            </p>
+            <p className="text-[9px] text-gray-400 leading-relaxed">
+              {userTier === 'PROSPECT' 
+                ? 'Estamos usando fotos de exemplo para você conhecer a qualidade. Adquira o Link Edition para usar suas próprias fotos!'
+                : 'Você está visualizando suas fotos no modelo físico. Adquira o Black Edition para finalizar e receber seu álbum em casa.'}
+            </p>
+          </div>
+        )}
 
         <div>
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
@@ -323,6 +362,45 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             ))}
           </div>
         </div>
+
+        <div>
+          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
+            <Box size={14} /> Material da Capa
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {(['standard', 'premium', 'leather', 'acrylic', 'velvet', 'photo'] as MaterialType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => setMaterialType(type)}
+                className={`py-2 rounded-lg text-[8px] font-bold uppercase border transition-all ${
+                  materialType === type ? 'bg-brand-gold border-brand-gold text-black' : 'bg-white/5 border-white/10 text-gray-400'
+                }`}
+              >
+                {type === 'standard' ? 'Padrão' : 
+                 type === 'premium' ? 'Premium' : 
+                 type === 'leather' ? 'Couro' : 
+                 type === 'acrylic' ? 'Acrílico' : 
+                 type === 'velvet' ? 'Veludo' : 'Fotográfica'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {!hasPurchasedAlbum && (
+          <div>
+            <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
+              <Sparkles size={14} /> Vídeo de Capa (Opcional)
+            </h3>
+            <input 
+              type="text" 
+              placeholder="URL do vídeo (MP4)"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:border-brand-gold transition-all"
+            />
+            <p className="text-[8px] text-gray-500 mt-2 uppercase tracking-widest">Adicione um vídeo para a primeira página do seu álbum premium.</p>
+          </div>
+        )}
 
         <div>
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
@@ -369,6 +447,12 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               <div className="flex justify-between text-[10px] text-gray-400">
                 <span>Adicional Tamanho {albumSize}</span>
                 <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${PRICES.size[albumSize].toFixed(2)}`}</span>
+              </div>
+            )}
+            {PRICES.material[materialType] > 0 && (
+              <div className="flex justify-between text-[10px] text-gray-400">
+                <span>Adicional Material {materialType}</span>
+                <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${PRICES.material[materialType].toFixed(2)}`}</span>
               </div>
             )}
             <div className="pt-2 border-t border-white/5 flex justify-between text-xs font-bold text-white">
@@ -465,7 +549,15 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               exit={{ opacity: 0 }}
               className="h-full"
             >
-              <Album3D pages={pages} currentPage={currentPage} isOpen={true} zoom={1} />
+              <Album3D 
+                pages={pages} 
+                currentPage={currentPage} 
+                isOpen={true} 
+                zoom={1} 
+                videoUrl={videoUrl || undefined}
+                materialType={materialType}
+                coverTextureUrl={photos[0]?.url}
+              />
               
               {/* 3D Controls Overlay */}
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-xl border border-white/10 p-2 rounded-2xl z-10">

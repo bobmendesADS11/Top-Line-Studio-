@@ -17,9 +17,14 @@ import {
   GraduationCap,
   MessageCircle,
   Menu,
-  X
+  X,
+  Upload,
+  Image as ImageIcon,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { setDoc, serverTimestamp, addDoc, getDocs } from 'firebase/firestore';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'albums' | 'students'>('dashboard');
@@ -28,6 +33,11 @@ const Admin: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [albums, setAlbums] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
+  const [selectedStudentForPhotos, setSelectedStudentForPhotos] = useState<any>(null);
+  const [selectedStudentForApproval, setSelectedStudentForApproval] = useState<any>(null);
+  const [studentPhotos, setStudentPhotos] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [approvalTier, setApprovalTier] = useState('prospect');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,9 +104,20 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async () => {
+    if (!selectedStudentForApproval) return;
     try {
-      await updateDoc(doc(db, 'users', id), { role: 'student' });
+      await updateDoc(doc(db, 'users', selectedStudentForApproval.id), { 
+        role: 'student',
+        package: approvalTier
+      });
+      
+      // Optional: Send WhatsApp automatically after approval
+      if (selectedStudentForApproval.phoneNumber) {
+        sendWhatsApp(selectedStudentForApproval.phoneNumber, selectedStudentForApproval.displayName || 'Formando');
+      }
+      
+      setSelectedStudentForApproval(null);
     } catch (error) {
       console.error("Error approving student:", error);
     }
@@ -113,6 +134,53 @@ const Admin: React.FC = () => {
       await updateDoc(doc(db, 'users', id), { package: newPackage });
     } catch (error) {
       console.error("Error updating package:", error);
+    }
+  };
+
+  const handleAddStudentInfo = () => {
+    alert('Os alunos agora se cadastram sozinhos na página de login. Você só precisa aprová-los aqui quando aparecerem como "pending".');
+  };
+
+  const handleManagePhotos = async (student: any) => {
+    setSelectedStudentForPhotos(student);
+    const photosRef = collection(db, 'users', student.id, 'photos');
+    const snapshot = await getDocs(photosRef);
+    setStudentPhotos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !selectedStudentForPhotos) return;
+    
+    setIsUploading(true);
+    const files = Array.from(e.target.files);
+    
+    try {
+      for (const file of files) {
+        // In a real app, we'd upload to Firebase Storage.
+        // For this demo, we'll use a placeholder URL.
+        const demoUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
+        await addDoc(collection(db, 'users', selectedStudentForPhotos.id, 'photos'), {
+          url: demoUrl,
+          name: file.name,
+          createdAt: serverTimestamp()
+        });
+      }
+      // Refresh photos
+      handleManagePhotos(selectedStudentForPhotos);
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!selectedStudentForPhotos) return;
+    try {
+      await deleteDoc(doc(db, 'users', selectedStudentForPhotos.id, 'photos', photoId));
+      setStudentPhotos(studentPhotos.filter(p => p.id !== photoId));
+    } catch (error) {
+      console.error("Error deleting photo:", error);
     }
   };
 
@@ -223,20 +291,24 @@ const Admin: React.FC = () => {
                 className="w-full sm:w-64 bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-brand-gold outline-none transition-all"
               />
             </div>
-            <button className="bg-brand-gold text-black px-6 py-2 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-gold/90 transition-all">
+            <button 
+              onClick={() => activeTab === 'students' ? handleAddStudentInfo() : null}
+              className="bg-brand-gold text-black px-6 py-2 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-gold/90 transition-all"
+            >
               <Plus size={20} />
-              Novo Item
+              {activeTab === 'students' ? 'Info Cadastro' : 'Novo Item'}
             </button>
           </div>
         </header>
 
         {/* Dashboard Stats */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
             {[
               { label: 'Total de Pedidos', value: orders.length, icon: ShoppingBag, color: 'text-blue-500' },
               { label: 'Álbuns Ativos', value: albums.length, icon: Book, color: 'text-brand-gold' },
-              { label: 'Alunos Cadastrados', value: students.length, icon: Users, color: 'text-green-500' },
+              { label: 'Alunos Ativos', value: students.filter(s => s.role === 'student').length, icon: Users, color: 'text-green-500' },
+              { label: 'Pendentes', value: students.filter(s => s.role === 'pending').length, icon: AlertCircle, color: 'text-yellow-500' },
             ].map((stat, i) => (
               <div key={i} className="bg-zinc-900/50 border border-white/5 p-6 md:p-8 rounded-3xl">
                 <div className="flex items-center justify-between mb-4">
@@ -368,12 +440,15 @@ const Admin: React.FC = () => {
                     </td>
                     <td className="p-4 md:p-6">
                       <select 
-                        value={student.package || 'link'} 
+                        value={student.package || 'prospect'} 
                         onChange={(e) => handleUpdatePackage(student.id, e.target.value)}
                         className={`bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase transition-all outline-none ${
-                          student.package === 'black' ? 'text-brand-gold border-brand-gold/30' : 'text-blue-400 border-blue-400/30'
+                          student.package === 'black' ? 'text-brand-gold border-brand-gold/30' : 
+                          student.package === 'link' ? 'text-blue-400 border-blue-400/30' :
+                          'text-gray-400 border-white/10'
                         }`}
                       >
+                        <option value="prospect">Demonstração</option>
                         <option value="link">Link Edition</option>
                         <option value="black">Black Edition</option>
                       </select>
@@ -389,12 +464,23 @@ const Admin: React.FC = () => {
                     </td>
                     <td className="p-4 md:p-6 text-right">
                       <div className="flex items-center justify-end gap-1 md:gap-2">
+                        <button 
+                          onClick={() => handleManagePhotos(student)}
+                          className="p-2 hover:bg-white/10 rounded-lg transition-colors text-brand-gold"
+                          title="Gerenciar Fotos"
+                        >
+                          <ImageIcon size={16} />
+                        </button>
                         {student.role === 'pending' ? (
                           <button 
-                            onClick={() => handleApprove(student.id)}
-                            className="bg-brand-gold text-black px-2 md:px-3 py-1 rounded-lg text-[8px] md:text-[10px] font-bold uppercase hover:bg-brand-gold/90 transition-all"
+                            onClick={() => {
+                              setSelectedStudentForApproval(student);
+                              setApprovalTier(student.package || 'prospect');
+                            }}
+                            className="bg-brand-gold text-black px-4 py-2 rounded-xl text-[10px] font-bold uppercase hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2"
                           >
-                            Aprovar
+                            <CheckCircle2 size={14} />
+                            Aprovar Acesso
                           </button>
                         ) : (
                           student.role === 'student' && (
@@ -418,6 +504,128 @@ const Admin: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Approve Student Modal */}
+      {selectedStudentForApproval && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-zinc-900 border border-brand-gold/30 rounded-[40px] p-8 max-w-md w-full shadow-[0_0_50px_rgba(212,175,55,0.1)]"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-xl font-bold">Aprovar Cadastro</h3>
+              <button onClick={() => setSelectedStudentForApproval(null)} className="p-2 hover:bg-white/5 rounded-full">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-8">
+              <p className="text-gray-400 text-sm mb-2">Aluno:</p>
+              <p className="text-white font-bold text-lg">{selectedStudentForApproval.displayName}</p>
+              <p className="text-gray-500 text-xs">{selectedStudentForApproval.email}</p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-3 block">Selecione o Pacote de Acesso</label>
+                <div className="grid grid-cols-1 gap-3">
+                  {[
+                    { id: 'prospect', label: 'Demonstração (Prospect)', desc: 'Acesso limitado para visualização' },
+                    { id: 'link', label: 'Link Edition', desc: 'Acesso às fotos digitais' },
+                    { id: 'black', label: 'Black Edition', desc: 'Acesso completo + Álbum Físico' }
+                  ].map((tier) => (
+                    <button
+                      key={tier.id}
+                      onClick={() => setApprovalTier(tier.id)}
+                      className={`w-full p-4 rounded-2xl border text-left transition-all ${
+                        approvalTier === tier.id 
+                          ? 'bg-brand-gold/10 border-brand-gold text-brand-gold' 
+                          : 'bg-black/40 border-white/5 text-gray-400 hover:border-white/20'
+                      }`}
+                    >
+                      <p className="font-bold text-sm">{tier.label}</p>
+                      <p className="text-[10px] opacity-60">{tier.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  onClick={() => setSelectedStudentForApproval(null)}
+                  className="flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest border border-white/10 hover:bg-white/5 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleApprove}
+                  className="flex-1 bg-brand-gold text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)]"
+                >
+                  Confirmar e Aprovar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Manage Photos View */}
+      {selectedStudentForPhotos && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-zinc-900 border border-white/10 rounded-[40px] p-8 max-w-4xl w-full h-[80vh] flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-xl font-bold">Fotos de {selectedStudentForPhotos.displayName}</h3>
+                <p className="text-xs text-gray-500">{studentPhotos.length} fotos carregadas</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="bg-brand-gold text-black px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all cursor-pointer flex items-center gap-2">
+                  <Upload size={16} />
+                  {isUploading ? 'Enviando...' : 'Subir Fotos'}
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleUploadPhoto}
+                    disabled={isUploading}
+                  />
+                </label>
+                <button onClick={() => setSelectedStudentForPhotos(null)} className="p-2 hover:bg-white/5 rounded-full">
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-2">
+              {studentPhotos.map((photo) => (
+                <div key={photo.id} className="aspect-[2/3] bg-black rounded-xl overflow-hidden relative group">
+                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button 
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {studentPhotos.length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 text-gray-500">
+                  <ImageIcon size={48} className="mb-4 opacity-20" />
+                  <p>Nenhuma foto encontrada para este aluno.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
