@@ -530,10 +530,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           <button
             onClick={() => onSave?.(pages)}
             disabled={isGenerating}
-            className="w-full bg-brand-gold text-black py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-gold/90 transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+            className="w-full bg-brand-gold text-black py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 shadow-[0_0_30px_rgba(212,175,55,0.4)] animate-pulse"
           >
-            <Download size={16} />
-            {hasPurchasedAlbum ? 'Finalizar Diagramação' : 'Finalizar e Comprar Álbum'}
+            <Check size={16} />
+            {hasPurchasedAlbum ? 'Finalizar Diagramação' : 'Confirmar e Comprar Álbum'}
           </button>
         </div>
       </div>
@@ -576,6 +576,16 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 >
                   <ArrowRight size={20} />
                 </button>
+                
+                <div className="w-[1px] h-8 bg-white/10 mx-2" />
+                
+                <button 
+                  onClick={() => onSave?.(pages)}
+                  className="bg-brand-gold text-black px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2"
+                >
+                  <Check size={16} />
+                  Confirmar Pagamento
+                </button>
               </div>
             </motion.div>
           ) : (
@@ -608,46 +618,60 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                     <p className="text-xs uppercase tracking-widest text-gray-500">Otimizando diagramação...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-1 gap-12">
                     {pages.map((page, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
                         className="group relative"
                       >
-                        <div className="aspect-[2/3] bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-white/5 transition-transform group-hover:scale-[1.02]">
-                          <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
-                          
-                          {/* Individual Page Layout Controls */}
-                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 gap-4">
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-brand-gold mb-2">Mudar Layout desta Página</p>
-                            <div className="grid grid-cols-2 gap-2 w-full">
-                              {[
-                                { id: 'minimalist', label: 'Minimalista' },
-                                { id: 'grid', label: 'Grade (4)' },
-                                { id: 'spread', label: 'Sangrado' },
-                                { id: 'collage', label: 'Artístico' },
-                                { id: 'editorial', label: 'Revista' }
-                              ].map(l => (
-                                <button
-                                  key={l.id}
-                                  onClick={() => handlePageLayoutChange(i, l.id as LayoutType)}
-                                  className={`py-2 rounded-lg border text-[8px] font-bold tracking-widest transition-all ${
-                                    pageLayouts[i] === l.id 
-                                      ? 'bg-brand-gold border-brand-gold text-black' 
-                                      : 'bg-white/5 border-white/10 text-white hover:border-brand-gold/50'
-                                  }`}
-                                >
-                                  {l.label}
-                                </button>
-                              ))}
+                        <div className="flex flex-col lg:flex-row gap-8 bg-zinc-900/40 border border-white/5 p-8 rounded-[40px] hover:border-brand-gold/30 transition-all">
+                          <div className="flex-1 aspect-[1.414/1] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/5 relative">
+                            <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
+                            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-brand-gold">
+                              Página {i + 1}
                             </div>
                           </div>
-                        </div>
-                        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border border-white/10">
-                          Página {i + 1}
+                          
+                          <div className="w-full lg:w-64 space-y-8">
+                            <div>
+                              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
+                                <Layout size={14} className="text-brand-gold" /> Layout da Página
+                              </h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {[
+                                  { id: 'minimalist', label: 'Minimal' },
+                                  { id: 'grid', label: 'Grade' },
+                                  { id: 'spread', label: 'Sangrado' },
+                                  { id: 'collage', label: 'Artístico' },
+                                  { id: 'editorial', label: 'Revista' }
+                                ].map(l => (
+                                  <button
+                                    key={l.id}
+                                    onClick={() => handlePageLayoutChange(i, l.id as LayoutType)}
+                                    className={`py-3 rounded-xl border text-[9px] font-bold uppercase tracking-widest transition-all ${
+                                      pageLayouts[i] === l.id 
+                                        ? 'bg-brand-gold border-brand-gold text-black' 
+                                        : 'bg-black/40 border-white/10 text-white hover:border-brand-gold/50'
+                                    }`}
+                                  >
+                                    {l.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-white/5">
+                              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
+                                <Palette size={14} className="text-brand-gold" /> Estilo Sugerido
+                              </h4>
+                              <p className="text-[9px] text-gray-400 leading-relaxed italic">
+                                "Este layout foi otimizado para destacar a composição desta página específica."
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </motion.div>
                     ))}

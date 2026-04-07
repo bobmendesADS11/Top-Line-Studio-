@@ -95,48 +95,55 @@ const Student: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-3xl"
     >
       <motion.div 
-        initial={{ scale: 0.9, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="max-w-lg w-full bg-zinc-900 border border-brand-gold/30 rounded-[40px] p-10 text-center relative overflow-hidden shadow-[0_0_50px_rgba(212,175,55,0.2)]"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="max-w-lg w-full bg-zinc-900/40 border border-brand-gold/30 rounded-[40px] p-10 text-center backdrop-blur-xl shadow-[0_0_100px_rgba(212,175,55,0.15)] relative overflow-hidden"
       >
-        {/* Background Sparkles */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
-          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-gold/20 blur-[80px] rounded-full" />
-        </div>
+        {/* Decorative background element */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 bg-brand-gold/10 blur-[80px] rounded-full" />
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-brand-gold/10 blur-[80px] rounded-full" />
 
         <div className="relative z-10">
-          <div className="w-20 h-20 bg-brand-gold/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-brand-gold/20">
-            {hasPurchasedAlbum ? (
-              <Sparkles className="text-brand-gold w-10 h-10 animate-pulse" />
-            ) : (
-              <ImageIcon className="text-brand-gold w-10 h-10" />
-            )}
+          <div className="flex flex-col items-center mb-10">
+            <div className="relative w-20 h-20 mb-6">
+              <div className="absolute inset-0 bg-brand-gold/20 blur-2xl rounded-full animate-pulse" />
+              <div className="relative w-full h-full bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden group">
+                <GraduationCap className="text-brand-gold w-10 h-10 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+              </div>
+            </div>
+            
+            <h1 className="font-serif text-3xl text-white uppercase tracking-[0.2em] mb-2">Top Line</h1>
+            <div className="flex items-center gap-3">
+              <span className="text-[8px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
+              <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-brand-gold">Black Edition</span>
+            </div>
           </div>
 
-          <h2 className="topline-black text-4xl text-brand-gold mb-4">
-            {userTier === 'BLACK' ? 'Bem-vindo ao Black Edition' : 
-             userTier === 'LINK' ? 'Bem-vindo ao Link Edition' : 
-             'Bem-vindo à Experiência Top Line'}
-          </h2>
-
-          <p className="text-gray-400 text-sm leading-relaxed mb-10">
+          <h2 className="text-2xl font-bold text-white mb-4 leading-tight">
             {userTier === 'BLACK' 
-              ? 'Sua jornada premium começou! Sua diagramação profissional já está liberada e pronta para ser eternizada no seu álbum físico exclusivo.'
+              ? 'Sua Jornada Premium Começa Agora' 
               : userTier === 'LINK'
-                ? 'Suas fotos chegaram! Explore suas memórias em 3D, selecione suas favoritas e veja como seu álbum físico pode ficar incrível.'
-                : 'Conheça o futuro das recordações! Experimente nosso editor 3D com fotos de demonstração e descubra o poder do Black Edition.'
-            }
+                ? 'Suas Recordações em Alta Definição'
+                : 'Bem-vindo à Experiência Top Line'}
+          </h2>
+          
+          <p className="text-gray-400 text-sm mb-10 leading-relaxed max-w-sm mx-auto">
+            {userTier === 'BLACK'
+              ? 'Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte em sua casa.'
+              : userTier === 'LINK'
+                ? 'Acesse sua galeria exclusiva, baixe suas fotos e experimente como elas ficariam no nosso álbum físico de luxo.'
+                : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder do Black Edition.'}
           </p>
 
           <button 
             onClick={() => setShowWelcome(false)}
-            className="w-full bg-brand-gold text-black py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(212,175,55,0.3)]"
+            className="w-full bg-brand-gold text-black py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.3)] group flex items-center justify-center gap-3"
           >
             Começar Experiência
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </motion.div>
@@ -165,8 +172,8 @@ const Student: React.FC = () => {
             </p>
             {userTier !== 'BLACK' ? (
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="editor" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
-                  {userTier === 'PROSPECT' ? 'Experimentar Modelos 3D' : 'Ver Minhas Fotos no Álbum'}
+                <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
+                  {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Ver Minhas Fotos no Álbum'}
                 </Link>
                 <button 
                   onClick={() => navigate('/area-do-aluno')} // In a real app, this would open a checkout
@@ -288,14 +295,18 @@ const Student: React.FC = () => {
         <div className="space-y-6">
           <h3 className="text-xl font-bold">Acesso Rápido</h3>
           <div className="space-y-4">
-            <Link to="galeria" className="w-full bg-zinc-900/50 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:bg-white/5 transition-colors text-left group">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                <ImageIcon size={20} />
+            <Link 
+              to="galeria" 
+              className="w-full bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-3xl flex items-center gap-6 hover:bg-brand-gold/5 transition-all text-left group"
+            >
+              <div className="w-14 h-14 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold group-hover:bg-brand-gold group-hover:text-black transition-all shadow-[0_0_20px_rgba(212,175,55,0.1)]">
+                <ImageIcon size={28} />
               </div>
-              <div>
-                <p className="font-medium">Galeria de Fotos</p>
-                <p className="text-xs text-gray-500">Ver fotos do evento</p>
+              <div className="flex-1">
+                <p className="font-bold text-lg">Escolher Minhas Fotos</p>
+                <p className="text-xs text-gray-500">Acesse sua galeria e selecione suas favoritas</p>
               </div>
+              <ArrowRight className="text-brand-gold group-hover:translate-x-2 transition-transform" />
             </Link>
             
             <Link to="album" className="w-full bg-zinc-900/50 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:bg-white/5 transition-colors text-left group">

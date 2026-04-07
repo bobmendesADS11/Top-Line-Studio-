@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 
 interface Photo {
   id: string;
@@ -22,6 +22,8 @@ export default function Gallery({ onSelect }: GalleryProps) {
   const [page, setPage] = useState(1);
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const PHOTOS_PER_PAGE = 24;
 
   useEffect(() => {
@@ -65,6 +67,30 @@ export default function Gallery({ onSelect }: GalleryProps) {
       newFavorites.add(id);
     }
     setFavoriteIds(newFavorites);
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !auth.currentUser) return;
+    
+    setIsUploading(true);
+    const files = Array.from(e.target.files);
+    
+    try {
+      for (const file of files) {
+        // In a real app, we'd upload to Firebase Storage.
+        // For this demo, we'll use a placeholder URL.
+        const demoUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
+        await addDoc(collection(db, 'users', auth.currentUser.uid, 'photos'), {
+          url: demoUrl,
+          name: file.name,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading photos:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleContinue = () => {
@@ -113,6 +139,23 @@ export default function Gallery({ onSelect }: GalleryProps) {
           </div>
           
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="bg-brand-gold text-black px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+            >
+              <Upload size={16} />
+              {isUploading ? 'Enviando...' : 'Subir Fotos'}
+            </button>
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleUpload}
+            />
+            
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
               <input 
