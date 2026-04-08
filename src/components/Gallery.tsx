@@ -25,7 +25,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const PHOTOS_PER_PAGE = 24;
+  const PHOTOS_PER_PAGE = 100;
 
   useEffect(() => {
     if (!auth.currentUser) return;
