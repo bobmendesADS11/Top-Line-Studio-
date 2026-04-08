@@ -406,7 +406,7 @@ const Auth: React.FC = () => {
           <h1 className="font-serif text-2xl text-white uppercase tracking-[0.1em] mb-1">Top Line</h1>
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-[7px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
-            <span className="text-[7px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+            <span className="text-[7px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <p className="text-gray-500 text-[9px] uppercase tracking-[0.2em] font-light">Acesse sua área exclusiva</p>
@@ -783,7 +783,7 @@ const Auth: React.FC = () => {
         </div>
 
         <p className="mt-8 text-center text-[10px] text-gray-600 uppercase tracking-widest">
-          Top Line Black Edition • 2026
+          Top Line Edition • 2026
         </p>
       </motion.div>
     </div>

@@ -88,7 +88,7 @@ const Student: React.FC = () => {
     (order.status === 'pago' || order.status === 'concluido')
   );
 
-  const userTier = hasPurchasedAlbum ? 'BLACK' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
+  const userTier = hasPurchasedAlbum ? 'ALBUM' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
 
   const WelcomeOverlay = () => (
     <motion.div 
@@ -118,12 +118,12 @@ const Student: React.FC = () => {
             <h1 className="font-serif text-3xl text-white uppercase tracking-[0.2em] mb-2">Top Line</h1>
             <div className="flex items-center gap-3">
               <span className="text-[8px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
-              <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-brand-gold">Black Edition</span>
+              <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-brand-gold">Edition</span>
             </div>
           </div>
 
           <h2 className="text-2xl font-bold text-white mb-4 leading-tight">
-            {userTier === 'BLACK' 
+            {userTier === 'ALBUM' 
               ? 'Sua Jornada Premium Começa Agora' 
               : userTier === 'LINK'
                 ? 'Suas Recordações em Alta Definição'
@@ -131,11 +131,11 @@ const Student: React.FC = () => {
           </h2>
           
           <p className="text-gray-400 text-sm mb-10 leading-relaxed max-w-sm mx-auto">
-            {userTier === 'BLACK'
+            {userTier === 'ALBUM'
               ? 'Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte em sua casa.'
               : userTier === 'LINK'
                 ? 'Acesse sua galeria exclusiva, baixe suas fotos e experimente como elas ficariam no nosso álbum físico de luxo.'
-                : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder do Black Edition.'}
+                : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder da Edition.'}
           </p>
 
           <button 
@@ -164,13 +164,13 @@ const Student: React.FC = () => {
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Olá, {user?.displayName?.split(' ')[0] || 'Formando'}! 👋</h2>
             <p className="text-gray-400 text-base md:text-lg mb-8">
-              {userTier === 'BLACK' 
+              {userTier === 'ALBUM' 
                 ? 'Suas fotos estão prontas! Agora é hora de criar seu álbum eterno e eternizar seus melhores momentos.'
                 : userTier === 'LINK'
                   ? 'Suas fotos estão disponíveis! Explore nossas opções premium e veja como elas ficariam no seu álbum físico.'
                   : 'Sua formatura está sendo preparada com todo carinho. Enquanto as fotos não chegam, explore nossas opções premium e planeje seu álbum.'}
             </p>
-            {userTier !== 'BLACK' ? (
+            {userTier !== 'ALBUM' ? (
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
                   {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Ver Minhas Fotos no Álbum'}
@@ -179,7 +179,7 @@ const Student: React.FC = () => {
                   onClick={() => navigate('/area-do-aluno')} // In a real app, this would open a checkout
                   className="inline-block bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all"
                 >
-                  {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Black Edition'}
+                  {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Album Edition'}
                 </button>
               </div>
             ) : (
@@ -235,7 +235,7 @@ const Student: React.FC = () => {
             <div className="space-y-6 pt-8">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold flex items-center gap-2">
-                  <Sparkles className="text-brand-gold" size={20} /> Modelos Premium Black Edition
+                  <Sparkles className="text-brand-gold" size={20} /> Modelos Premium Edition
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -352,7 +352,7 @@ const Student: React.FC = () => {
                 <span className="font-serif text-base md:text-lg text-white uppercase tracking-[0.1em] leading-none">Top Line</span>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="text-[4px] md:text-[5px] uppercase tracking-[0.4em] font-light text-white/60">Formaturas</span>
-                  <span className="text-[4px] md:text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+                  <span className="text-[4px] md:text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
                 </div>
               </div>
             </Link>

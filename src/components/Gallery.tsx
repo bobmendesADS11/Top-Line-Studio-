@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2 } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2, Download, Plus } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 
 interface Photo {
   id: string;
   url: string;
+  name?: string;
+  source?: 'admin' | 'student';
   thumbnail: string;
+}
+
+interface UserProfile {
+  package?: 'prospect' | 'link' | 'album';
+  displayName?: string;
 }
 
 interface GalleryProps {
@@ -16,10 +23,12 @@ interface GalleryProps {
 
 export default function Gallery({ onSelect }: GalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<'all' | 'selected' | 'student'>('all');
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -30,6 +39,14 @@ export default function Gallery({ onSelect }: GalleryProps) {
   useEffect(() => {
     if (!auth.currentUser) return;
 
+    // Fetch User Profile for Package Status
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsubUser = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        setUserProfile(doc.data() as UserProfile);
+      }
+    });
+
     const photosRef = collection(db, 'users', auth.currentUser.uid, 'photos');
     const q = query(photosRef, orderBy('createdAt', 'desc'), limit(PHOTOS_PER_PAGE * page));
     
@@ -37,6 +54,8 @@ export default function Gallery({ onSelect }: GalleryProps) {
       const fetchedPhotos = snapshot.docs.map(doc => ({
         id: doc.id,
         url: doc.data().url,
+        name: doc.data().name,
+        source: doc.data().source || 'admin',
         thumbnail: doc.data().url // Using same for now
       }));
       setPhotos(fetchedPhotos);
@@ -46,7 +65,10 @@ export default function Gallery({ onSelect }: GalleryProps) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubUser();
+    };
   }, [page]);
 
   const togglePhoto = (id: string) => {
@@ -95,6 +117,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
         await addDoc(collection(db, 'users', auth.currentUser.uid, 'photos'), {
           url: dataUrl,
           name: file.name,
+          source: 'student',
           createdAt: serverTimestamp()
         });
       }
@@ -109,21 +132,23 @@ export default function Gallery({ onSelect }: GalleryProps) {
     setShowFinalizeModal(true);
   };
 
-  const handleFinalize = async (pkg: 'link' | 'black') => {
+  const handleFinalize = async (pkg: 'link' | 'album') => {
     if (!auth.currentUser) return;
     
     try {
       const selected = photos.filter(p => selectedIds.has(p.id));
-      // Create an order or update user profile
+      // Create an order
       await addDoc(collection(db, 'orders'), {
         studentUid: auth.currentUser.uid,
         studentEmail: auth.currentUser.email,
+        studentName: userProfile?.displayName || 'Formando',
         package: pkg,
         photoIds: Array.from(selectedIds),
         status: 'pending',
         createdAt: serverTimestamp()
       });
       
+      setShowFinalizeModal(false);
       onSelect(selected);
     } catch (error) {
       console.error("Error finalizing selection:", error);
@@ -153,6 +178,23 @@ export default function Gallery({ onSelect }: GalleryProps) {
     }
   };
 
+  const downloadPhoto = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || 'foto-topline.jpg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadAll = () => {
+    photos.forEach((photo, index) => {
+      setTimeout(() => {
+        downloadPhoto(photo.url, photo.name || `foto-${index + 1}.jpg`);
+      }, index * 200); // Small delay to prevent browser blocking multiple downloads
+    });
+  };
+
   const toggleSelectAll = () => {
     if (selectedIds.size === photos.length) {
       setSelectedIds(new Set());
@@ -160,6 +202,12 @@ export default function Gallery({ onSelect }: GalleryProps) {
       setSelectedIds(new Set(photos.map(p => p.id)));
     }
   };
+
+  const filteredPhotos = photos.filter(photo => {
+    if (activeTab === 'selected') return selectedIds.has(photo.id);
+    if (activeTab === 'student') return photo.source === 'student';
+    return true;
+  });
 
   if (loading) {
     return (
@@ -175,13 +223,23 @@ export default function Gallery({ onSelect }: GalleryProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="topline-black text-2xl">Top Line <span className="gold-gradient italic lowercase tracking-normal">Black</span></h2>
+              <h2 className="topline-edition text-2xl">Top Line <span className="gold-gradient italic lowercase tracking-normal">Edition</span></h2>
               <span className="bg-brand-gold/20 text-brand-gold text-[10px] px-2 py-1 rounded-full font-bold border border-brand-gold/30">20 ANOS</span>
             </div>
             <p className="text-gray-500 text-sm">Selecione as fotos que farão parte do seu álbum exclusivo</p>
           </div>
           
           <div className="flex items-center gap-4 flex-wrap">
+            {(userProfile?.package === 'link' || userProfile?.package === 'album') && (
+              <button 
+                onClick={downloadAll}
+                className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-brand-gold transition-all flex items-center gap-2"
+              >
+                <Download size={16} />
+                Baixar Todas
+              </button>
+            )}
+
             <button 
               onClick={toggleSelectAll}
               className="px-6 py-2 rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all text-xs font-bold uppercase tracking-widest"
@@ -220,8 +278,30 @@ export default function Gallery({ onSelect }: GalleryProps) {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex items-center gap-4 mb-8 border-b border-white/5 pb-4 overflow-x-auto scrollbar-hide">
+          {[
+            { id: 'all', label: 'Fotos do Evento', icon: ImageIcon },
+            { id: 'selected', label: `Minha Seleção (${selectedIds.size})`, icon: Check },
+            { id: 'student', label: 'Minhas Fotos', icon: Upload },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-brand-gold/10 text-brand-gold border border-brand-gold/30' 
+                  : 'text-gray-500 hover:text-white'
+              }`}
+            >
+              <tab.icon size={12} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {photos.map((photo) => (
+          {filteredPhotos.map((photo) => (
             <motion.div 
               key={photo.id}
               layout
@@ -342,7 +422,16 @@ export default function Gallery({ onSelect }: GalleryProps) {
               alt="" 
               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
             />
-            <div className="mt-8 flex items-center gap-6">
+            <div className="mt-8 flex items-center gap-4">
+              {(userProfile?.package === 'link' || userProfile?.package === 'album') && (
+                <button 
+                  onClick={() => downloadPhoto(previewPhoto.url, previewPhoto.name || 'foto.jpg')}
+                  className="bg-white/10 text-white px-8 py-3 rounded-full font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <Download size={20} />
+                  Baixar Foto
+                </button>
+              )}
               <button 
                 onClick={() => {
                   togglePhoto(previewPhoto.id);
@@ -374,33 +463,76 @@ export default function Gallery({ onSelect }: GalleryProps) {
               </button>
             </div>
 
-            <p className="text-gray-400 mb-8">Você selecionou <span className="text-white font-bold">{selectedIds.size} fotos</span>. Como deseja prosseguir?</p>
+            <p className="text-gray-400 mb-8">
+              {userProfile?.package === 'prospect' 
+                ? 'Você está no modo demonstração. Selecione as fotos que deseja e escolha um pacote abaixo para liberar o acesso completo.'
+                : `Você selecionou ${selectedIds.size} fotos para o seu álbum.`}
+            </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <button 
-                onClick={() => handleFinalize('link')}
-                className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left group"
-              >
-                <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform">
-                  <ImageIcon size={24} />
-                </div>
-                <h4 className="text-lg font-bold mb-2">Somente Fotos</h4>
-                <p className="text-xs text-gray-500 mb-4">Receba o link com todas as suas fotos em alta resolução.</p>
-                <p className="text-xl font-bold text-blue-400">Link Edition</p>
-              </button>
+            {userProfile?.package === 'prospect' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button 
+                  onClick={() => handleFinalize('link')}
+                  className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left group"
+                >
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform">
+                    <ImageIcon size={24} />
+                  </div>
+                  <h4 className="text-lg font-bold mb-2">Somente Fotos</h4>
+                  <p className="text-xs text-gray-500 mb-4">Receba o link com todas as suas fotos em alta resolução.</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xl font-bold text-blue-400">Link Edition</p>
+                    <p className="text-lg font-bold text-white">R$ 197,00</p>
+                  </div>
+                </button>
 
-              <button 
-                onClick={() => handleFinalize('black')}
-                className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all text-left group"
-              >
-                <div className="w-12 h-12 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold mb-6 group-hover:scale-110 transition-transform">
-                  <Check size={24} />
+                <button 
+                  onClick={() => handleFinalize('album')}
+                  className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all text-left group"
+                >
+                  <div className="w-12 h-12 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold mb-6 group-hover:scale-110 transition-transform">
+                    <Check size={24} />
+                  </div>
+                  <h4 className="text-lg font-bold mb-2">Álbum + Fotos</h4>
+                  <p className="text-xs text-gray-500 mb-4">Receba seu álbum físico premium e o link com as fotos.</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xl font-bold text-brand-gold">Album Edition</p>
+                    <p className="text-lg font-bold text-white">R$ 897,00</p>
+                  </div>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile?.package === 'album' ? 'bg-brand-gold/20 text-brand-gold' : 'bg-blue-500/20 text-blue-500'}`}>
+                      {userProfile?.package === 'album' ? <Check size={20} /> : <ImageIcon size={20} />}
+                    </div>
+                    <div>
+                      <p className="font-bold">{userProfile?.package === 'album' ? 'Album Edition Ativo' : 'Link Edition Ativo'}</p>
+                      <p className="text-xs text-gray-500">Seu pacote já permite o acesso completo às fotos.</p>
+                    </div>
+                  </div>
+                  
+                  {userProfile?.package === 'link' && (
+                    <button 
+                      onClick={() => handleFinalize('album')}
+                      className="w-full mb-4 bg-brand-gold/10 text-brand-gold border border-brand-gold/30 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus size={18} />
+                      Upgrade para Album Edition (R$ 700,00)
+                    </button>
+                  )}
+
+                  <button 
+                    onClick={() => handleFinalize(userProfile?.package as any)}
+                    className="w-full bg-brand-gold text-black py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-white transition-all"
+                  >
+                    Confirmar Seleção do Álbum
+                  </button>
                 </div>
-                <h4 className="text-lg font-bold mb-2">Álbum + Fotos</h4>
-                <p className="text-xs text-gray-500 mb-4">Receba seu álbum físico premium e o link com as fotos.</p>
-                <p className="text-xl font-bold text-brand-gold">Black Edition</p>
-              </button>
-            </div>
+              </div>
+            )}
 
             <div className="mt-8 p-6 bg-brand-gold/10 border border-brand-gold/20 rounded-2xl flex items-start gap-4">
               <div className="p-2 bg-brand-gold/20 rounded-lg text-brand-gold">

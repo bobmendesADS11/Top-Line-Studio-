@@ -164,7 +164,7 @@ const PendingAccess: React.FC = () => {
         <div className="w-20 h-20 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-brand-gold/20">
           <div className="w-10 h-10 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
         </div>
-        <h1 className="topline-black text-3xl text-brand-gold mb-4">Acesso em Processamento</h1>
+        <h1 className="topline-edition text-3xl text-brand-gold mb-4">Acesso em Processamento</h1>
         <p className="text-gray-400 mb-8 leading-relaxed">
           Olá! Recebemos sua solicitação. Sua conta está sendo configurada pela nossa equipe. 
           Em breve você terá acesso total à sua área exclusiva Top Line.

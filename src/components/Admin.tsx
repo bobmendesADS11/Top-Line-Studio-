@@ -20,6 +20,7 @@ import {
   X,
   Upload,
   Image as ImageIcon,
+  Check,
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
@@ -123,7 +124,7 @@ const Admin: React.FC = () => {
 
   const sendWhatsApp = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá ${name}! Seu acesso ao Top Line Black Edition foi aprovado. 🎓\n\nAgora você já pode acessar o site, conferir suas fotos e criar o seu álbum 3D exclusivo! ✨\n\nAcesse aqui: ${window.location.origin}/login`);
+    const message = encodeURIComponent(`Olá ${name}! Seu acesso ao Top Line Edition foi aprovado. 🎓\n\nAgora você já pode acessar o site, conferir suas fotos e criar o seu álbum 3D exclusivo! ✨\n\nAcesse aqui: ${window.location.origin}/login`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
@@ -171,6 +172,7 @@ const Admin: React.FC = () => {
         await addDoc(collection(db, 'users', selectedStudentForPhotos.id, 'photos'), {
           url: dataUrl,
           name: file.name,
+          source: 'admin',
           createdAt: serverTimestamp()
         });
       }
@@ -204,7 +206,7 @@ const Admin: React.FC = () => {
             <span className="font-serif text-sm text-white uppercase tracking-[0.1em] leading-none">Top Line</span>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-[4px] uppercase tracking-[0.4em] font-light text-white/60">Formaturas</span>
-              <span className="text-[4px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+              <span className="text-[4px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
             </div>
           </div>
         </div>
@@ -286,7 +288,7 @@ const Admin: React.FC = () => {
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 md:mb-12 gap-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold capitalize">{activeTab}</h2>
-            <p className="text-gray-500 text-sm">Gerencie sua plataforma Top Line Black</p>
+            <p className="text-gray-500 text-sm">Gerencie sua plataforma Top Line Edition</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -312,25 +314,45 @@ const Admin: React.FC = () => {
 
         {/* Dashboard Stats */}
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
-            {[
-              { label: 'Total de Pedidos', value: orders.length, icon: ShoppingBag, color: 'text-blue-500' },
-              { label: 'Álbuns Ativos', value: albums.length, icon: Book, color: 'text-brand-gold' },
-              { label: 'Alunos Ativos', value: students.filter(s => s.role === 'student').length, icon: Users, color: 'text-green-500' },
-              { label: 'Pendentes', value: students.filter(s => s.role === 'pending').length, icon: AlertCircle, color: 'text-yellow-500' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-zinc-900/50 border border-white/5 p-6 md:p-8 rounded-3xl">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
-                    <stat.icon size={24} />
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
+              {[
+                { label: 'Total de Pedidos', value: orders.length, icon: ShoppingBag, color: 'text-blue-500' },
+                { label: 'Álbuns Ativos', value: albums.length, icon: Book, color: 'text-brand-gold' },
+                { label: 'Alunos Ativos', value: students.filter(s => s.role === 'student').length, icon: Users, color: 'text-green-500' },
+                { label: 'Pendentes', value: students.filter(s => s.role === 'pending').length, icon: AlertCircle, color: 'text-yellow-500' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-zinc-900/50 border border-white/5 p-6 md:p-8 rounded-3xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
+                      <stat.icon size={24} />
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Este Mês</span>
                   </div>
-                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Este Mês</span>
+                  <p className="text-gray-400 text-xs md:text-sm mb-1">{stat.label}</p>
+                  <p className="text-3xl md:text-4xl font-bold">{stat.value}</p>
                 </div>
-                <p className="text-gray-400 text-xs md:text-sm mb-1">{stat.label}</p>
-                <p className="text-3xl md:text-4xl font-bold">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+              {[
+                { label: 'Link Edition', count: students.filter(s => s.package === 'link').length, color: 'bg-blue-500', icon: ImageIcon },
+                { label: 'Album Edition', count: students.filter(s => s.package === 'album').length, color: 'bg-brand-gold', icon: Check },
+                { label: 'Demonstração', count: students.filter(s => s.package === 'prospect' || !s.package).length, color: 'bg-gray-500', icon: Search },
+              ].map((pkg, i) => (
+                <div key={i} className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex items-center gap-6">
+                  <div className={`w-12 h-12 rounded-2xl ${pkg.color} flex items-center justify-center text-black`}>
+                    <pkg.icon size={24} />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">{pkg.label}</p>
+                    <p className="text-2xl font-bold">{pkg.count} Alunos</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Data Tables */}
@@ -452,14 +474,14 @@ const Admin: React.FC = () => {
                         value={student.package || 'prospect'} 
                         onChange={(e) => handleUpdatePackage(student.id, e.target.value)}
                         className={`bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase transition-all outline-none ${
-                          student.package === 'black' ? 'text-brand-gold border-brand-gold/30' : 
+                          student.package === 'album' ? 'text-brand-gold border-brand-gold/30' : 
                           student.package === 'link' ? 'text-blue-400 border-blue-400/30' :
                           'text-gray-400 border-white/10'
                         }`}
                       >
                         <option value="prospect">Demonstração</option>
                         <option value="link">Link Edition</option>
-                        <option value="black">Black Edition</option>
+                        <option value="album">Album Edition</option>
                       </select>
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
@@ -548,7 +570,7 @@ const Admin: React.FC = () => {
                   {[
                     { id: 'prospect', label: 'Demonstração (Prospect)', desc: 'Acesso limitado para visualização' },
                     { id: 'link', label: 'Link Edition', desc: 'Acesso às fotos digitais' },
-                    { id: 'black', label: 'Black Edition', desc: 'Acesso completo + Álbum Físico' }
+                    { id: 'album', label: 'Album Edition', desc: 'Acesso completo + Álbum Físico' }
                   ].map((tier) => (
                     <button
                       key={tier.id}

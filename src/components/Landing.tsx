@@ -126,7 +126,7 @@ function Logo() {
         <span className="font-serif text-lg text-white uppercase tracking-[0.05em] leading-none">Top Line</span>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-[5px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
-          <span className="text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Black</span>
+          <span className="text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
         </div>
       </div>
     </div>
@@ -566,7 +566,7 @@ export default function Landing() {
                 <div className="relative z-10 flex items-center justify-center gap-4">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
                   <span className="text-brand-gold text-lg md:text-2xl font-serif tracking-[0.3em] uppercase italic drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                    Black
+                    Edition
                   </span>
                   <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-brand-gold/30 to-transparent" />
                 </div>
@@ -907,7 +907,7 @@ export default function Landing() {
           <div className="flex flex-col items-center md:items-start gap-8">
             <Logo />
             <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase leading-relaxed text-center md:text-left max-w-xs">
-              Eternizando momentos com a sofisticação e exclusividade da Top Line Black Edition.
+              Eternizando momentos com a sofisticação e exclusividade da Top Line Edition.
             </p>
           </div>
           

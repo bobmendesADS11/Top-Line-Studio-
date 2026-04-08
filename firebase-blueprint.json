@@ -10,7 +10,7 @@
         "displayName": { "type": "string" },
         "photoURL": { "type": "string" },
         "role": { "type": "string", "enum": ["admin", "student", "pending"] },
-        "package": { "type": "string", "enum": ["prospect", "link", "black"] },
+        "package": { "type": "string", "enum": ["prospect", "link", "album"] },
         "phoneNumber": { "type": "string" },
         "course": { "type": "string" },
         "semester": { "type": "string" },
@@ -24,6 +24,8 @@
       "type": "object",
       "properties": {
         "url": { "type": "string" },
+        "name": { "type": "string" },
+        "source": { "type": "string", "enum": ["admin", "student"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["url"]

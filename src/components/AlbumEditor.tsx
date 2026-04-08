@@ -32,7 +32,7 @@ interface AlbumEditorProps {
   onSave?: (pages: string[]) => void;
   onBack?: () => void;
   hasPurchasedAlbum?: boolean;
-  userTier?: 'PROSPECT' | 'LINK' | 'BLACK';
+  userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
 }
 
 type LayoutType = 'minimalist' | 'grid' | 'collage' | 'editorial' | 'spread';
@@ -250,7 +250,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         ctx.fillText('TOP LINE', width * 0.1, height * 0.82);
         ctx.fillStyle = '#fff';
         ctx.font = `italic ${width * 0.03}px serif`;
-        ctx.fillText('Black Edition', width * 0.1, height * 0.87);
+        ctx.fillText('Edition', width * 0.1, height * 0.87);
         
         ctx.fillStyle = '#666';
         ctx.font = `${width * 0.02}px sans-serif`;
@@ -319,17 +319,17 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </button>
           
           <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest border ${
-            userTier === 'BLACK' 
+            userTier === 'ALBUM' 
               ? 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold' 
               : userTier === 'LINK'
                 ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                 : 'bg-white/5 border-white/10 text-gray-400'
           }`}>
-            {userTier === 'BLACK' ? 'Black Edition' : userTier === 'LINK' ? 'Link Edition' : 'Modo Demonstração'}
+            {userTier === 'ALBUM' ? 'Edition' : userTier === 'LINK' ? 'Link Edition' : 'Modo Demonstração'}
           </div>
         </div>
 
-        {userTier !== 'BLACK' && (
+        {userTier !== 'ALBUM' && (
           <div className="p-4 bg-brand-gold/10 border border-brand-gold/30 rounded-2xl">
             <p className="text-[10px] text-brand-gold font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
               <Sparkles size={12} /> {userTier === 'PROSPECT' ? 'Modo de Demonstração' : 'Prévia Premium'}
@@ -337,7 +337,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             <p className="text-[9px] text-gray-400 leading-relaxed">
               {userTier === 'PROSPECT' 
                 ? 'Estamos usando fotos de exemplo para você conhecer a qualidade. Adquira o Link Edition para usar suas próprias fotos!'
-                : 'Você está visualizando suas fotos no modelo físico. Adquira o Black Edition para finalizar e receber seu álbum em casa.'}
+                : 'Você está visualizando suas fotos no modelo físico. Adquira a Edition para finalizar e receber seu álbum em casa.'}
             </p>
           </div>
         )}
@@ -432,7 +432,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
         <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-3">
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
-            <Palette size={14} /> {hasPurchasedAlbum ? 'Black Edition Ativo' : 'Link Edition - Prévia'}
+            <Palette size={14} /> {hasPurchasedAlbum ? 'Edition Ativo' : 'Link Edition - Prévia'}
           </h3>
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] text-gray-400">
@@ -468,7 +468,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   ✨ Upgrade Disponível
                 </p>
                 <p className="text-[8px] text-gray-400 leading-relaxed mb-3">
-                  Transforme seu link digital em um álbum físico **Black Edition** com diagramação profissional.
+                  Transforme seu link digital em um álbum físico **Edition** com diagramação profissional.
                 </p>
                 <button className="w-full bg-brand-gold text-black py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest hover:scale-105 transition-transform">
                   Adquirir Álbum Físico
