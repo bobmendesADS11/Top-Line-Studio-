@@ -70,9 +70,12 @@ service cloud.firestore {
     }
 
     function isValidPhoto(data) {
-      return data.keys().hasAll(['url', 'createdAt']) &&
-             data.url is string && data.url.size() < 1000 &&
-             (data.name == null || (data.name is string && data.name.size() < 255)) &&
+      let requiredFields = ['url', 'createdAt'];
+      let allowedFields = ['url', 'createdAt', 'name'];
+      return data.keys().hasAll(requiredFields) &&
+             data.keys().hasOnly(allowedFields) &&
+             data.url is string && data.url.size() < 1500000 &&
+             (!('name' in data) || (data.name is string && data.name.size() < 255)) &&
              data.createdAt is timestamp;
     }
 
