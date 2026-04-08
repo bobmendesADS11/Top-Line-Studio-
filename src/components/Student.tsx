@@ -115,10 +115,26 @@ const Student: React.FC = () => {
               </div>
             </div>
             
-            <h1 className="font-serif text-3xl text-white uppercase tracking-[0.2em] mb-2">Top Line</h1>
-            <div className="flex items-center gap-3">
-              <span className="text-[8px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
-              <span className="text-[8px] uppercase tracking-[0.2em] font-bold text-brand-gold">Edition</span>
+            <div className="relative flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col leading-none">
+                  <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Top</span>
+                  <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Line</span>
+                </div>
+                <span className="font-serif text-5xl md:text-7xl text-brand-gold italic lowercase tracking-tight drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">edition</span>
+              </div>
+              
+              {/* 20 Anos Badge - Increased Visibility with Cap */}
+              <div className="flex items-center px-5 py-2.5 rounded-full bg-brand-gold/15 border border-brand-gold/30 gap-4 shadow-[0_0_15px_rgba(212,175,55,0.1)] relative">
+                <div className="absolute -top-3 left-6">
+                  <GraduationCap className="text-brand-gold w-4 h-4 rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+                </div>
+                <span className="font-script text-4xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">20</span>
+                <div className="flex flex-col leading-none">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold">Anos de</span>
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold font-bold">Excelência</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -152,185 +168,222 @@ const Student: React.FC = () => {
 
   const Dashboard = () => (
     <main className="max-w-7xl mx-auto px-6 py-12">
-      {/* Welcome Section */}
-      <section className="mb-12">
+      {/* Welcome Section - Editorial Style */}
+      <section className="mb-16">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-zinc-900 to-black border border-brand-gold/20 rounded-3xl p-8 md:p-12 relative overflow-hidden"
+          className="relative group"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/10 blur-[100px] rounded-full -mr-32 -mt-32" />
+          <div className="absolute -inset-4 bg-brand-gold/5 blur-[60px] rounded-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
           
-          <div className="relative z-10 max-w-2xl">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Olá, {user?.displayName?.split(' ')[0] || 'Formando'}! 👋</h2>
-            <p className="text-gray-400 text-base md:text-lg mb-8">
-              {userTier === 'ALBUM' 
-                ? 'Suas fotos estão prontas! Agora é hora de criar seu álbum eterno e eternizar seus melhores momentos.'
-                : userTier === 'LINK'
-                  ? 'Suas fotos estão disponíveis! Explore nossas opções premium e veja como elas ficariam no seu álbum físico.'
-                  : 'Sua formatura está sendo preparada com todo carinho. Enquanto as fotos não chegam, explore nossas opções premium e planeje seu álbum.'}
-            </p>
-            {userTier !== 'ALBUM' ? (
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
-                  {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Ver Minhas Fotos no Álbum'}
-                </Link>
-                <button 
-                  onClick={() => navigate('/area-do-aluno')} // In a real app, this would open a checkout
-                  className="inline-block bg-white/10 text-white border border-white/20 px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all"
-                >
-                  {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Album Edition'}
-                </button>
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 bg-zinc-900/40 border border-white/5 rounded-[40px] p-8 md:p-16 backdrop-blur-md overflow-hidden">
+            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(212,175,55,0.08),transparent_70%)]" />
+            
+            <div className="flex-1 relative z-10">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-[1px] w-12 bg-brand-gold/40" />
+                <span className="text-brand-gold text-[10px] uppercase tracking-[0.4em] font-bold">Studio Edition • 2026</span>
               </div>
-            ) : (
-              <Link to="galeria" className="inline-block bg-brand-gold text-black px-8 py-4 rounded-xl font-bold hover:bg-brand-gold/90 transition-all hover:scale-105">
-                Começar Seleção de Fotos
-              </Link>
-            )}
+              
+              <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-none tracking-tight">
+                Olá, <span className="italic gold-gradient">{user?.displayName?.split(' ')[0] || 'Formando'}</span>
+              </h2>
+              
+              <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-xl leading-relaxed font-light">
+                {userTier === 'ALBUM' 
+                  ? 'Sua jornada de excelência continua. Suas fotos estão prontas para serem eternizadas em seu álbum exclusivo.'
+                  : userTier === 'LINK'
+                    ? 'Explore o poder da Edition. Suas fotos digitais já estão disponíveis, mas a experiência física aguarda por você.'
+                    : 'Sua formatura está sendo preparada com o requinte que você merece. Enquanto aguardamos os registros, planeje seu legado.'}
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-6">
+                <Link to="galeria" className="gold-button px-10 py-5 text-sm">
+                  {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Acessar Galeria Edition'}
+                </Link>
+                {userTier !== 'ALBUM' && (
+                  <button className="px-10 py-5 rounded-full border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all">
+                    {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Álbum'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="w-full md:w-72 aspect-[3/4] relative group/img">
+              <div className="absolute inset-0 border border-brand-gold/20 rounded-3xl translate-x-4 translate-y-4 group-hover/img:translate-x-6 group-hover/img:translate-y-6 transition-transform duration-500" />
+              <div className="relative h-full w-full rounded-3xl overflow-hidden border border-white/10">
+                <img 
+                  src="https://picsum.photos/seed/grad_premium/600/800" 
+                  alt="Premium Experience" 
+                  className="w-full h-full object-cover grayscale group-hover/img:grayscale-0 transition-all duration-1000"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="font-script text-2xl text-brand-gold">Sonhe, acredite, realize!</p>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
       </section>
 
-      {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Orders Status */}
-        <div className="md:col-span-2 space-y-6">
-          <h3 className="text-xl font-bold flex items-center gap-2">
+      {/* Bento Grid Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+        {/* Main Action: Gallery */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className="md:col-span-8 bg-zinc-900/30 border border-white/5 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
+          onClick={() => navigate('galeria')}
+        >
+          <div className="flex items-center justify-between mb-8">
+            <div className="w-12 h-12 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold">
+              <ImageIcon size={24} />
+            </div>
+            <ArrowRight className="text-white/20 group-hover:text-brand-gold group-hover:translate-x-2 transition-all" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2">Galeria de Fotos</h3>
+          <p className="text-gray-500 text-sm max-w-md">Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria Top Line.</p>
+          
+          <div className="mt-8 flex gap-2 overflow-hidden">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="w-24 h-32 rounded-xl overflow-hidden border border-white/5 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-700">
+                <img src={`https://picsum.photos/seed/grad_${i}/200/300`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Studio Concierge */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className="md:col-span-4 bg-brand-gold/5 border border-brand-gold/10 rounded-[40px] p-8 flex flex-col justify-between"
+        >
+          <div>
+            <div className="w-12 h-12 bg-brand-gold/20 rounded-2xl flex items-center justify-center text-brand-gold mb-8">
+              <Sparkles size={24} />
+            </div>
+            <h3 className="text-2xl font-bold mb-2 text-brand-gold">Concierge Edition</h3>
+            <p className="text-gray-400 text-sm">Suporte personalizado para a criação do seu legado. Fale com nossos especialistas em design de álbuns.</p>
+          </div>
+          <button className="w-full py-4 bg-brand-gold text-black rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all mt-8">
+            Falar com Especialista
+          </button>
+        </motion.div>
+
+        {/* Order Tracking */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className="md:col-span-4 bg-zinc-900/30 border border-white/5 rounded-[40px] p-8"
+        >
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
             <Clock size={20} className="text-brand-gold" />
-            Meus Pedidos
+            Status de Produção
           </h3>
           
           {myOrders.length === 0 ? (
-            <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-12 text-center">
-              <ImageIcon size={48} className="mx-auto text-gray-700 mb-4" />
-              <p className="text-gray-500">Você ainda não tem pedidos ativos.</p>
-              <button className="mt-4 text-brand-gold hover:underline">Ver álbuns disponíveis</button>
+            <div className="py-8 text-center">
+              <p className="text-gray-600 text-sm italic">Nenhum álbum em produção no momento.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {myOrders.map(order => (
-                <div key={order.id} className="bg-zinc-900/50 border border-white/5 rounded-2xl p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-brand-gold/10 rounded-xl flex items-center justify-center">
-                      <Book size={24} className="text-brand-gold" />
-                    </div>
-                    <div>
-                      <p className="font-bold">Álbum de Formatura</p>
-                      <p className="text-xs text-gray-500">Pedido #{order.id.slice(0, 8)}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="px-3 py-1 rounded-full bg-brand-gold/10 text-brand-gold text-xs font-bold uppercase">
-                      {order.status}
-                    </span>
-                    <p className="text-[10px] text-gray-500 mt-2">Atualizado em {order.createdAt?.toDate().toLocaleDateString()}</p>
-                  </div>
+            <div className="space-y-6">
+              {myOrders.slice(0, 2).map(order => (
+                <div key={order.id} className="relative pl-6 border-l border-brand-gold/30">
+                  <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-brand-gold" />
+                  <p className="text-xs font-bold text-brand-gold uppercase tracking-widest mb-1">{order.status}</p>
+                  <p className="text-sm font-medium text-white mb-1">Álbum de Formatura</p>
+                  <p className="text-[10px] text-gray-500">#{order.id.slice(0, 8)}</p>
                 </div>
               ))}
             </div>
           )}
+        </motion.div>
 
-          {/* Premium Showcase Section */}
-          {!hasPurchasedAlbum && (
-            <div className="space-y-6 pt-8">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold flex items-center gap-2">
-                  <Sparkles className="text-brand-gold" size={20} /> Modelos Premium Edition
-                </h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-[40px] relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4">
-                    <span className="bg-brand-gold text-black text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Mais Vendido</span>
-                  </div>
-                  <div className="w-full aspect-video bg-black rounded-2xl mb-4 overflow-hidden border border-white/5">
-                    <img 
-                      src="https://picsum.photos/seed/leather/800/450" 
-                      alt="Leather Edition" 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <h4 className="text-brand-gold font-bold text-lg mb-2">Leather Edition</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed mb-4">
-                    Acabamento em couro legítimo com costura artesanal e gravação a laser. O clássico que nunca sai de moda.
-                  </p>
-                  <button 
-                    onClick={() => navigate('editor')}
-                    className="text-brand-gold text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
-                  >
-                    Testar Modelo <ArrowRight size={14} />
-                  </button>
-                </div>
-
-                <div className="bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-[40px] relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4">
-                    <span className="bg-white/10 text-white text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Exclusivo</span>
-                  </div>
-                  <div className="w-full aspect-video bg-black rounded-2xl mb-4 overflow-hidden border border-white/5">
-                    <img 
-                      src="https://picsum.photos/seed/acrylic/800/450" 
-                      alt="Acrylic Edition" 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <h4 className="text-brand-gold font-bold text-lg mb-2">Acrylic & Video Edition</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed mb-4">
-                    Capa em acrílico cristal de alta resistência com tela de vídeo integrada na primeira página. Tecnologia e luxo.
-                  </p>
-                  <button 
-                    onClick={() => navigate('editor')}
-                    className="text-brand-gold text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
-                  >
-                    Testar Modelo <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="space-y-6">
-          <h3 className="text-xl font-bold">Acesso Rápido</h3>
-          <div className="space-y-4">
-            <Link 
-              to="galeria" 
-              className="w-full bg-zinc-900/50 border border-brand-gold/20 p-6 rounded-3xl flex items-center gap-6 hover:bg-brand-gold/5 transition-all text-left group"
-            >
-              <div className="w-14 h-14 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold group-hover:bg-brand-gold group-hover:text-black transition-all shadow-[0_0_20px_rgba(212,175,55,0.1)]">
-                <ImageIcon size={28} />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-lg">Escolher Minhas Fotos</p>
-                <p className="text-xs text-gray-500">Acesse sua galeria e selecione suas favoritas</p>
-              </div>
-              <ArrowRight className="text-brand-gold group-hover:translate-x-2 transition-transform" />
-            </Link>
-            
-            <Link to="album" className="w-full bg-zinc-900/50 border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:bg-white/5 transition-colors text-left group">
-              <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                <Book size={20} />
-              </div>
-              <div>
-                <p className="font-medium">Meu Álbum 3D</p>
-                <p className="text-xs text-gray-500">Visualizar prévia</p>
-              </div>
-            </Link>
-
-            <Link to="editor" className="w-full bg-zinc-900/50 border border-brand-gold/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-brand-gold/5 transition-colors text-left group border-dashed">
-              <div className="w-10 h-10 bg-brand-gold/10 rounded-lg flex items-center justify-center text-brand-gold group-hover:bg-brand-gold group-hover:text-black transition-colors">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <p className="font-medium">Editor de Diagramação</p>
-                <p className="text-xs text-gray-500">Criar layout automático</p>
-              </div>
-            </Link>
+        {/* 3D Editor Preview */}
+        <motion.div 
+          whileHover={{ y: -5 }}
+          className="md:col-span-8 bg-gradient-to-br from-zinc-900 to-black border border-white/5 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
+          onClick={() => navigate('editor')}
+        >
+          <div className="absolute right-0 top-0 w-1/2 h-full opacity-20 group-hover:opacity-40 transition-opacity">
+            <img src="https://picsum.photos/seed/3d_editor/800/600" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </div>
-        </div>
+          <div className="relative z-10">
+            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white mb-8">
+              <Book size={24} />
+            </div>
+            <h3 className="text-2xl font-bold mb-2">Editor 3D de Álbuns</h3>
+            <p className="text-gray-500 text-sm max-w-xs">Visualize seu álbum em tempo real com nossa tecnologia de renderização 3D exclusiva.</p>
+            <button className="mt-8 flex items-center gap-2 text-brand-gold font-bold text-xs uppercase tracking-widest">
+              Abrir Estúdio Digital <ArrowRight size={14} />
+            </button>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Luxury Catalog Section */}
+      {!hasPurchasedAlbum && (
+        <section className="pt-8">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h3 className="text-3xl font-serif mb-2">Catálogo <span className="italic gold-gradient">Edition</span></h3>
+              <p className="text-gray-500 text-sm">Modelos exclusivos desenvolvidos para eternizar sua história.</p>
+            </div>
+            <div className="h-[1px] flex-1 bg-white/5 mx-12 hidden md:block" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'Leather Edition',
+                desc: 'Couro legítimo com costura artesanal e gravação a laser.',
+                img: 'leather',
+                tag: 'Clássico'
+              },
+              {
+                title: 'Acrylic & Video',
+                desc: 'Capa em acrílico cristal com tela de vídeo integrada.',
+                img: 'acrylic',
+                tag: 'Tecnológico'
+              },
+              {
+                title: 'Velvet Edition',
+                desc: 'Toque aveludado com detalhes em hot-stamping dourado.',
+                img: 'velvet',
+                tag: 'Sofisticado'
+              }
+            ].map((item, idx) => (
+              <motion.div 
+                key={idx}
+                whileHover={{ y: -10 }}
+                className="group cursor-pointer"
+                onClick={() => navigate('editor')}
+              >
+                <div className="relative aspect-[4/5] rounded-[32px] overflow-hidden mb-6 border border-white/5">
+                  <img 
+                    src={`https://picsum.photos/seed/${item.img}/800/1000`} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                  <div className="absolute top-6 right-6">
+                    <span className="bg-brand-gold text-black text-[8px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
+                      {item.tag}
+                    </span>
+                  </div>
+                </div>
+                <h4 className="text-xl font-bold mb-2 group-hover:text-brand-gold transition-colors">{item.title}</h4>
+                <p className="text-gray-500 text-xs leading-relaxed mb-4">{item.desc}</p>
+                <div className="flex items-center gap-2 text-brand-gold text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  Explorar Modelo <ArrowRight size={12} />
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 
@@ -348,11 +401,20 @@ const Student: React.FC = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
                 <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <div className="flex flex-col">
-                <span className="font-serif text-base md:text-lg text-white uppercase tracking-[0.1em] leading-none">Top Line</span>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[4px] md:text-[5px] uppercase tracking-[0.4em] font-light text-white/60">Formaturas</span>
-                  <span className="text-[4px] md:text-[5px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
+              <div className="flex items-center gap-2 relative group">
+                <div className="flex flex-col leading-none">
+                  <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Top</span>
+                  <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Line</span>
+                </div>
+                <span className="font-serif text-2xl md:text-3xl text-brand-gold italic lowercase tracking-tight">edition</span>
+                
+                {/* 20 Anos Badge Mini - Increased Visibility with Cap */}
+                <div className="absolute -right-12 -top-3 flex flex-col items-center">
+                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+                  <div className="flex items-center">
+                    <span className="font-script text-2xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
+                    <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
+                  </div>
                 </div>
               </div>
             </Link>
@@ -388,12 +450,18 @@ const Student: React.FC = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="galeria" element={
           <div className="relative">
-            <button 
+            {/* Premium Back Button */}
+            <motion.button 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               onClick={() => navigate('/area-do-aluno')}
-              className="fixed top-24 left-4 z-50 bg-brand-gold text-black p-2 rounded-full shadow-xl hover:scale-110 transition-transform"
+              className="fixed top-28 left-6 z-50 group flex items-center gap-3"
             >
-              <ArrowLeft size={20} />
-            </button>
+              <div className="w-12 h-12 rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white group-hover:border-brand-gold group-hover:text-brand-gold transition-all shadow-2xl">
+                <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+              </div>
+              <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40 group-hover:text-brand-gold transition-colors hidden md:block">Voltar ao Estúdio</span>
+            </motion.button>
             <Gallery onSelect={(photos) => {
               setSelectedPhotos(photos);
               navigate('/area-do-aluno/editor');

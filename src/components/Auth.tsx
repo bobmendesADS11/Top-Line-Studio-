@@ -403,10 +403,21 @@ const Auth: React.FC = () => {
               <GraduationCap className="text-brand-gold w-8 h-8 relative z-10 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
             </div>
           </div>
-          <h1 className="font-serif text-2xl text-white uppercase tracking-[0.1em] mb-1">Top Line</h1>
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-[7px] uppercase tracking-[0.6em] font-light text-white/60">Formaturas</span>
-            <span className="text-[7px] uppercase tracking-[0.1em] font-bold text-brand-gold">Edition</span>
+          <div className="relative flex items-center justify-center gap-4">
+            <div className="flex flex-col leading-none">
+              <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Top</span>
+              <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Line</span>
+            </div>
+            <span className="font-serif text-4xl text-brand-gold italic lowercase tracking-tight">edition</span>
+            
+            {/* 20 Anos Badge - Increased Visibility with Cap */}
+            <div className="absolute -right-12 -top-5 flex flex-col items-center">
+              <GraduationCap className="text-brand-gold w-4 h-4 mb-[-6px] rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+              <div className="flex items-center">
+                <span className="font-script text-2xl text-brand-gold -rotate-12 drop-shadow-[0_0_12px_rgba(212,175,55,0.7)]">20</span>
+                <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
+              </div>
+            </div>
           </div>
           <div className="flex items-center justify-center gap-2">
             <p className="text-gray-500 text-[9px] uppercase tracking-[0.2em] font-light">Acesse sua área exclusiva</p>
