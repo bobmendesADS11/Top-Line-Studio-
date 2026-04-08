@@ -153,6 +153,14 @@ export default function Gallery({ onSelect }: GalleryProps) {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === photos.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(photos.map(p => p.id)));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-black">
@@ -173,7 +181,14 @@ export default function Gallery({ onSelect }: GalleryProps) {
             <p className="text-gray-500 text-sm">Selecione as fotos que farão parte do seu álbum exclusivo</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <button 
+              onClick={toggleSelectAll}
+              className="px-6 py-2 rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all text-xs font-bold uppercase tracking-widest"
+            >
+              {selectedIds.size === photos.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
+            </button>
+
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
