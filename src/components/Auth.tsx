@@ -10,7 +10,7 @@ import {
   updateProfile,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
@@ -611,6 +611,13 @@ const Auth: React.FC = () => {
                     </div>
                   </div>
 
+                  <div className="flex items-start gap-3 p-3 bg-brand-gold/5 border border-brand-gold/10 rounded-xl mb-4">
+                    <AlertCircle className="text-brand-gold shrink-0 mt-0.5" size={14} />
+                    <p className="text-[10px] text-brand-gold/80 leading-relaxed">
+                      <span className="font-bold text-brand-gold uppercase tracking-widest">Aviso:</span> Se você se cadastrou com um e-mail diferente (ex: Hotmail), não use o Google. Isso criará uma conta nova em vez de acessar a sua atual.
+                    </p>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleGoogleLogin}
@@ -660,106 +667,50 @@ const Auth: React.FC = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-4"
                       >
-                        <div className="relative">
-                          <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                          <input
-                            type="password"
-                            placeholder={email.toLowerCase().includes('bielmaestrelli') ? "Sua senha (admin123)" : "Sua senha (topline2026)"}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                            required
-                            autoFocus
-                          />
-                        </div>
-                        
-                        {email.toLowerCase().includes('bielmaestrelli') && (
-                          <div className="space-y-2">
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                            <input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Sua senha de acesso"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-12 text-white focus:border-brand-gold outline-none transition-colors"
+                              required
+                              autoFocus
+                            />
                             <button
                               type="button"
-                              onClick={async () => {
-                                setLoading(true);
-                                setError(null);
-                                const passwords = ['admin123', 'topline2026', '123456', '12345678', 'topline'];
-                                let success = false;
-                                
-                                for (const p of passwords) {
-                                  try {
-                                    await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), p);
-                                    success = true;
-                                    break;
-                                  } catch (e) {
-                                    continue;
-                                  }
-                                }
-                                
-                                if (!success) {
-                                  // If all sign-ins fail, try to create with admin123
-                                  try {
-                                    await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), 'admin123');
-                                    await updateProfile(auth.currentUser!, { displayName: 'Biel Maestrelli' });
-                                    success = true;
-                                  } catch (e: any) {
-                                    if (e.code === 'auth/email-already-in-use') {
-                                      setError('A senha atual do seu e-mail não é nenhuma das padrões. Use o botão "Enviar Link sem Senha" abaixo para entrar e resetar sua senha.');
-                                    } else {
-                                      setError('Não foi possível entrar automaticamente. Tente o link por e-mail.');
-                                    }
-                                  }
-                                }
-                                
-                                setLoading(false);
-                              }}
-                              className="w-full bg-white/10 text-brand-gold py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-all border border-brand-gold/20"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
                             >
-                              {loading ? 'Tentando Acesso...' : 'Tentar Acesso Automático'}
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
-                            
+                          </div>
+                          <div className="flex justify-end px-1">
                             <button
                               type="button"
                               onClick={async () => {
-                                setLoading(true);
-                                setError(null);
-                                try {
-                                  const actionCodeSettings = {
-                                    url: window.location.origin + '/login',
-                                    handleCodeInApp: true,
-                                  };
-                                  await sendSignInLinkToEmail(auth, email.trim().toLowerCase(), actionCodeSettings);
-                                  window.localStorage.setItem('emailForSignIn', email.trim().toLowerCase());
-                                  setSuccessMessage('Link enviado! Verifique seu e-mail para entrar sem senha agora mesmo.');
-                                  setShowTestPassword(false);
-                                } catch (err: any) {
-                                  setError('Erro ao enviar link: ' + err.message);
-                                } finally {
-                                  setLoading(false);
+                                if (!email) {
+                                  setError('Por favor, digite seu e-mail primeiro.');
+                                  return;
                                 }
-                              }}
-                              className="w-full bg-brand-gold/5 text-brand-gold/60 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-brand-gold/10 transition-all border border-brand-gold/10"
-                            >
-                              Entrar via E-mail (Sem Senha)
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={async () => {
                                 setLoading(true);
-                                setError(null);
                                 try {
                                   await sendPasswordResetEmail(auth, email.trim().toLowerCase());
-                                  setSuccessMessage('E-mail de redefinição enviado! Use-o para trocar sua senha para admin123.');
+                                  setSuccessMessage('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
                                 } catch (err: any) {
                                   setError('Erro ao enviar redefinição: ' + err.message);
                                 } finally {
                                   setLoading(false);
                                 }
                               }}
-                              className="w-full bg-red-500/5 text-red-500/60 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-red-500/10 transition-all border border-red-500/10"
+                              className="text-[9px] text-brand-gold/60 hover:text-brand-gold transition-colors uppercase tracking-widest font-medium"
                             >
-                              Redefinir Senha (Esqueci a Senha)
+                              Esqueci minha senha
                             </button>
                           </div>
-                        )}
+                        </div>
                       </motion.div>
                     )}
                     <button
@@ -788,6 +739,13 @@ const Auth: React.FC = () => {
                     <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
                       <span className="bg-[#0a0a0a] px-4 text-gray-500">Ou continue com</span>
                     </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 bg-brand-gold/5 border border-brand-gold/10 rounded-xl mb-4">
+                    <AlertCircle className="text-brand-gold shrink-0 mt-0.5" size={14} />
+                    <p className="text-[10px] text-brand-gold/80 leading-relaxed">
+                      <span className="font-bold text-brand-gold uppercase tracking-widest">Aviso:</span> Se você se cadastrou com um e-mail diferente (ex: Hotmail), não use o Google. Isso criará uma conta nova em vez de acessar a sua atual.
+                    </p>
                   </div>
 
                   <button
