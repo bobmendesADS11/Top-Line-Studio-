@@ -115,25 +115,21 @@ const Student: React.FC = () => {
               </div>
             </div>
             
-            <div className="relative flex items-center gap-6">
+            <div className="relative flex items-center gap-8">
               <div className="flex items-center gap-4">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Top</span>
                   <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Line</span>
                 </div>
-                <span className="font-serif text-5xl md:text-7xl text-brand-gold italic lowercase tracking-tight drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">edition</span>
-              </div>
-              
-              {/* 20 Anos Badge - Increased Visibility with Cap */}
-              <div className="flex items-center px-5 py-2.5 rounded-full bg-brand-gold/15 border border-brand-gold/30 gap-4 shadow-[0_0_15px_rgba(212,175,55,0.1)] relative">
-                <div className="absolute -top-3 left-6">
-                  <GraduationCap className="text-brand-gold w-4 h-4 rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+
+                {/* 20 Anos Badge - Vertical Stack */}
+                <div className="flex flex-col items-center -mt-4">
+                  <GraduationCap className="text-brand-gold w-6 h-6 mb-[-8px] drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" />
+                  <span className="font-script text-6xl gold-gradient leading-none">20</span>
+                  <span className="font-script text-xl gold-gradient -mt-3">anos</span>
                 </div>
-                <span className="font-script text-4xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">20</span>
-                <div className="flex flex-col leading-none">
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold">Anos de</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold font-bold">Excelência</span>
-                </div>
+
+                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] pt-4">edition</span>
               </div>
             </div>
           </div>
@@ -187,7 +183,7 @@ const Student: React.FC = () => {
               </div>
               
               <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-none tracking-tight">
-                Olá, <span className="italic gold-gradient">{user?.displayName?.split(' ')[0] || 'Formando'}</span>
+                Olá, <span className="font-script gold-gradient">{user?.displayName?.split(' ')[0] || 'Formando'}</span>
               </h2>
               
               <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-xl leading-relaxed font-light">
@@ -401,21 +397,20 @@ const Student: React.FC = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
                 <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <div className="flex items-center gap-2 relative group pr-16">
+              <div className="flex items-center gap-4 relative group">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Top</span>
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Line</span>
                 </div>
-                <span className="font-serif text-2xl md:text-3xl text-brand-gold italic lowercase tracking-tight">edition</span>
-                
-                {/* 20 Anos Badge Mini - Increased Visibility with Cap */}
-                <div className="absolute -right-4 -top-3 flex flex-col items-center">
-                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-2px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-                  <div className="flex items-center">
-                    <span className="font-script text-2xl text-brand-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
-                    <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
-                  </div>
+
+                {/* 20 Anos Badge - Vertical Stack */}
+                <div className="flex flex-col items-center -mt-1">
+                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+                  <span className="font-script text-2xl gold-gradient leading-none">20</span>
+                  <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
                 </div>
+
+                <span className="font-script text-3xl md:text-4xl gold-gradient leading-none pt-2 pb-1">edition</span>
               </div>
             </Link>
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />

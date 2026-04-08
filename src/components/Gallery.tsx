@@ -223,25 +223,20 @@ export default function Gallery({ onSelect }: GalleryProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div className="flex flex-col lg:flex-row lg:items-center gap-8 mb-12">
             <div className="flex items-center gap-6">
-              {/* Stacked Logo Style */}
               <div className="flex items-center gap-4">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-2xl md:text-3xl text-white uppercase tracking-[0.3em]">Top</span>
                   <span className="font-serif text-2xl md:text-3xl text-white uppercase tracking-[0.3em]">Line</span>
                 </div>
-                <span className="font-serif text-4xl md:text-6xl text-brand-gold italic lowercase tracking-tight drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">edition</span>
-              </div>
 
-              {/* 20 Anos Badge - Increased Visibility with Cap */}
-              <div className="hidden sm:flex items-center px-6 py-3 rounded-full bg-brand-gold/15 border border-brand-gold/30 gap-4 shadow-[0_0_20px_rgba(212,175,55,0.1)] relative">
-                <div className="absolute -top-3 left-8">
-                  <GraduationCap className="text-brand-gold w-5 h-5 rotate-[-15deg] drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+                {/* 20 Anos Badge - Vertical Stack */}
+                <div className="flex flex-col items-center -mt-2">
+                  <GraduationCap className="text-brand-gold w-5 h-5 mb-[-6px] drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
+                  <span className="font-script text-4xl gold-gradient leading-none">20</span>
+                  <span className="font-script text-sm gold-gradient -mt-2">anos</span>
                 </div>
-                <span className="font-script text-4xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">20</span>
-                <div className="flex flex-col leading-none">
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold">Anos de</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-brand-gold font-bold">Excelência</span>
-                </div>
+
+                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2">edition</span>
               </div>
             </div>
 
