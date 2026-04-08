@@ -180,7 +180,7 @@ const Student: React.FC = () => {
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 bg-zinc-900/40 border border-white/5 rounded-[40px] p-8 md:p-16 backdrop-blur-md overflow-hidden">
             <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(212,175,55,0.08),transparent_70%)]" />
             
-            <div className="flex-1 relative z-10">
+            <div className="flex-1 relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-[1px] w-12 bg-brand-gold/40" />
                 <span className="text-brand-gold text-[10px] uppercase tracking-[0.4em] font-bold">Studio Edition • 2026</span>
@@ -401,7 +401,7 @@ const Student: React.FC = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
                 <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <div className="flex items-center gap-2 relative group">
+              <div className="flex items-center gap-2 relative group pr-16">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Top</span>
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Line</span>
@@ -409,10 +409,10 @@ const Student: React.FC = () => {
                 <span className="font-serif text-2xl md:text-3xl text-brand-gold italic lowercase tracking-tight">edition</span>
                 
                 {/* 20 Anos Badge Mini - Increased Visibility with Cap */}
-                <div className="absolute -right-12 -top-3 flex flex-col items-center">
-                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+                <div className="absolute -right-4 -top-3 flex flex-col items-center">
+                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-2px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
                   <div className="flex items-center">
-                    <span className="font-script text-2xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
+                    <span className="font-script text-2xl text-brand-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
                     <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
                   </div>
                 </div>

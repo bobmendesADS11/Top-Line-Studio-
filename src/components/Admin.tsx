@@ -202,7 +202,7 @@ const Admin: React.FC = () => {
           <div className="w-8 h-8 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
             <GraduationCap className="text-brand-gold w-4 h-4" />
           </div>
-          <div className="flex items-center gap-2 relative group">
+          <div className="flex items-center gap-2 relative group pr-16">
             <div className="flex flex-col leading-none">
               <span className="font-serif text-xs text-white uppercase tracking-[0.2em]">Top</span>
               <span className="font-serif text-xs text-white uppercase tracking-[0.2em]">Line</span>
@@ -210,10 +210,10 @@ const Admin: React.FC = () => {
             <span className="font-serif text-2xl text-brand-gold italic lowercase tracking-tight">edition</span>
             
             {/* 20 Anos Badge Mini - Increased Visibility with Cap */}
-            <div className="absolute -right-12 -top-3 flex flex-col items-center">
-              <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+            <div className="absolute -right-4 -top-3 flex flex-col items-center">
+              <GraduationCap className="text-brand-gold w-3 h-3 mb-[-2px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
               <div className="flex items-center">
-                <span className="font-script text-2xl text-brand-gold -rotate-12 drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
+                <span className="font-script text-2xl text-brand-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">20</span>
                 <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
               </div>
             </div>
