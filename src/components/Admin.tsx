@@ -95,12 +95,10 @@ const Admin: React.FC = () => {
   };
 
   const handleDelete = async (collectionName: string, id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este item?')) {
-      try {
-        await deleteDoc(doc(db, collectionName, id));
-      } catch (error) {
-        console.error("Error deleting document:", error);
-      }
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+    } catch (error) {
+      console.error("Error deleting document:", error);
     }
   };
 
@@ -138,7 +136,7 @@ const Admin: React.FC = () => {
   };
 
   const handleAddStudentInfo = () => {
-    alert('Os alunos agora se cadastram sozinhos na página de login. Você só precisa aprová-los aqui quando aparecerem como "pending".');
+    // No-op or custom modal
   };
 
   const handleManagePhotos = async (student: any) => {
@@ -166,7 +164,7 @@ const Admin: React.FC = () => {
 
         // Check if dataUrl is too large for Firestore (approx 1MB limit)
         if (dataUrl.length > 900000) {
-          alert(`A imagem ${file.name} é muito grande. Tente uma imagem menor que 800KB.`);
+          console.warn(`A imagem ${file.name} é muito grande.`);
           continue;
         }
 
@@ -180,7 +178,6 @@ const Admin: React.FC = () => {
       handleManagePhotos(selectedStudentForPhotos);
     } catch (error) {
       console.error("Error uploading photos:", error);
-      alert("Erro ao processar as imagens. Verifique o tamanho dos arquivos.");
     } finally {
       setIsUploading(false);
     }

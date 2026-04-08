@@ -23,6 +23,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const PHOTOS_PER_PAGE = 24;
 
@@ -87,7 +88,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
 
         // Check if dataUrl is too large for Firestore (approx 1MB limit)
         if (dataUrl.length > 900000) {
-          alert(`A imagem ${file.name} é muito grande. Tente uma imagem menor que 800KB.`);
+          console.warn(`A imagem ${file.name} é muito grande.`);
           continue;
         }
 
@@ -99,7 +100,6 @@ export default function Gallery({ onSelect }: GalleryProps) {
       }
     } catch (error) {
       console.error("Error uploading photos:", error);
-      alert("Erro ao processar as imagens. Verifique o tamanho dos arquivos.");
     } finally {
       setIsUploading(false);
     }
@@ -132,14 +132,13 @@ export default function Gallery({ onSelect }: GalleryProps) {
 
   const handleDeletePhoto = async (e: React.MouseEvent, photoId: string) => {
     e.stopPropagation();
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || deletingId) return;
     
-    if (!confirm('Tem certeza que deseja apagar esta foto?')) return;
+    setDeletingId(photoId);
 
     try {
       await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'photos', photoId));
-      // Selection and favorites will be cleaned up by the onSnapshot listener if needed,
-      // but we can also do it manually for immediate feedback
+      
       const newSelected = new Set(selectedIds);
       newSelected.delete(photoId);
       setSelectedIds(newSelected);
@@ -149,7 +148,8 @@ export default function Gallery({ onSelect }: GalleryProps) {
       setFavoriteIds(newFavorites);
     } catch (error) {
       console.error("Error deleting photo:", error);
-      alert("Erro ao apagar a foto.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -238,9 +238,12 @@ export default function Gallery({ onSelect }: GalleryProps) {
 
               <button 
                 onClick={(e) => handleDeletePhoto(e, photo.id)}
-                className="absolute top-2 left-2 p-1.5 bg-red-500/20 text-red-500 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white z-10"
+                disabled={deletingId === photo.id}
+                className={`absolute top-2 left-2 p-1.5 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all z-10 ${
+                  deletingId === photo.id ? 'bg-gray-500 text-white' : 'bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white'
+                }`}
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                {deletingId === photo.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
               </button>
 
               <button 
