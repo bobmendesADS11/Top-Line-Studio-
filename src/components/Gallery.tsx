@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 interface Photo {
   id: string;
@@ -77,17 +77,29 @@ export default function Gallery({ onSelect }: GalleryProps) {
     
     try {
       for (const file of files) {
-        // In a real app, we'd upload to Firebase Storage.
-        // For this demo, we'll use a placeholder URL.
-        const demoUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
+        // Convert file to Base64 for demo persistence in Firestore (1MB limit)
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Check if dataUrl is too large for Firestore (approx 1MB limit)
+        if (dataUrl.length > 900000) {
+          alert(`A imagem ${file.name} é muito grande. Tente uma imagem menor que 800KB.`);
+          continue;
+        }
+
         await addDoc(collection(db, 'users', auth.currentUser.uid, 'photos'), {
-          url: demoUrl,
+          url: dataUrl,
           name: file.name,
           createdAt: serverTimestamp()
         });
       }
     } catch (error) {
       console.error("Error uploading photos:", error);
+      alert("Erro ao processar as imagens. Verifique o tamanho dos arquivos.");
     } finally {
       setIsUploading(false);
     }
@@ -115,6 +127,29 @@ export default function Gallery({ onSelect }: GalleryProps) {
       onSelect(selected);
     } catch (error) {
       console.error("Error finalizing selection:", error);
+    }
+  };
+
+  const handleDeletePhoto = async (e: React.MouseEvent, photoId: string) => {
+    e.stopPropagation();
+    if (!auth.currentUser) return;
+    
+    if (!confirm('Tem certeza que deseja apagar esta foto?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'photos', photoId));
+      // Selection and favorites will be cleaned up by the onSnapshot listener if needed,
+      // but we can also do it manually for immediate feedback
+      const newSelected = new Set(selectedIds);
+      newSelected.delete(photoId);
+      setSelectedIds(newSelected);
+      
+      const newFavorites = new Set(favoriteIds);
+      newFavorites.delete(photoId);
+      setFavoriteIds(newFavorites);
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      alert("Erro ao apagar a foto.");
     }
   };
 
@@ -200,6 +235,13 @@ export default function Gallery({ onSelect }: GalleryProps) {
               }`}>
                 <Check className="w-4 h-4 text-brand-navy" />
               </div>
+
+              <button 
+                onClick={(e) => handleDeletePhoto(e, photo.id)}
+                className="absolute top-2 left-2 p-1.5 bg-red-500/20 text-red-500 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
 
               <button 
                 onClick={(e) => toggleFavorite(e, photo.id)}

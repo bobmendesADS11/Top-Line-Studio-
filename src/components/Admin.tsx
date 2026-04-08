@@ -156,11 +156,22 @@ const Admin: React.FC = () => {
     
     try {
       for (const file of files) {
-        // In a real app, we'd upload to Firebase Storage.
-        // For this demo, we'll use a placeholder URL.
-        const demoUrl = `https://picsum.photos/seed/${Math.random()}/800/1200`;
+        // Convert file to Base64 for demo persistence in Firestore (1MB limit)
+        const reader = new FileReader();
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Check if dataUrl is too large for Firestore (approx 1MB limit)
+        if (dataUrl.length > 900000) {
+          alert(`A imagem ${file.name} é muito grande. Tente uma imagem menor que 800KB.`);
+          continue;
+        }
+
         await addDoc(collection(db, 'users', selectedStudentForPhotos.id, 'photos'), {
-          url: demoUrl,
+          url: dataUrl,
           name: file.name,
           createdAt: serverTimestamp()
         });
@@ -169,6 +180,7 @@ const Admin: React.FC = () => {
       handleManagePhotos(selectedStudentForPhotos);
     } catch (error) {
       console.error("Error uploading photos:", error);
+      alert("Erro ao processar as imagens. Verifique o tamanho dos arquivos.");
     } finally {
       setIsUploading(false);
     }
@@ -590,6 +602,38 @@ const Admin: React.FC = () => {
                 <p className="text-xs text-gray-500">{studentPhotos.length} fotos carregadas</p>
               </div>
               <div className="flex items-center gap-4">
+                {auth.currentUser?.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' && (
+                  <button 
+                    onClick={async () => {
+                      setIsUploading(true);
+                      try {
+                        const demoPhotos = [
+                          'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1541339907198-e08756eaa539?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1525921429624-479b6a29d84c?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800'
+                        ];
+                        for (const [index, url] of demoPhotos.entries()) {
+                          await addDoc(collection(db, 'users', selectedStudentForPhotos.id, 'photos'), {
+                            url,
+                            name: `demo-photo-${index + 1}.jpg`,
+                            createdAt: serverTimestamp()
+                          });
+                        }
+                        handleManagePhotos(selectedStudentForPhotos);
+                      } catch (error) {
+                        console.error("Error loading demo photos:", error);
+                      } finally {
+                        setIsUploading(false);
+                      }
+                    }}
+                    disabled={isUploading}
+                    className="bg-white/5 text-white/60 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10"
+                  >
+                    Demo Photos
+                  </button>
+                )}
                 <label className="bg-brand-gold text-black px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all cursor-pointer flex items-center gap-2">
                   <Upload size={16} />
                   {isUploading ? 'Enviando...' : 'Subir Fotos'}
