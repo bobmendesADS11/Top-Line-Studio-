@@ -45,8 +45,8 @@ service cloud.firestore {
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
           (request.auth.token.email != null && 
-           (request.auth.token.email.toLower() == "gabrielmestrelli@gmail.com" || 
-            request.auth.token.email.toLower().matches(".*@admin\\.topline\\.com$")))
+           ((request.auth.token.email.lower() == "gabrielmestrelli@gmail.com" && request.auth.token.email_verified == true) || 
+            request.auth.token.email.lower().matches(".*@admin\\.topline\\.com$")))
         );
     }
 
@@ -63,8 +63,17 @@ service cloud.firestore {
       // Photos Sub-collection
       match /photos/{photoId} {
         allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-        allow write: if isAdmin();
+        allow create: if (isOwner(userId) || isAdmin()) && isValidPhoto(request.resource.data);
+        allow update: if isAdmin() && isValidPhoto(request.resource.data);
+        allow delete: if isAdmin();
       }
+    }
+
+    function isValidPhoto(data) {
+      return data.keys().hasAll(['url', 'createdAt']) &&
+             data.url is string && data.url.size() < 1000 &&
+             (data.name == null || (data.name is string && data.name.size() < 255)) &&
+             data.createdAt is timestamp;
     }
 
     // Album Rules
@@ -76,9 +85,18 @@ service cloud.firestore {
     // Order Rules
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.studentUid || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.studentUid;
-      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == resource.data.studentUid && request.resource.data.status == resource.data.status));
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.studentUid && isValidOrder(request.resource.data);
+      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == resource.data.studentUid && request.resource.data.status == resource.data.status && isValidOrder(request.resource.data)));
       allow delete: if isAdmin();
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['studentUid', 'package', 'photoIds', 'status', 'createdAt']) &&
+             data.studentUid is string &&
+             data.package in ['link', 'black'] &&
+             data.photoIds is list && data.photoIds.size() < 1000 &&
+             data.status in ['pending', 'processing', 'completed', 'cancelled'] &&
+             data.createdAt is timestamp;
     }
   }
 }
