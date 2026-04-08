@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
@@ -238,9 +238,19 @@ export default function Gallery({ onSelect }: GalleryProps) {
 
               <button 
                 onClick={(e) => handleDeletePhoto(e, photo.id)}
-                className="absolute top-2 left-2 p-1.5 bg-red-500/20 text-red-500 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                className="absolute top-2 left-2 p-1.5 bg-red-500/20 text-red-500 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white z-10"
               >
                 <Trash2 className="w-3.5 h-3.5" />
+              </button>
+
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewPhoto(photo);
+                }}
+                className="absolute top-2 left-10 p-1.5 bg-white/10 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-white/20 z-10"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
               </button>
 
               <button 

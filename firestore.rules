@@ -65,7 +65,7 @@ service cloud.firestore {
         allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
         allow create: if (isOwner(userId) || isAdmin()) && isValidPhoto(request.resource.data);
         allow update: if isAdmin() && isValidPhoto(request.resource.data);
-        allow delete: if isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
     }
 
