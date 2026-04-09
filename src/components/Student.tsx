@@ -7,6 +7,7 @@ import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
 import Album3D from './Album3D';
 import AlbumEditor from './AlbumEditor';
+import ConciergeChat from './ConciergeChat';
 
 const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void }> = ({ userTier, studentData, user, setShowWelcome }) => (
   <motion.div 
@@ -78,7 +79,8 @@ const Dashboard: React.FC<{
   myOrders: any[]; 
   hasPurchasedAlbum: boolean;
   navigate: (path: string) => void;
-}> = ({ userTier, studentData, user, myOrders, hasPurchasedAlbum, navigate }) => (
+  onOpenChat: () => void;
+}> = ({ userTier, studentData, user, myOrders, hasPurchasedAlbum, navigate, onOpenChat }) => (
   <main className="max-w-7xl mx-auto px-6 py-12">
     {/* Welcome Section - Editorial Style */}
     <section className="mb-16">
@@ -190,11 +192,14 @@ const Dashboard: React.FC<{
           </div>
           <h3 className="text-3xl font-serif mb-3 gold-gradient">Concierge Edition</h3>
           <p className="text-gray-400 text-sm leading-relaxed font-light">
-            Suporte personalizado para a criação do seu legado. Fale com nossos especialistas em design de álbuns e materiais nobres.
+            Suporte personalizado para a criação do seu legado. Fale com nosso especialista em design de álbuns e materiais nobres.
           </p>
         </div>
         
-        <button className="gold-button w-full py-5 text-sm mt-8">
+        <button 
+          onClick={onOpenChat}
+          className="gold-button w-full py-5 text-sm mt-8"
+        >
           Falar com Especialista
         </button>
       </motion.div>
@@ -333,6 +338,7 @@ const Dashboard: React.FC<{
 const Student: React.FC = () => {
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [studentData, setStudentData] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
@@ -424,6 +430,12 @@ const Student: React.FC = () => {
           />
         )}
       </AnimatePresence>
+
+      <ConciergeChat 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+        studentName={studentData?.displayName?.split(' ')[0]} 
+      />
       
       {/* Header */}
       <header className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
@@ -489,6 +501,7 @@ const Student: React.FC = () => {
             myOrders={myOrders} 
             hasPurchasedAlbum={hasPurchasedAlbum}
             navigate={navigate}
+            onOpenChat={() => setIsChatOpen(true)}
           />
         } />
         <Route path="galeria" element={
