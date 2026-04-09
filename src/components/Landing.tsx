@@ -111,7 +111,7 @@ function Logo() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
             <img 
               key={i}
-              src="https://picsum.photos/seed/grad_small/100/100" 
+              src={`https://picsum.photos/seed/grad_logo_${i}/100/100`} 
               className="w-full aspect-square object-cover rounded-md opacity-30 group-hover:opacity-60 transition-opacity"
               referrerPolicy="no-referrer"
             />
@@ -122,20 +122,23 @@ function Logo() {
           <GraduationCap className="text-brand-gold w-5 h-5 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
         </div>
       </div>
-      <div className="flex items-center gap-1 relative group">
-        <div className="flex flex-col leading-none">
-          <span className="font-serif text-[10px] text-white uppercase tracking-[0.2em]">Top</span>
-          <span className="font-serif text-[10px] text-white uppercase tracking-[0.2em]">Line</span>
+      <div className="flex items-center gap-3 relative group">
+        <div className="flex flex-col items-center leading-none">
+          <div className="flex gap-1">
+            <span className="font-serif text-[11px] text-white uppercase tracking-[0.2em]">Top</span>
+            <span className="font-serif text-[11px] text-white uppercase tracking-[0.2em]">Line</span>
+          </div>
+          <span className="text-[6px] text-white/50 uppercase tracking-[0.4em] mt-1.5">Formaturas</span>
         </div>
 
         {/* 20 Anos Badge - Vertical Stack */}
-        <div className="flex flex-col items-center -mt-1 -ml-1">
+        <div className="flex flex-col items-center -mt-1">
           <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
           <span className="font-script text-2xl gold-gradient leading-none">20</span>
           <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
         </div>
 
-        <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-3">edition</span>
+        <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-1">edition</span>
       </div>
     </div>
   );
@@ -197,7 +200,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 className={`aspect-square rounded-xl border overflow-hidden relative group cursor-pointer transition-all ${selectedPhotos.includes(i) ? 'border-brand-gold ring-2 ring-brand-gold/20' : 'border-white/10 grayscale hover:grayscale-0'}`}
               >
                 <img 
-                  src={`https://picsum.photos/seed/grad${i}/400/400`} 
+                  src={`https://picsum.photos/seed/graduation_cap_${i}/400/400`} 
                   alt="Graduation" 
                   className={`w-full h-full object-cover transition-all duration-500 ${selectedPhotos.includes(i) ? 'scale-110 opacity-100' : 'opacity-50 group-hover:opacity-100'}`}
                   referrerPolicy="no-referrer"
@@ -271,7 +274,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   transition={{ delay: 0.2 }}
                   className="col-span-7 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative shadow-2xl"
                 >
-                  <img src={`https://picsum.photos/seed/grad${layoutSeed + 7}/600/800`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
+                  <img src={`https://picsum.photos/seed/photo_album_design_${layoutSeed}/600/800`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   
                   {/* Floating "Memory" particles */}
@@ -298,7 +301,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                     transition={{ delay: 0.4 }}
                     className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
                   >
-                    <img src={`https://picsum.photos/seed/grad${layoutSeed + 8}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
+                    <img src={`https://picsum.photos/seed/page_layout_${layoutSeed}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   </motion.div>
                   <motion.div 
                     key={`side2-${layoutSeed}`}
@@ -307,7 +310,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                     transition={{ delay: 0.6 }}
                     className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
                   >
-                    <img src={`https://picsum.photos/seed/grad${layoutSeed + 9}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
+                    <img src={`https://picsum.photos/seed/photo_editing_${layoutSeed}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
                   </motion.div>
                 </div>
 
@@ -378,7 +381,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
               {/* Left Page (Full Photo) */}
               <div className="flex-1 bg-[#1a1a1a] rounded-l-sm border-y border-l border-white/5 relative overflow-hidden shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] origin-right">
                 <img 
-                  src={`https://picsum.photos/seed/grad${layoutSeed + 11}/800/1200`} 
+                  src={`https://picsum.photos/seed/3d_album_spread_preview_${layoutSeed}/800/1200`} 
                   className="w-full h-full object-cover opacity-100"
                   referrerPolicy="no-referrer"
                 />
@@ -395,7 +398,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
               <div className="flex-1 bg-[#1a1a1a] rounded-r-sm border-y border-r border-white/5 relative overflow-hidden shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-6">
                 <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
                   <img 
-                    src={`https://picsum.photos/seed/grad${layoutSeed + 12}/800/600`} 
+                    src={`https://picsum.photos/seed/premium_album_detail_view_${layoutSeed}/800/600`} 
                     className="w-full h-full object-cover opacity-100"
                     referrerPolicy="no-referrer"
                   />
@@ -403,7 +406,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 </div>
                 <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
                   <img 
-                    src={`https://picsum.photos/seed/grad${layoutSeed + 13}/800/600`} 
+                    src={`https://picsum.photos/seed/graduation_celebration_memory_${layoutSeed}/800/600`} 
                     className="w-full h-full object-cover opacity-100"
                     referrerPolicy="no-referrer"
                   />
@@ -920,13 +923,14 @@ export default function Landing() {
         {/* Subtle background element */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent" />
         
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
-          <div className="flex flex-col items-center md:items-start gap-8">
-            <Logo />
-            <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase leading-relaxed text-center md:text-left max-w-xs">
-              Eternizando momentos com a sofisticação e exclusividade da Top Line Edition.
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
+            <div className="flex flex-col items-center md:items-start gap-8">
+              <Logo />
+              <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase leading-relaxed text-center md:text-left max-w-xs">
+                Eternizando momentos com a sofisticação e exclusividade da Top Line Edition.
+              </p>
+            </div>
           
           <div className="flex flex-col items-center md:items-start gap-8">
             <h4 className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">Navegação</h4>
@@ -964,7 +968,8 @@ export default function Landing() {
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-600 text-[9px] tracking-[0.2em] uppercase">
+      </div>
+      <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-600 text-[9px] tracking-[0.2em] uppercase">
           <span>© 2026 Top Line Formaturas. Todos os direitos reservados.</span>
           <div className="flex gap-8">
             <a href="#" className="hover:text-white transition-colors">Privacidade</a>
