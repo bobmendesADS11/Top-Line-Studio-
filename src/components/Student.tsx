@@ -336,19 +336,19 @@ const Student: React.FC = () => {
               {
                 title: 'Leather Edition',
                 desc: 'Couro legítimo com costura artesanal e gravação a laser.',
-                img: 'leather',
+                img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800',
                 tag: 'Clássico'
               },
               {
                 title: 'Acrylic & Video',
                 desc: 'Capa em acrílico cristal com tela de vídeo integrada.',
-                img: 'acrylic',
+                img: 'https://images.unsplash.com/photo-1621600411666-47428c14ce6a?auto=format&fit=crop&q=80&w=800',
                 tag: 'Tecnológico'
               },
               {
                 title: 'Velvet Edition',
                 desc: 'Toque aveludado com detalhes em hot-stamping dourado.',
-                img: 'velvet',
+                img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=800',
                 tag: 'Sofisticado'
               }
             ].map((item, idx) => (
@@ -360,7 +360,7 @@ const Student: React.FC = () => {
               >
                 <div className="relative aspect-[4/5] rounded-[32px] overflow-hidden mb-6 border border-white/5">
                   <img 
-                    src={`https://picsum.photos/seed/${item.img}/800/1000`} 
+                    src={item.img} 
                     alt={item.title} 
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                     referrerPolicy="no-referrer"
