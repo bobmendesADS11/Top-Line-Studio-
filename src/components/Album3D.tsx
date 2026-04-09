@@ -51,7 +51,8 @@ function PageContent({
   foldAngle = 0,
   materialType = 'standard',
   customMaterialProps,
-  coverTextureUrl
+  coverTextureUrl,
+  isCover = false
 }: { 
   textureUrl?: string, 
   videoUrl?: string,
@@ -59,11 +60,19 @@ function PageContent({
   foldAngle?: number,
   materialType?: string,
   customMaterialProps?: any,
-  coverTextureUrl?: string
+  coverTextureUrl?: string,
+  isCover?: boolean
 }) {
   const texture = textureUrl ? useTexture(textureUrl) : null;
   const coverTexture = coverTextureUrl ? useTexture(coverTextureUrl) : null;
   
+  // Load leather normal map for realism
+  const leatherNormal = useTexture('https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/leather/leather_normal.jpg');
+  if (leatherNormal) {
+    leatherNormal.wrapS = leatherNormal.wrapT = THREE.RepeatWrapping;
+    leatherNormal.repeat.set(2, 2);
+  }
+
   // Base materials with realistic properties
   const materialProps = useMemo(() => {
     if (customMaterialProps) return customMaterialProps;
@@ -71,29 +80,42 @@ function PageContent({
     switch (materialType) {
       case 'leather':
         return { 
-          color: '#0a0a0a', 
-          roughness: 0.9, 
-          metalness: 0.05,
+          color: '#121212', 
+          roughness: 0.7, 
+          metalness: 0.1,
+          normalMap: leatherNormal,
+          normalScale: new THREE.Vector2(0.5, 0.5),
+          clearcoat: 0.1,
+          clearcoatRoughness: 0.3
         };
       case 'acrylic':
         return { 
-          color: '#050505', 
-          roughness: 0.05, 
-          metalness: 0.95, 
-          opacity: 0.8, 
+          color: '#ffffff', 
+          transmission: 0.95,
+          thickness: 1.5,
+          roughness: 0.02, 
+          metalness: 0,
+          ior: 1.5,
           transparent: true,
+          opacity: 1,
+          envMapIntensity: 2
         };
       case 'velvet':
         return {
           color: '#1a0a2a',
-          roughness: 1,
+          roughness: 0.9,
           metalness: 0,
+          sheen: 1,
+          sheenColor: new THREE.Color('#ffffff'),
+          sheenRoughness: 0.8
         };
       case 'photo':
         return {
           color: '#ffffff',
-          roughness: 0.3,
-          metalness: 0.1,
+          roughness: 0.2,
+          metalness: 0.05,
+          clearcoat: 0.5,
+          clearcoatRoughness: 0.1
         };
       default:
         return { 
@@ -102,19 +124,49 @@ function PageContent({
           metalness: 0.1 
         };
     }
-  }, [materialType, customMaterialProps]);
+  }, [materialType, customMaterialProps, leatherNormal]);
+
+  // Page stack to simulate depth
+  const pageStack = useMemo(() => {
+    const stack = [];
+    const numPages = 5;
+    const spacing = 0.01;
+    for (let i = 0; i < numPages; i++) {
+      stack.push(
+        <mesh key={i} position={[0, 0, -i * spacing]} receiveShadow>
+          <boxGeometry args={[4, 5.5, 0.01]} />
+          <meshStandardMaterial color="#fff" roughness={0.8} />
+        </mesh>
+      );
+    }
+    return stack;
+  }, []);
 
   return (
     <group rotation={[0, isRightPage ? -foldAngle : foldAngle, 0]}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[4, 5.5, 0.05]} />
-        <meshPhysicalMaterial {...materialProps} map={materialType === 'photo' ? coverTexture : null} />
+      {/* The main page/cover body */}
+      <mesh castShadow receiveShadow position={[isRightPage ? 2 : -2, 0, 0]}>
+        <boxGeometry args={[4, 5.5, isCover ? 0.15 : 0.05]} />
+        <meshPhysicalMaterial 
+          {...materialProps} 
+          map={isCover && materialType === 'photo' ? coverTexture : null} 
+        />
       </mesh>
       
+      {/* Internal Page Stack (only if not cover or when open) */}
+      {!isCover && (
+        <group position={[isRightPage ? 2 : -2, 0, 0.03]}>
+          {pageStack}
+        </group>
+      )}
+
+      {/* Content (Photo or Video) */}
       {videoUrl ? (
-        <VideoContent videoUrl={videoUrl} />
+        <group position={[isRightPage ? 2 : -2, 0, 0.04]}>
+          <VideoContent videoUrl={videoUrl} />
+        </group>
       ) : texture && (
-        <mesh position={[0, 0, 0.03]} castShadow>
+        <mesh position={[isRightPage ? 2 : -2, 0, 0.04]} castShadow>
           <planeGeometry args={[3.8, 5.3]} />
           <meshStandardMaterial map={texture} />
         </mesh>
@@ -133,13 +185,14 @@ interface PageProps {
   materialType?: string;
   customMaterialProps?: any;
   coverTextureUrl?: string;
+  isCover?: boolean;
 }
 
-function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle = 0, materialType, customMaterialProps, coverTextureUrl }: PageProps) {
+function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle = 0, materialType, customMaterialProps, coverTextureUrl, isCover }: PageProps) {
   return (
     <group position={position} rotation={rotation}>
       <Suspense fallback={
-        <mesh>
+        <mesh position={[isRightPage ? 2 : -2, 0, 0]}>
           <boxGeometry args={[4, 5.5, 0.05]} />
           <meshStandardMaterial color="#222" />
         </mesh>
@@ -153,6 +206,7 @@ function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle
             materialType={materialType}
             customMaterialProps={customMaterialProps}
             coverTextureUrl={coverTextureUrl}
+            isCover={isCover}
           />
         </TextureErrorBoundary>
       </Suspense>
@@ -206,32 +260,53 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
       />
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
         <group ref={groupRef} rotation={[0, 0, 0]}>
-          {/* Left Page */}
+          {/* Back Cover */}
           <Page 
-            textureUrl={leftPageUrl} 
-            videoUrl={currentVideoUrl}
-            position={[-2.05, 0, 0]} 
+            position={[0, 0, -0.1]} 
             rotation={[0, 0, 0]} 
             foldAngle={fold}
             materialType={materialType}
             customMaterialProps={customMaterialProps}
-            coverTextureUrl={coverTextureUrl}
+            isCover
           />
+          
+          {/* Left Page */}
+          <Page 
+            textureUrl={leftPageUrl} 
+            videoUrl={currentVideoUrl}
+            position={[0, 0, 0]} 
+            rotation={[0, 0, 0]} 
+            foldAngle={fold}
+            materialType={materialType}
+            customMaterialProps={customMaterialProps}
+          />
+          
           {/* Right Page */}
           <Page 
             textureUrl={rightPageUrl} 
-            position={[2.05, 0, 0]} 
+            position={[0, 0, 0]} 
+            rotation={[0, 0, 0]} 
+            isRightPage
+            foldAngle={fold}
+            materialType={materialType}
+            customMaterialProps={customMaterialProps}
+          />
+
+          {/* Front Cover */}
+          <Page 
+            position={[0, 0, 0.1]} 
             rotation={[0, 0, 0]} 
             isRightPage
             foldAngle={fold}
             materialType={materialType}
             customMaterialProps={customMaterialProps}
             coverTextureUrl={coverTextureUrl}
+            isCover
           />
           
           {/* Spine */}
-          <mesh position={[0, 0, -0.05]}>
-            <boxGeometry args={[0.1, 5.5, 0.15]} />
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[0.15, 5.5, 0.25]} />
             <meshStandardMaterial 
               color={materialType === 'standard' ? "#D4AF37" : "#111"} 
               metalness={0.8} 

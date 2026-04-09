@@ -223,20 +223,20 @@ export default function Gallery({ onSelect }: GalleryProps) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div className="flex flex-col lg:flex-row lg:items-center gap-8 mb-12">
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-2xl md:text-3xl text-white uppercase tracking-[0.3em]">Top</span>
                   <span className="font-serif text-2xl md:text-3xl text-white uppercase tracking-[0.3em]">Line</span>
                 </div>
 
                 {/* 20 Anos Badge - Vertical Stack */}
-                <div className="flex flex-col items-center -mt-2">
+                <div className="flex flex-col items-center -mt-2 -ml-3">
                   <GraduationCap className="text-brand-gold w-5 h-5 mb-[-6px] drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
                   <span className="font-script text-4xl gold-gradient leading-none">20</span>
                   <span className="font-script text-sm gold-gradient -mt-2">anos</span>
                 </div>
 
-                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2">edition</span>
+                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2 ml-6">edition</span>
               </div>
             </div>
 

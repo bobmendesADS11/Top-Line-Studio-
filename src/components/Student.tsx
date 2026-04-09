@@ -108,28 +108,30 @@ const Student: React.FC = () => {
 
         <div className="relative z-10">
           <div className="flex flex-col items-center mb-10">
-            <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 bg-brand-gold/20 blur-2xl rounded-full animate-pulse" />
-              <div className="relative w-full h-full bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden group">
-                <GraduationCap className="text-brand-gold w-10 h-10 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
-              </div>
+            {/* 20 Anos Emblem with Capelo */}
+            <div className="flex flex-col items-center mb-6">
+              <GraduationCap className="text-brand-gold w-10 h-10 mb-[-10px] drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+              <span className="font-script text-7xl gold-gradient leading-none">20</span>
+              <span className="font-script text-2xl gold-gradient -mt-4">anos</span>
             </div>
-            
-            <div className="relative flex items-center gap-8">
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col leading-none">
-                  <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Top</span>
-                  <span className="font-serif text-3xl md:text-4xl text-white uppercase tracking-[0.3em]">Line</span>
-                </div>
 
-                {/* 20 Anos Badge - Vertical Stack */}
-                <div className="flex flex-col items-center -mt-4">
-                  <GraduationCap className="text-brand-gold w-6 h-6 mb-[-8px] drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]" />
-                  <span className="font-script text-6xl gold-gradient leading-none">20</span>
-                  <span className="font-script text-xl gold-gradient -mt-3">anos</span>
+            <div className="flex flex-col items-center">
+              <h1 className="font-serif text-4xl md:text-6xl text-white uppercase tracking-[0.2em] leading-none">
+                Top Line
+              </h1>
+              <span className="text-white/60 text-xs md:text-sm uppercase tracking-[0.8em] font-light mt-4 ml-[0.8em]">
+                Formaturas
+              </span>
+              
+              <div className="relative w-full mt-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-brand-gold/20"></div>
                 </div>
-
-                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none drop-shadow-[0_0_15px_rgba(212,175,55,0.3)] pt-4">edition</span>
+                <div className="relative flex justify-center">
+                  <span className="bg-zinc-900/40 px-4 font-script text-5xl md:text-7xl gold-gradient leading-none drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                    edition
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -183,7 +185,7 @@ const Student: React.FC = () => {
               </div>
               
               <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-none tracking-tight">
-                Olá, <span className="font-script gold-gradient">{user?.displayName?.split(' ')[0] || 'Formando'}</span>
+                Olá, <span className="font-script gold-gradient">{studentData?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Formando'}</span>
               </h2>
               
               <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-xl leading-relaxed font-light">
@@ -397,20 +399,20 @@ const Student: React.FC = () => {
               <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
                 <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
               </div>
-              <div className="flex items-center gap-4 relative group">
+              <div className="flex items-center gap-1 relative group">
                 <div className="flex flex-col leading-none">
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Top</span>
                   <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Line</span>
                 </div>
 
                 {/* 20 Anos Badge - Vertical Stack */}
-                <div className="flex flex-col items-center -mt-1">
+                <div className="flex flex-col items-center -mt-1 -ml-1">
                   <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
                   <span className="font-script text-2xl gold-gradient leading-none">20</span>
                   <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
                 </div>
 
-                <span className="font-script text-3xl md:text-4xl gold-gradient leading-none pt-2 pb-1">edition</span>
+                <span className="font-script text-3xl md:text-4xl gold-gradient leading-none pt-2 pb-1 ml-3">edition</span>
               </div>
             </Link>
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />

@@ -71,7 +71,8 @@ const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-t
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
   const activePhotos = photos.length > 0 ? photos : DEMO_PHOTOS;
   const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
-  const [effect, setEffect] = useState<EffectType>('none');
+  const [pageEffects, setPageEffects] = useState<EffectType[]>([]);
+  const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
   const [albumSize, setAlbumSize] = useState<AlbumSize>('30x30');
   const [materialType, setMaterialType] = useState<MaterialType>('standard');
   const [videoUrl, setVideoUrl] = useState<string>(DEFAULT_VIDEO);
@@ -83,11 +84,15 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   
   const totalPrice = (activePhotos.length * PRICES.photo) + PRICES.size[albumSize] + PRICES.material[materialType];
   
-  // Initialize page layouts when photos change
+  // Initialize page layouts and effects when photos change
   useEffect(() => {
     const photosPerPage = 1; // Default
     const numPages = Math.ceil(activePhotos.length / photosPerPage);
     setPageLayouts(new Array(numPages).fill(globalLayout));
+    setPageEffects(new Array(numPages).fill('none'));
+    if (!coverPhotoId && activePhotos.length > 0) {
+      setCoverPhotoId(activePhotos[0].id);
+    }
   }, [activePhotos.length]);
 
   // Update all layouts when global layout changes
@@ -102,15 +107,21 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     setPageLayouts(newLayouts);
   };
 
-  // Generate pages whenever photos, layouts, or effect changes
+  const handlePageEffectChange = (index: number, newEffect: EffectType) => {
+    const newEffects = [...pageEffects];
+    newEffects[index] = newEffect;
+    setPageEffects(newEffects);
+  };
+
+  // Generate pages whenever photos, layouts, or effects change
   useEffect(() => {
-    if (activePhotos.length > 0 && pageLayouts.length > 0) {
+    if (activePhotos.length > 0 && pageLayouts.length > 0 && pageEffects.length > 0) {
       generateAllPages();
     }
-  }, [activePhotos, pageLayouts, effect, albumSize]);
+  }, [activePhotos, pageLayouts, pageEffects, albumSize]);
 
-  const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
-    if (effect === 'none') return;
+  const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number, pageEffect: EffectType) => {
+    if (pageEffect === 'none') return;
 
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;
@@ -120,18 +131,18 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       const g = data[i + 1];
       const b = data[i + 2];
 
-      if (effect === 'bw') {
+      if (pageEffect === 'bw') {
         const avg = 0.3 * r + 0.59 * g + 0.11 * b;
         data[i] = data[i + 1] = data[i + 2] = avg;
-      } else if (effect === 'sepia') {
+      } else if (pageEffect === 'sepia') {
         data[i] = (r * 0.393) + (g * 0.769) + (b * 0.189);
         data[i + 1] = (r * 0.349) + (g * 0.686) + (b * 0.168);
         data[i + 2] = (r * 0.272) + (g * 0.534) + (b * 0.131);
-      } else if (effect === 'vintage') {
+      } else if (pageEffect === 'vintage') {
         data[i] = r * 0.9;
         data[i + 1] = g * 0.8;
         data[i + 2] = b * 0.7;
-      } else if (effect === 'vibrant') {
+      } else if (pageEffect === 'vibrant') {
         const max = Math.max(r, g, b);
         data[i] += (max - r) * 0.2;
         data[i + 1] += (max - g) * 0.2;
@@ -141,7 +152,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     ctx.putImageData(imageData, 0, 0);
   };
 
-  const drawPage = async (pagePhotos: Photo[], layout: LayoutType): Promise<string> => {
+  const drawPage = async (pagePhotos: Photo[], layout: LayoutType, pageEffect: EffectType): Promise<string> => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
@@ -279,7 +290,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       });
     }
 
-    applyEffect(ctx, width, height);
+    applyEffect(ctx, width, height, pageEffect);
     return canvas.toDataURL('image/jpeg', 0.9);
   };
 
@@ -290,6 +301,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     let photoIdx = 0;
     for (let i = 0; i < pageLayouts.length; i++) {
       const layout = pageLayouts[i];
+      const pageEffect = pageEffects[i] || 'none';
       let photosPerPage = 1;
       if (layout === 'grid') photosPerPage = 4;
       if (layout === 'collage') photosPerPage = 2;
@@ -297,7 +309,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       const pagePhotos = activePhotos.slice(photoIdx, photoIdx + photosPerPage);
       if (pagePhotos.length === 0) break;
       
-      const pageData = await drawPage(pagePhotos, layout);
+      const pageData = await drawPage(pagePhotos, layout, pageEffect);
       newPages.push(pageData);
       photoIdx += photosPerPage;
     }
@@ -478,29 +490,47 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </div>
         </div>
 
+        {materialType === 'photo' && (
+          <div>
+            <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
+              <ImageIcon size={14} /> Foto da Capa
+            </h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {activePhotos.map((photo) => (
+                <button
+                  key={photo.id}
+                  onClick={() => setCoverPhotoId(photo.id)}
+                  className={`flex-shrink-0 w-12 h-12 rounded-lg border-2 overflow-hidden transition-all ${
+                    coverPhotoId === photo.id ? 'border-brand-gold scale-110' : 'border-white/10 opacity-50'
+                  }`}
+                >
+                  <img src={photo.url} alt="Cover option" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Palette size={14} /> Efeitos de Imagem
+            <Palette size={14} /> Efeito Global (Aplicar a Todos)
           </h3>
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'none', label: 'Original' },
-              { id: 'bw', label: 'Preto e Branco' },
-              { id: 'sepia', label: 'Sépia Clássico' },
+              { id: 'bw', label: 'P&B' },
+              { id: 'sepia', label: 'Sépia' },
               { id: 'vintage', label: 'Vintage' },
               { id: 'vibrant', label: 'Vibrante' }
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setEffect(item.id as EffectType)}
-                className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${
-                  effect === item.id 
-                    ? 'bg-brand-gold/10 border-brand-gold text-brand-gold' 
-                    : 'bg-black/40 border-white/10 text-gray-400 hover:border-brand-gold/50'
-                }`}
+                onClick={() => {
+                  setPageEffects(pageEffects.map(() => item.id as EffectType));
+                }}
+                className="p-2 rounded-lg bg-white/5 border border-white/10 text-[8px] font-bold uppercase tracking-widest text-gray-400 hover:border-brand-gold/50 transition-all"
               >
-                <span className="text-[10px] uppercase font-bold tracking-widest">{item.label}</span>
-                {effect === item.id && <Check size={14} />}
+                {item.label}
               </button>
             ))}
           </div>
@@ -510,7 +540,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           <button
             onClick={() => {
               handleGlobalLayoutChange('minimalist');
-              setEffect('none');
+              setPageEffects(pageEffects.map(() => 'none'));
               setAlbumSize('30x30');
             }}
             className="w-full bg-white/5 text-gray-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/5"
@@ -556,7 +586,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 zoom={1} 
                 videoUrl={videoUrl || undefined}
                 materialType={materialType}
-                coverTextureUrl={photos[0]?.url}
+                coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
               />
               
               {/* 3D Controls Overlay */}
@@ -658,6 +688,33 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                     }`}
                                   >
                                     {l.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
+                                <Palette size={14} className="text-brand-gold" /> Efeito da Página
+                              </h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {[
+                                  { id: 'none', label: 'Original' },
+                                  { id: 'bw', label: 'P&B' },
+                                  { id: 'sepia', label: 'Sépia' },
+                                  { id: 'vintage', label: 'Vintage' },
+                                  { id: 'vibrant', label: 'Vibrante' }
+                                ].map(e => (
+                                  <button
+                                    key={e.id}
+                                    onClick={() => handlePageEffectChange(i, e.id as EffectType)}
+                                    className={`py-3 rounded-xl border text-[9px] font-bold uppercase tracking-widest transition-all ${
+                                      pageEffects[i] === e.id 
+                                        ? 'bg-brand-gold border-brand-gold text-black' 
+                                        : 'bg-black/40 border-white/10 text-white hover:border-brand-gold/50'
+                                    }`}
+                                  >
+                                    {e.label}
                                   </button>
                                 ))}
                               </div>
