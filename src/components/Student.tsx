@@ -146,40 +146,55 @@ const Dashboard: React.FC<{
       {/* Main Action: Gallery */}
       <motion.div 
         whileHover={{ y: -5 }}
-        className="md:col-span-8 bg-zinc-900/30 border border-white/5 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
+        className="md:col-span-8 bg-zinc-900/40 border border-white/10 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer backdrop-blur-sm"
         onClick={() => navigate('galeria')}
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="w-12 h-12 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold">
-            <ImageIcon size={24} />
-          </div>
-          <ArrowRight className="text-white/20 group-hover:text-brand-gold group-hover:translate-x-2 transition-all" />
-        </div>
-        <h3 className="text-2xl font-bold mb-2">Galeria de Fotos</h3>
-        <p className="text-gray-500 text-sm max-w-md">Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria Top Line.</p>
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-gold/5 blur-[80px] rounded-full" />
         
-        <div className="mt-8 flex gap-2 overflow-hidden">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="w-24 h-32 rounded-xl overflow-hidden border border-white/5 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-700">
-              <img src={`https://picsum.photos/seed/graduation_moment_${i}/200/300`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-brand-gold group-hover:border-brand-gold/30 transition-colors">
+              <ImageIcon size={28} />
             </div>
-          ))}
+            <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white/20 group-hover:text-brand-gold group-hover:border-brand-gold/30 group-hover:translate-x-1 transition-all">
+              <ArrowRight size={20} />
+            </div>
+          </div>
+          <h3 className="text-3xl font-serif mb-2 gold-gradient">Galeria de Fotos</h3>
+          <p className="text-gray-400 text-sm max-w-md font-light leading-relaxed">Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria exclusiva Top Line.</p>
+          
+          <div className="mt-10 flex gap-4 overflow-hidden">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="w-28 h-36 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-1000 relative">
+                <img src={`https://picsum.photos/seed/graduation_moment_${i}/300/400`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            ))}
+          </div>
         </div>
       </motion.div>
 
       {/* Studio Concierge */}
       <motion.div 
         whileHover={{ y: -5 }}
-        className="md:col-span-4 bg-brand-gold/5 border border-brand-gold/10 rounded-[40px] p-8 flex flex-col justify-between"
+        className="md:col-span-4 bg-zinc-950 border border-brand-gold/20 rounded-[40px] p-8 flex flex-col justify-between relative overflow-hidden group"
       >
-        <div>
-          <div className="w-12 h-12 bg-brand-gold/20 rounded-2xl flex items-center justify-center text-brand-gold mb-8">
-            <Sparkles size={24} />
+        {/* Decorative background effects */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 blur-[60px] rounded-full -mr-16 -mt-16" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-gold/5 blur-[40px] rounded-full -ml-12 -mb-12" />
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.05),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+        <div className="relative z-10">
+          <div className="w-14 h-14 bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center text-brand-gold mb-8 shadow-[0_0_20px_rgba(212,175,55,0.1)] group-hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] transition-all">
+            <Sparkles size={28} className="drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
           </div>
-          <h3 className="text-2xl font-bold mb-2 text-brand-gold">Concierge Edition</h3>
-          <p className="text-gray-400 text-sm">Suporte personalizado para a criação do seu legado. Fale com nossos especialistas em design de álbuns.</p>
+          <h3 className="text-3xl font-serif mb-3 gold-gradient">Concierge Edition</h3>
+          <p className="text-gray-400 text-sm leading-relaxed font-light">
+            Suporte personalizado para a criação do seu legado. Fale com nossos especialistas em design de álbuns e materiais nobres.
+          </p>
         </div>
-        <button className="w-full py-4 bg-brand-gold text-black rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all mt-8">
+        
+        <button className="gold-button w-full py-5 text-sm mt-8">
           Falar com Especialista
         </button>
       </motion.div>
@@ -187,25 +202,30 @@ const Dashboard: React.FC<{
       {/* Order Tracking */}
       <motion.div 
         whileHover={{ y: -5 }}
-        className="md:col-span-4 bg-zinc-900/30 border border-white/5 rounded-[40px] p-8"
+        className="md:col-span-4 bg-zinc-900/40 border border-white/10 rounded-[40px] p-8 relative overflow-hidden backdrop-blur-sm"
       >
-        <h3 className="text-xl font-bold mb-6 flex items-center gap-3">
-          <Clock size={20} className="text-brand-gold" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-gold/20 to-transparent" />
+        
+        <h3 className="text-xl font-serif mb-8 flex items-center gap-3 gold-gradient">
+          <Clock size={22} className="text-brand-gold" />
           Status de Produção
         </h3>
         
         {myOrders.length === 0 ? (
-          <div className="py-8 text-center">
-            <p className="text-gray-600 text-sm italic">Nenhum álbum em produção no momento.</p>
+          <div className="py-12 text-center flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-full border border-white/5 flex items-center justify-center text-white/10">
+              <Clock size={24} />
+            </div>
+            <p className="text-gray-500 text-xs italic font-light tracking-wide">Nenhum álbum em produção no momento.</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {myOrders.slice(0, 2).map(order => (
-              <div key={order.id} className="relative pl-6 border-l border-brand-gold/30">
-                <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-brand-gold" />
-                <p className="text-xs font-bold text-brand-gold uppercase tracking-widest mb-1">{order.status}</p>
-                <p className="text-sm font-medium text-white mb-1">Álbum de Formatura</p>
-                <p className="text-[10px] text-gray-500">#{order.id.slice(0, 8)}</p>
+              <div key={order.id} className="relative pl-8 border-l border-brand-gold/20 group/order">
+                <div className="absolute -left-[5px] top-0 w-2.5 h-2.5 rounded-full bg-brand-gold shadow-[0_0_10px_rgba(212,175,55,0.5)] group-hover/order:scale-125 transition-transform" />
+                <p className="text-[10px] font-bold text-brand-gold uppercase tracking-[0.3em] mb-2">{order.status}</p>
+                <p className="text-sm font-medium text-white mb-1 group-hover/order:text-brand-gold transition-colors">Álbum de Formatura Premium</p>
+                <p className="text-[10px] text-gray-500 font-mono">ID: {order.id.slice(0, 8).toUpperCase()}</p>
               </div>
             ))}
           </div>
@@ -215,21 +235,26 @@ const Dashboard: React.FC<{
       {/* 3D Editor Preview */}
       <motion.div 
         whileHover={{ y: -5 }}
-        className="md:col-span-8 bg-gradient-to-br from-zinc-900 to-black border border-white/5 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
+        className="md:col-span-8 bg-zinc-950 border border-white/10 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
         onClick={() => navigate('editor')}
       >
-        <div className="absolute right-0 top-0 w-1/2 h-full opacity-20 group-hover:opacity-40 transition-opacity">
-          <img src="https://picsum.photos/seed/album_3d_render_preview/800/600" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+        <div className="absolute right-0 top-0 w-2/3 h-full opacity-30 group-hover:opacity-50 transition-opacity duration-1000">
+          <img src="https://picsum.photos/seed/album_3d_render_preview/1200/800" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/60 to-transparent" />
         </div>
-        <div className="relative z-10">
-          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white mb-8">
-            <Book size={24} />
+        
+        <div className="relative z-10 h-full flex flex-col justify-between">
+          <div>
+            <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white mb-8 group-hover:border-white/20 transition-colors">
+              <Book size={28} />
+            </div>
+            <h3 className="text-3xl font-serif mb-2 gold-gradient">Estúdio Digital 3D</h3>
+            <p className="text-gray-400 text-sm max-w-xs font-light leading-relaxed">Visualize seu legado em tempo real com nossa tecnologia de renderização 3D exclusiva.</p>
           </div>
-          <h3 className="text-2xl font-bold mb-2">Editor 3D de Álbuns</h3>
-          <p className="text-gray-500 text-sm max-w-xs">Visualize seu álbum em tempo real com nossa tecnologia de renderização 3D exclusiva.</p>
-          <button className="mt-8 flex items-center gap-2 text-brand-gold font-bold text-xs uppercase tracking-widest">
-            Abrir Estúdio Digital <ArrowRight size={14} />
-          </button>
+          
+          <div className="mt-12 flex items-center gap-3 text-brand-gold font-bold text-xs uppercase tracking-[0.2em] group-hover:gap-5 transition-all">
+            Abrir Estúdio Digital <ArrowRight size={16} />
+          </div>
         </div>
       </motion.div>
     </div>
@@ -292,10 +317,10 @@ const Dashboard: React.FC<{
                   </span>
                 </div>
               </div>
-              <h4 className="text-xl font-bold mb-2 group-hover:text-brand-gold transition-colors">{item.title}</h4>
-              <p className="text-gray-500 text-xs leading-relaxed mb-4">{item.desc}</p>
-              <div className="flex items-center gap-2 text-brand-gold text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                Explorar Modelo <ArrowRight size={12} />
+              <h4 className="text-2xl font-serif mb-2 gold-gradient group-hover:scale-105 transition-transform origin-left">{item.title}</h4>
+              <p className="text-gray-400 text-xs leading-relaxed mb-6 font-light">{item.desc}</p>
+              <div className="flex items-center gap-3 text-brand-gold text-[10px] font-bold uppercase tracking-[0.2em] group-hover:gap-5 transition-all">
+                Explorar Modelo <ArrowRight size={14} />
               </div>
             </motion.div>
           ))}
