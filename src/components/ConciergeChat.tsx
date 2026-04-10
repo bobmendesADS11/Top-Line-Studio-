@@ -9,12 +9,22 @@ interface Message {
 }
 
 interface ConciergeChatProps {
-  isOpen: boolean;
   onClose: () => void;
   studentName?: string;
+  initialMessage?: string;
 }
 
-const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentName }) => {
+const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, initialMessage }) => {
+  console.log('DEBUG: ConciergeChat rendering, studentName:', studentName, 'initialMessage:', initialMessage);
+  useEffect(() => {
+    console.log('DEBUG: ConciergeChat mounted');
+    // Prevent body scroll when chat is open
+    document.body.style.overflow = 'hidden';
+    return () => {
+      console.log('DEBUG: ConciergeChat unmounting');
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -24,6 +34,7 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialSentRef = useRef(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -31,11 +42,19 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  useEffect(() => {
+    if (initialMessage && messages.length === 1 && !initialSentRef.current) {
+      console.log('DEBUG: Auto-sending initial message:', initialMessage);
+      initialSentRef.current = true;
+      handleSend(initialMessage);
+    }
+  }, [initialMessage, messages.length]);
 
-    const userMessage = input.trim();
-    setInput('');
+  const handleSend = async (overrideMessage?: string) => {
+    const userMessage = (overrideMessage || input).trim();
+    if (!userMessage || isLoading) return;
+
+    if (!overrideMessage) setInput('');
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
 
@@ -58,13 +77,18 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
           Seu tom de voz é extremamente sofisticado, atencioso, profissional e inspirador. 
           Você é um expert em:
           1. Design de Álbuns: Layouts, curadoria de fotos e narrativa visual.
-          2. Materiais Nobres: Couro legítimo (Leather Edition), Acrílico Cristal (Acrylic Edition), Veludo (Velvet Edition) e a tecnologia de Vídeo na capa (Video Edition).
+          2. Materiais Nobres e Edições: 
+             - Link Edition: Galeria digital premium com acesso vitalício e compartilhamento instantâneo.
+             - Leather Edition: Couro legítimo trabalhado artesanalmente, um clássico atemporal.
+             - Acrylic Edition: Capa em acrílico cristalino de alta espessura, que traz profundidade e brilho às fotos.
+             - Velvet Edition: Toque aveludado e sofisticado com detalhes em hot-stamping.
+             - Video Edition: Um álbum físico de luxo com uma tela de alta definição embutida na capa, que reproduz seus vídeos de formatura automaticamente ao ser aberto.
           3. Experiência do Formando: Como eternizar o legado da conquista.
           
           Regras:
           - Nunca mencione que você é uma IA, a menos que seja estritamente necessário. Aja como um concierge humano de alto nível.
           - Use termos como "Legado", "Excelência", "Extraordinário", "Eternizar".
-          - Se o aluno perguntar sobre preços ou questões financeiras, sugira que ele entre em contato com o setor comercial através do telefone (48) 3028-0949, mas tente primeiro entender o desejo dele.
+          - Se o aluno perguntar sobre preços, pacotes ou como adquirir seu álbum, oriente-o a explorar o **Catálogo Edition** ao final da sua página principal ou acessar o **Estúdio Digital 3D**. Nessas seções, ele poderá visualizar cada modelo em detalhes, escolher sua edição favorita e conferir as condições exclusivas para eternizar seu momento.
           - Seja breve mas impactante.`,
           temperature: 0.7,
         }
@@ -81,23 +105,15 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-          />
-          
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl h-[80vh] bg-zinc-950 border border-brand-gold/20 rounded-[40px] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
-          >
+    <div className="fixed inset-0 top-0 left-0 w-full h-full z-[9999] flex items-center justify-center p-4 md:p-6">
+      <div 
+        onClick={onClose}
+        className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
+      />
+      
+      <div 
+        className="relative w-full max-w-2xl h-[80vh] bg-zinc-950 border border-brand-gold/40 rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col"
+      >
             {/* Header */}
             <div className="p-6 border-b border-white/5 flex items-center justify-between bg-zinc-900/50">
               <div className="flex items-center gap-4">
@@ -165,7 +181,7 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
                   className="w-full bg-white/5 border border-white/10 rounded-full py-4 pl-6 pr-14 text-sm focus:outline-none focus:border-brand-gold/30 transition-all placeholder:text-gray-600"
                 />
                 <button 
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={!input.trim() || isLoading}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-brand-gold text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
                 >
@@ -176,10 +192,8 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ isOpen, onClose, studentN
                 Top Line Edition • Inteligência Artificial de Design
               </p>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 };
 

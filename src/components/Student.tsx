@@ -9,7 +9,7 @@ import Album3D from './Album3D';
 import AlbumEditor from './AlbumEditor';
 import ConciergeChat from './ConciergeChat';
 
-const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void }> = ({ userTier, studentData, user, setShowWelcome }) => (
+const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (message?: string) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
   <motion.div 
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -60,13 +60,25 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
               : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder da Edition.'}
         </p>
 
-        <button 
-          onClick={() => setShowWelcome(false)}
-          className="w-full bg-brand-gold text-black py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.3)] group flex items-center justify-center gap-3"
-        >
-          Começar Experiência
-          <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-        </button>
+        <div className="flex flex-col gap-3">
+          <button 
+            onClick={() => setShowWelcome(false)}
+            className="w-full bg-brand-gold text-black py-5 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all shadow-[0_0_30px_rgba(212,175,55,0.3)] group flex items-center justify-center gap-3"
+          >
+            Começar Experiência
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+          <button 
+            onClick={() => {
+              setShowWelcome(false);
+              onOpenChat("Olá! Acabei de entrar na minha área do aluno e gostaria de saber mais sobre como eternizar minha formatura com a Top Line Edition.");
+            }}
+            className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+          >
+            <Sparkles size={14} className="text-brand-gold" />
+            Falar com Concierge
+          </button>
+        </div>
       </div>
     </motion.div>
   </motion.div>
@@ -77,11 +89,14 @@ const Dashboard: React.FC<{
   studentData: any; 
   user: any; 
   myOrders: any[]; 
+  selectedPhotos: any[];
   hasPurchasedAlbum: boolean;
   navigate: (path: string) => void;
-  onOpenChat: () => void;
-}> = ({ userTier, studentData, user, myOrders, hasPurchasedAlbum, navigate, onOpenChat }) => (
-  <main className="max-w-7xl mx-auto px-6 py-12">
+  onOpenChat: (message?: string) => void;
+}> = ({ userTier, studentData, user, myOrders, selectedPhotos, hasPurchasedAlbum, navigate, onOpenChat }) => {
+  console.log('Dashboard rendered, onOpenChat type:', typeof onOpenChat);
+  return (
+    <main className="max-w-7xl mx-auto px-6 py-12">
     {/* Welcome Section - Editorial Style */}
     <section className="mb-16">
       <motion.div 
@@ -104,7 +119,7 @@ const Dashboard: React.FC<{
               Olá, <span className="font-script gold-gradient">{studentData?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Formando'}</span>
             </h2>
             
-            <p className="text-gray-400 text-lg md:text-xl mb-10 max-w-xl leading-relaxed font-light">
+            <p className="text-gray-400 text-lg md:text-xl mb-4 max-w-xl leading-relaxed font-light">
               {userTier === 'ALBUM' 
                 ? 'Sua jornada de excelência continua. Suas fotos estão prontas para serem eternizadas em seu álbum exclusivo.'
                 : userTier === 'LINK'
@@ -112,13 +127,38 @@ const Dashboard: React.FC<{
                   : 'Sua formatura está sendo preparada com o requinte que você merece. Enquanto aguardamos os registros, planeje seu legado.'}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6">
-              <Link to="galeria" className="gold-button px-10 py-5 text-sm">
+            <p className="font-script text-3xl text-brand-gold mb-10 opacity-90">
+              Sonhe, acredite, realize!
+            </p>
+
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+              <Link to="galeria" className="gold-button px-8 py-4 text-sm">
                 {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Acessar Galeria Edition'}
               </Link>
-              {userTier !== 'ALBUM' && (
-                <button className="px-10 py-5 rounded-full border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all">
-                  {userTier === 'PROSPECT' ? 'Adquirir Link Edition' : 'Upgrade para Álbum'}
+              
+              {userTier === 'PROSPECT' && (
+                <>
+                  <button 
+                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Álbum Edition (Físico) para minha formatura.')}
+                    className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                  >
+                    Adquirir Álbum Edition
+                  </button>
+                  <button 
+                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Link Edition para minhas fotos.')}
+                    className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                  >
+                    Adquirir Link Edition
+                  </button>
+                </>
+              )}
+
+              {userTier === 'LINK' && (
+                <button 
+                  onClick={() => onOpenChat('Gostaria de saber mais sobre como fazer o upgrade para o Álbum Físico Edition.')}
+                  className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                >
+                  Upgrade para Álbum
                 </button>
               )}
             </div>
@@ -165,13 +205,22 @@ const Dashboard: React.FC<{
           <h3 className="text-3xl font-serif mb-2 gold-gradient">Galeria de Fotos</h3>
           <p className="text-gray-400 text-sm max-w-md font-light leading-relaxed">Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria exclusiva Top Line.</p>
           
-          <div className="mt-10 flex gap-4 overflow-hidden">
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="w-28 h-36 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-1000 relative">
-                <img src={`https://picsum.photos/seed/graduation_moment_${i}/300/400`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="mt-10 flex gap-4 overflow-hidden min-h-[144px] items-center">
+            {selectedPhotos.length > 0 ? (
+              selectedPhotos.slice(0, 5).map((photo, i) => (
+                <div key={photo.id || i} className="w-28 h-36 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-1000 relative">
+                  <img src={photo.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-white/5 rounded-3xl group-hover:border-brand-gold/20 transition-colors">
+                <ImageIcon size={24} className="text-gray-600 mb-2 group-hover:text-brand-gold/40 transition-colors" />
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest font-medium group-hover:text-brand-gold/60 transition-colors">
+                  Adicione suas fotos na Top Line Edition
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </motion.div>
@@ -179,7 +228,8 @@ const Dashboard: React.FC<{
       {/* Studio Concierge */}
       <motion.div 
         whileHover={{ y: -5 }}
-        className="md:col-span-4 bg-zinc-950 border border-brand-gold/20 rounded-[40px] p-8 flex flex-col justify-between relative overflow-hidden group"
+        onClick={() => onOpenChat("Olá! Gostaria de falar com um especialista sobre as edições exclusivas de álbuns da Top Line.")}
+        className="md:col-span-4 bg-zinc-950 border border-brand-gold/20 rounded-[40px] p-8 flex flex-col justify-between relative overflow-hidden group cursor-pointer"
       >
         {/* Decorative background effects */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 blur-[60px] rounded-full -mr-16 -mt-16" />
@@ -197,7 +247,7 @@ const Dashboard: React.FC<{
         </div>
         
         <button 
-          onClick={onOpenChat}
+          onClick={() => onOpenChat()}
           className="gold-button w-full py-5 text-sm mt-8"
         >
           Falar com Especialista
@@ -278,6 +328,12 @@ const Dashboard: React.FC<{
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             {
+              title: 'Link Edition',
+              desc: 'Sua galeria digital premium com acesso vitalício e compartilhamento instantâneo.',
+              img: 'digital-connection-network',
+              tag: 'Digital'
+            },
+            {
               title: 'Leather Edition',
               desc: 'Couro legítimo com costura artesanal e gravação a laser.',
               img: 'leather-bound-book',
@@ -285,8 +341,8 @@ const Dashboard: React.FC<{
             },
             {
               title: 'Acrylic Edition',
-              desc: 'Capa em acrílico cristal de alta transparência e brilho.',
-              img: 'glass-cube-art',
+              desc: 'Capa em acrílico cristalino de alta espessura, proporcionando profundidade e brilho eterno às suas fotos.',
+              img: 'modern-glass-architecture',
               tag: 'Moderno'
             },
             {
@@ -297,8 +353,8 @@ const Dashboard: React.FC<{
             },
             {
               title: 'Video Edition',
-              desc: 'Tecnologia de ponta com tela de vídeo integrada na capa.',
-              img: 'tablet-display-screen',
+              desc: 'Um álbum físico de luxo com uma tela de alta definição integrada na capa, reproduzindo seus vídeos automaticamente.',
+              img: 'modern-technology-structure',
               tag: 'Tecnológico'
             }
           ].map((item, idx) => (
@@ -333,16 +389,26 @@ const Dashboard: React.FC<{
       </section>
     )}
   </main>
-);
+  );
+};
 
 const Student: React.FC = () => {
+  console.log('Student component rendering...');
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [initialChatMessage, setInitialChatMessage] = useState<string | undefined>();
   const [studentData, setStudentData] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const user = auth.currentUser;
+
+  console.log('Student component rendering, isChatOpen:', isChatOpen);
+
+  const handleOpenChat = (message?: string) => {
+    setInitialChatMessage(message);
+    setIsChatOpen(true);
+  };
 
   const albumPages = [
     'https://picsum.photos/seed/grad1/800/1200',
@@ -427,15 +493,10 @@ const Student: React.FC = () => {
             studentData={studentData} 
             user={user} 
             setShowWelcome={setShowWelcome} 
+            onOpenChat={handleOpenChat}
           />
         )}
       </AnimatePresence>
-
-      <ConciergeChat 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-        studentName={studentData?.displayName?.split(' ')[0]} 
-      />
       
       {/* Header */}
       <header className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
@@ -469,6 +530,14 @@ const Student: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 md:gap-6">
+            <button 
+              onClick={() => handleOpenChat("Olá! Gostaria de tirar algumas dúvidas sobre meu álbum e as opções da Top Line.")}
+              className="p-2 hover:bg-brand-gold/10 text-gray-400 hover:text-brand-gold rounded-lg transition-colors group relative"
+              title="Concierge AI"
+            >
+              <Sparkles size={18} className="md:w-5 md:h-5" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-gold rounded-full animate-pulse" />
+            </button>
             <div className="flex items-center gap-2 md:gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-xs md:text-sm font-medium">{user?.displayName || 'Aluno'}</p>
@@ -499,9 +568,10 @@ const Student: React.FC = () => {
             studentData={studentData} 
             user={user} 
             myOrders={myOrders} 
+            selectedPhotos={selectedPhotos}
             hasPurchasedAlbum={hasPurchasedAlbum}
             navigate={navigate}
-            onOpenChat={() => setIsChatOpen(true)}
+            onOpenChat={handleOpenChat}
           />
         } />
         <Route path="galeria" element={
@@ -557,6 +627,33 @@ const Student: React.FC = () => {
           </div>
         } />
       </Routes>
+
+      {isChatOpen && (
+        <ConciergeChat 
+          onClose={() => {
+            console.log('DEBUG: Closing Concierge Chat');
+            setIsChatOpen(false);
+            setInitialChatMessage(undefined);
+          }} 
+          studentName={studentData?.displayName?.split(' ')[0]} 
+          initialMessage={initialChatMessage}
+        />
+      )}
+
+      {/* Floating Chat Button */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => handleOpenChat()}
+        className="fixed bottom-8 right-8 z-[90] w-16 h-16 bg-brand-gold text-black rounded-full shadow-[0_0_30px_rgba(212,175,55,0.4)] flex items-center justify-center group"
+      >
+        <Sparkles size={28} className="group-hover:rotate-12 transition-transform" />
+        <div className="absolute right-full mr-4 bg-zinc-900 border border-brand-gold/20 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest text-brand-gold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+          Concierge AI
+        </div>
+      </motion.button>
     </div>
   );
 };
