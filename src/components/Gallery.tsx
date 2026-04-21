@@ -136,7 +136,10 @@ export default function Gallery({ onSelect }: GalleryProps) {
     if (!auth.currentUser) return;
     
     try {
-      const selected = photos.filter(p => selectedIds.has(p.id));
+      // Respect selection order
+      const selectionArray = Array.from(selectedIds);
+      const selected = selectionArray.map(id => photos.find(p => p.id === id)).filter(Boolean) as Photo[];
+      
       // Create an order
       await addDoc(collection(db, 'orders'), {
         studentUid: auth.currentUser.uid,
@@ -245,7 +248,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
             <div className="flex flex-col gap-1">
               <span className="font-script text-3xl text-white/60">Sonhe, acredite, realize!</span>
               <p className="text-gray-500 text-xs max-w-md leading-relaxed">
-                Selecione as fotos que farão parte do seu álbum exclusivo. Eternizando conquistas com o requinte que só a Top Line oferece há duas décadas.
+                Selecione as fotos que farão parte do seu álbum exclusivo. O número em cada foto indica a ordem em que aparecerão na sua diagramação.
               </p>
             </div>
           </div>
@@ -346,10 +349,16 @@ export default function Gallery({ onSelect }: GalleryProps) {
                 selectedIds.has(photo.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               }`} />
               
-              <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center transition-transform ${
+              <div className={`absolute top-2 right-2 min-w-[24px] h-6 px-1.5 rounded-full flex items-center justify-center transition-all ${
                 selectedIds.has(photo.id) ? 'bg-brand-gold scale-100' : 'bg-white/20 scale-0 group-hover:scale-100'
               }`}>
-                <Check className="w-4 h-4 text-brand-navy" />
+                {selectedIds.has(photo.id) ? (
+                  <span className="text-[10px] font-black text-brand-navy leading-none">
+                    {Array.from(selectedIds).indexOf(photo.id) + 1}
+                  </span>
+                ) : (
+                  <Check className="w-4 h-4 text-white/50" />
+                )}
               </div>
 
               <button 

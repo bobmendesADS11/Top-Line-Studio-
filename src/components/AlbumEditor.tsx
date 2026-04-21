@@ -20,7 +20,8 @@ import {
   Box,
   Crop as CropIcon,
   AlertTriangle,
-  X
+  X,
+  ListOrdered
 } from 'lucide-react';
 import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './Album3D';
@@ -50,19 +51,29 @@ type AlbumSize = '20x30' | '30x30' | '30x40';
 type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 'photo';
 
 const PRICES = {
-  photo: 34.90,
+  edition: {
+    link: 1200.00,       // Noir Link Edition (Digital)
+    album: 1850.00,     // Full Experience (Physical + Link)
+  },
+  photo: 45.00,         // Unit price per photo curated
   size: {
     '20x30': 0,
-    '30x30': 50,
-    '30x40': 100
+    '30x30': 150,
+    '30x40': 300
   },
   material: {
     'standard': 0,
-    'premium': 150,
-    'leather': 250,
-    'acrylic': 400,
-    'velvet': 300,
-    'photo': 200
+    'premium': 350,
+    'leather': 550,
+    'acrylic': 950,
+    'velvet': 750,
+    'photo': 500
+  },
+  pagePackage: {
+    20: 0,
+    40: 400,
+    60: 750,
+    80: 1100
   }
 };
 
@@ -80,7 +91,17 @@ const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-t
 const STORAGE_KEY = 'noir_album_persistence';
 
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
-  const activePhotos = photos.length > 0 ? photos : DEMO_PHOTOS;
+  const [activePhotos, setActivePhotos] = useState<Photo[]>([]);
+  
+  // Initialize activePhotos from props
+  useEffect(() => {
+    if (activePhotos.length === 0 && photos.length > 0) {
+      setActivePhotos(photos);
+    } else if (photos.length === 0) {
+      setActivePhotos(DEMO_PHOTOS);
+    }
+  }, [photos, activePhotos.length]);
+
   const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
   const [pageEffects, setPageEffects] = useState<EffectType[]>([]);
   const [coverPhotoId, setCoverPhotoId] = useState<string | null>(null);
@@ -94,7 +115,119 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [showPreview, setShowPreview] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
+  const [requestedPageCount, setRequestedPageCount] = useState<number>(20);
+  const [purchaseType, setPurchaseType] = useState<'LINK' | 'FULL'>('FULL');
   
+  const getPhotosTotalCapacity = () => {
+    let cap = 0;
+    for (let i = 0; i < pageLayouts.length; i++) {
+      const layout = pageLayouts[i];
+      if (layout === 'grid') cap += 4;
+      else if (layout === 'vgrid') cap += 2;
+      else if (layout === 'panorama') {
+        cap += 1;
+        i++;
+      } else {
+        cap += 1;
+      }
+    }
+    return cap;
+  };
+
+  const optimizeHelper = (layoutsArr: LayoutType[], targetCount: number, updateFn: (arr: LayoutType[]) => void) => {
+    let currentCap = 0;
+    const newLayouts = [...layoutsArr];
+    const pageBudget = requestedPageCount;
+    
+    // Calculate the density needed (photos per page)
+    const density = targetCount / pageBudget;
+    
+    for (let spreadIdx = 0; spreadIdx < Math.floor(newLayouts.length / 2); spreadIdx++) {
+      const p1 = spreadIdx * 2;
+      const p2 = p1 + 1;
+      
+      // If density is low (e.g. 1.5 photos per page), we use lighter patterns
+      // 30 photos / 20 pages = 1.5 density
+      
+      const pattern = spreadIdx % 4;
+      
+      if (density <= 1.2) {
+        // Very light: Mostly 1 photo per page, occasional 2
+        newLayouts[p1] = pattern === 0 ? 'vgrid' : 'minimalist';
+        newLayouts[p2] = 'minimalist';
+      } else if (density <= 1.8) {
+        // Medium (Your 30/20 case): Mix of 1, 2 and occasional Panorama
+        if (pattern === 0) {
+          newLayouts[p1] = 'vgrid';
+          newLayouts[p2] = 'minimalist';
+        } else if (pattern === 1) {
+          newLayouts[p1] = 'panorama';
+          newLayouts[p2] = 'panorama';
+        } else if (pattern === 2) {
+          newLayouts[p1] = 'minimalist';
+          newLayouts[p2] = 'vgrid';
+        } else {
+          newLayouts[p1] = 'vgrid';
+          newLayouts[p2] = 'vgrid';
+        }
+      } else {
+        // High density (>2): Use the rhythmic grid pattern
+        if (pattern === 0) {
+          newLayouts[p1] = 'grid';
+          newLayouts[p2] = 'vgrid';
+        } else if (pattern === 1) {
+          newLayouts[p1] = 'panorama';
+          newLayouts[p2] = 'panorama';
+        } else if (pattern === 2) {
+          newLayouts[p1] = 'vgrid';
+          newLayouts[p2] = 'grid';
+        } else {
+          newLayouts[p1] = 'spread';
+          newLayouts[p2] = 'grid';
+        }
+      }
+      
+      currentCap = newLayouts.slice(0, p2 + 1).reduce((acc, layout, i) => {
+        if (layout === 'panorama') return i % 2 === 0 ? acc + 1 : acc;
+        if (layout === 'grid') return acc + 4;
+        if (layout === 'vgrid') return acc + 2;
+        return acc + 1;
+      }, 0);
+
+      // Special check: if we are at the end and still haven't reached target, force high density on last spreads
+      if (spreadIdx === Math.floor(newLayouts.length / 2) - 1 && currentCap < targetCount) {
+        // Backtrack a bit if needed or just force last spread to be grids
+        newLayouts[p1] = 'grid';
+        newLayouts[p2] = 'grid';
+      }
+      
+      if (currentCap >= targetCount && (p2 + 1) >= pageBudget) {
+        // Fill remaining with minimalist
+        for (let j = p2 + 1; j < newLayouts.length; j++) {
+          newLayouts[j] = 'minimalist';
+        }
+        break;
+      }
+    }
+    updateFn([...newLayouts]);
+  };
+
+  const optimizeLayouts = () => {
+    optimizeHelper(pageLayouts, activePhotos.length, setPageLayouts);
+  };
+
+  const movePhotoInOrder = (index: number, direction: 'up' | 'down') => {
+    const newPhotos = [...activePhotos];
+    const newIdx = direction === 'up' ? index - 1 : index + 1;
+    if (newIdx < 0 || newIdx >= newPhotos.length) return;
+    
+    const temp = newPhotos[index];
+    newPhotos[index] = newPhotos[newIdx];
+    newPhotos[newIdx] = temp;
+    
+    setActivePhotos(newPhotos);
+  };
+
   // Crop state
   const [photoCrops, setPhotoCrops] = useState<Record<string, PhotoCrop>>({});
   const [croppingPhoto, setCroppingPhoto] = useState<{ id: string, url: string, aspect: number, baseZoom: number } | null>(null);
@@ -102,7 +235,14 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [zoom, setZoom] = useState(1);
   const [completedCrop, setCompletedCrop] = useState<Area | null>(null);
   
-  const totalPrice = (activePhotos.length * PRICES.photo) + PRICES.size[albumSize] + PRICES.material[materialType];
+  const totalPriceLink = PRICES.edition.link + (activePhotos.length * PRICES.photo);
+  const totalPriceFull = PRICES.edition.album + 
+                        (activePhotos.length * PRICES.photo) + 
+                        PRICES.size[albumSize] + 
+                        PRICES.material[materialType] + 
+                        (PRICES.pagePackage[requestedPageCount as keyof typeof PRICES.pagePackage] || 0);
+
+  const totalPrice = purchaseType === 'LINK' ? totalPriceLink : totalPriceFull;
 
   // Persistence Load
   useEffect(() => {
@@ -118,6 +258,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         if (data.coverPhotoId) setCoverPhotoId(data.coverPhotoId);
         if (data.albumSize) setAlbumSize(data.albumSize);
         if (data.materialType) setMaterialType(data.materialType);
+        if (data.requestedPageCount) setRequestedPageCount(data.requestedPageCount);
+        if (data.purchaseType) setPurchaseType(data.purchaseType);
         if (data.photoCrops) setPhotoCrops(data.photoCrops);
         if (data.videoUrl) setVideoUrl(data.videoUrl);
       }
@@ -138,48 +280,55 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       coverPhotoId,
       albumSize,
       materialType,
+      requestedPageCount,
+      purchaseType,
       photoCrops,
       videoUrl
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, photoCrops, videoUrl, isFirstLoad]);
+  }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, requestedPageCount, purchaseType, photoCrops, videoUrl, isFirstLoad]);
 
   // Initialize page layouts and effects when photos change (only if no draft and no previous state)
   useEffect(() => {
     if (!isFirstLoad) {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return; 
+      // If we have a saved draft, we only auto-trigger optimization if photos exceed current capacity
+      if (saved && getPhotosTotalCapacity() >= activePhotos.length) return; 
     }
     
-    // Only auto-initialize if we don't have layouts yet
-    if (pageLayouts.length > 0) return;
-    
-    const photosPerPage = globalLayout === 'grid' ? 4 : (globalLayout === 'vgrid' ? 2 : 1);
-    const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
-    const numPages = globalLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
-    
-    setPageLayouts(new Array(numPages).fill(globalLayout));
-    setPageEffects(new Array(numPages).fill('none'));
-    if (!coverPhotoId && activePhotos.length > 0) {
-      setCoverPhotoId(activePhotos[0].id);
-    }
-  }, [activePhotos.length, globalLayout, isFirstLoad, pageLayouts.length]);
-
-  const getPhotosTotalCapacity = () => {
-    let cap = 0;
-    for (let i = 0; i < pageLayouts.length; i++) {
-      const layout = pageLayouts[i];
-      if (layout === 'grid') cap += 4;
-      else if (layout === 'vgrid') cap += 2;
-      else if (layout === 'panorama') {
-        cap += 1;
-        i++;
+    // Auto-select best package for first load
+    if (pageLayouts.length === 0) {
+      const photosPerPage = globalLayout === 'grid' ? 4 : (globalLayout === 'vgrid' ? 2 : 1);
+      const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
+      const numPages = globalLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
+      
+      const ideal = [20, 40, 60, 80].reduce((prev, curr) => 
+        Math.abs(curr - numPages) < Math.abs(prev - numPages) ? curr : prev
+      );
+      setRequestedPageCount(ideal);
+      
+      const initialLayouts = new Array(ideal).fill(globalLayout);
+      
+      // If we have more photos than pages, we run the optimization logic immediately
+      if (activePhotos.length > ideal) {
+        optimizeHelper(initialLayouts, activePhotos.length, setPageLayouts);
       } else {
-        cap += 1;
+        setPageLayouts(initialLayouts);
+        setPageEffects(new Array(ideal).fill('none'));
+      }
+      
+      if (!coverPhotoId && activePhotos.length > 0) {
+        setCoverPhotoId(activePhotos[0].id);
+      }
+    } else if (getPhotosTotalCapacity() < activePhotos.length) {
+      // If capacity is exceeded later (e.g. user added more photos in gallery)
+      // and we are not in first load, we auto-optimize if enabled
+      if (isAutoSyncEnabled) {
+        optimizeLayouts();
       }
     }
-    return cap;
-  };
+  }, [activePhotos.length, globalLayout, isFirstLoad, pageLayouts.length, isAutoSyncEnabled]);
+
 
   const addPage = () => {
     setPageLayouts([...pageLayouts, globalLayout]);
@@ -195,12 +344,22 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   // Update all layouts when global layout changes
   const handleGlobalLayoutChange = (newLayout: LayoutType) => {
     setGlobalLayout(newLayout);
-    const photosPerPage = newLayout === 'grid' ? 4 : (newLayout === 'vgrid' ? 2 : 1);
-    const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
-    const numPages = newLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
-    
-    setPageLayouts(new Array(numPages).fill(newLayout));
-    setPageEffects(new Array(numPages).fill('none'));
+    // When global layout changes, we preserve the current page budget (requestedPageCount)
+    // but re-fill the layouts
+    setPageLayouts(new Array(requestedPageCount).fill(newLayout));
+    setPageEffects(new Array(requestedPageCount).fill('none'));
+  };
+
+  const handlePageCountChange = (count: number) => {
+    setRequestedPageCount(count);
+    if (count > pageLayouts.length) {
+      const extra = count - pageLayouts.length;
+      setPageLayouts([...pageLayouts, ...new Array(extra).fill(globalLayout)]);
+      setPageEffects([...pageEffects, ...new Array(extra).fill('none')]);
+    } else {
+      setPageLayouts(pageLayouts.slice(0, count));
+      setPageEffects(pageEffects.slice(0, count));
+    }
   };
 
   const syncPageCount = useCallback(() => {
@@ -222,13 +381,22 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     }
 
     if (lastUsedPage !== -1 && lastUsedPage < pageLayouts.length - 1) {
-      setPageLayouts(pageLayouts.slice(0, lastUsedPage + 1));
-      setPageEffects(pageEffects.slice(0, lastUsedPage + 1));
+      // Respect the budget: Don't shrink below requestedPageCount
+      const minPages = requestedPageCount;
+      const targetSlice = Math.max(minPages, lastUsedPage + 1);
+      
+      if (targetSlice < pageLayouts.length) {
+        setPageLayouts(pageLayouts.slice(0, targetSlice));
+        setPageEffects(pageEffects.slice(0, targetSlice));
+      }
     }
   }, [activePhotos.length, pageLayouts, pageEffects]);
 
   useEffect(() => {
     if (isAutoSyncEnabled && !isFirstLoad) {
+      // With fixed page packages, auto-sync might only be useful if it doesn't break the budget.
+      // But for now, we'll keep it as requested: choosing the page count upfront.
+      // If auto-sync is on, it might shrink below the budget if there aren't enough photos.
       syncPageCount();
     }
   }, [syncPageCount, isAutoSyncEnabled, isFirstLoad]);
@@ -242,9 +410,30 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   const handlePageLayoutChange = (index: number, newLayout: LayoutType) => {
     const newLayouts = [...pageLayouts];
-    newLayouts[index] = newLayout;
+    
+    if (newLayout === 'panorama') {
+      // Find the spread start (even indices: 0, 2, 4...)
+      const spreadStart = index % 2 === 0 ? index : index - 1;
+      if (spreadStart + 1 < newLayouts.length) {
+        newLayouts[spreadStart] = 'panorama';
+        newLayouts[spreadStart + 1] = 'panorama';
+      } else {
+        // Last page cannot be panorama spread
+        newLayouts[index] = 'spread';
+      }
+    } else {
+      // If we are changing AWAY from panorama, we only change the clicked page
+      // but we must check if the companion was ALSO a panorama and change it back to something else
+      const companionIdx = index % 2 === 0 ? index + 1 : index - 1;
+      if (newLayouts[index] === 'panorama' && companionIdx < newLayouts.length && newLayouts[companionIdx] === 'panorama') {
+        newLayouts[companionIdx] = 'minimalist';
+      }
+      newLayouts[index] = newLayout;
+    }
+    
     setPageLayouts(newLayouts);
   };
+
 
   const handlePageEffectChange = (index: number, newEffect: EffectType) => {
     const newEffects = [...pageEffects];
@@ -809,47 +998,185 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </div>
         )}
 
-        <div>
-          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Box size={14} /> Tamanho do Álbum
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            {(['20x30', '30x30', '30x40'] as AlbumSize[]).map((size) => (
+        <div className="p-4 bg-brand-gold/10 border border-brand-gold/30 rounded-2xl">
+          <p className="text-[10px] text-brand-gold font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+            <Settings2 size={14} /> 1. Escolha seu Produto
+          </p>
+          <div className="flex gap-2">
+            {[
+              { id: 'LINK', label: 'Noir Link', icon: Sparkles },
+              { id: 'FULL', label: 'Álbum + Link', icon: Box }
+            ].map((item) => (
               <button
-                key={size}
-                onClick={() => setAlbumSize(size)}
-                className={`py-2 rounded-lg border text-[9px] font-bold tracking-widest transition-all ${
-                  albumSize === size 
+                key={item.id}
+                onClick={() => setPurchaseType(item.id as 'LINK' | 'FULL')}
+                className={`flex-1 py-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                  purchaseType === item.id 
                     ? 'bg-brand-gold border-brand-gold text-black' 
-                    : 'bg-black/40 border-white/10 text-gray-400'
+                    : 'bg-black/40 border-white/10 text-gray-400 hover:border-brand-gold/50'
                 }`}
               >
-                {size}
+                <item.icon size={16} />
+                <span className="text-[8px] uppercase font-bold tracking-widest">{item.label}</span>
               </button>
             ))}
           </div>
+          <p className="text-[7px] text-gray-500 mt-2 uppercase tracking-tight text-center leading-tight">
+            {purchaseType === 'LINK' 
+              ? 'Interatividade e realidade aumentada digital.'
+              : 'O luxo do físico unido à tecnologia do digital.'}
+          </p>
         </div>
 
-        <div>
-          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Box size={14} /> Material da Capa
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {(['standard', 'premium', 'leather', 'acrylic', 'velvet', 'photo'] as MaterialType[]).map((type) => (
-              <button
-                key={type}
-                onClick={() => setMaterialType(type)}
-                className={`py-2 rounded-lg text-[8px] font-bold uppercase border transition-all ${
-                  materialType === type ? 'bg-brand-gold border-brand-gold text-black' : 'bg-white/5 border-white/10 text-gray-400'
-                }`}
-              >
-                {type === 'standard' ? 'Padrão' : 
-                 type === 'premium' ? 'Premium' : 
-                 type === 'leather' ? 'Couro' : 
-                 type === 'acrylic' ? 'Acrílico' : 
-                 type === 'velvet' ? 'Veludo' : 'Fotográfica'}
-              </button>
-            ))}
+        <div className="bg-brand-gold/5 border border-brand-gold/20 rounded-2xl p-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+              <Sparkles size={14} /> Status da Diagramação
+            </h3>
+            {getPhotosTotalCapacity() < activePhotos.length && (
+              <span className="flex h-2 w-2 rounded-full bg-brand-gold animate-ping" />
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-bold">
+              <span className="text-gray-400">Fotos Enquadradas</span>
+              <span className={getPhotosTotalCapacity() >= activePhotos.length ? 'text-green-500' : 'text-brand-gold'}>
+                {Math.min(activePhotos.length, getPhotosTotalCapacity())} / {activePhotos.length}
+              </span>
+            </div>
+            
+            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className={`h-full transition-all duration-500 ${getPhotosTotalCapacity() >= activePhotos.length ? 'bg-green-500' : 'bg-brand-gold shadow-[0_0_10px_rgba(212,175,55,0.5)]'}`}
+                style={{ width: `${Math.min(100, (getPhotosTotalCapacity() / activePhotos.length) * 100)}%` }}
+              />
+            </div>
+
+            {getPhotosTotalCapacity() < activePhotos.length ? (
+              <div className="space-y-3">
+                <p className="text-[8px] text-brand-gold uppercase tracking-widest leading-relaxed">
+                  Faltam <strong className="text-white">{activePhotos.length - getPhotosTotalCapacity()} fotos</strong> para diagramar.
+                </p>
+                <button 
+                  onClick={optimizeLayouts}
+                  className="w-full py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold text-[8px] font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-brand-gold hover:text-black transition-all"
+                >
+                  Otimizar Lâminas Automaticamente
+                </button>
+              </div>
+            ) : (
+              <p className="text-[8px] text-green-500 uppercase tracking-widest flex items-center gap-2 mb-2">
+                <Check size={10} /> Todas as fotos estão no álbum
+              </p>
+            )}
+            <p className="text-[8px] text-gray-400 uppercase tracking-widest leading-relaxed italic border-t border-white/5 pt-2">
+              Dica: Mude o layout de cada página em "VER DIAGRAMAÇÃO".
+            </p>
+          </div>
+        </div>
+
+        <div className={purchaseType === 'LINK' ? 'opacity-60 grayscale-[0.5] hover:grayscale-0 transition-all' : ''}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+              <Layers size={14} /> 2. Pacote de Páginas
+            </h3>
+            {purchaseType === 'LINK' && (
+              <span className="text-[6px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">Preview</span>
+            )}
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[20, 40, 60, 80].map((count) => {
+              const photosNeeded = activePhotos.length / 1.5;
+              const isRecommended = [20, 40, 60, 80].reduce((prev, curr) => 
+                Math.abs(curr - photosNeeded) < Math.abs(prev - photosNeeded) ? curr : prev
+              ) === count;
+              
+              // Defining explicit limits for guidance
+              const maxPhotos = count === 20 ? 30 : count === 40 ? 60 : count === 60 ? 90 : 120;
+              
+              return (
+                <button
+                  key={count}
+                  onClick={() => handlePageCountChange(count)}
+                  className={`relative py-3 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                    requestedPageCount === count 
+                      ? 'bg-brand-gold border-brand-gold text-black' 
+                      : 'bg-black/40 border-white/10 text-gray-400 hover:border-brand-gold/50'
+                  }`}
+                >
+                  <span className="text-[12px] font-bold">{count}</span>
+                  <span className="text-[6px] uppercase tracking-tighter opacity-70">Lâminas</span>
+                  {isRecommended && (
+                    <div className="absolute -top-1.5 -right-1 bg-white text-black text-[5px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md border border-brand-gold/50 z-10">
+                      Ideal
+                    </div>
+                  )}
+                  {getPhotosTotalCapacity() < activePhotos.length && count === requestedPageCount && (
+                    <div className="absolute -bottom-1 -right-1 bg-brand-gold text-black text-[5px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md z-10 animate-bounce">
+                      Cheio
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 p-3 bg-white/5 rounded-xl border border-white/5">
+            <p className="text-[7px] text-gray-400 leading-relaxed uppercase tracking-widest flex items-start gap-2">
+              <Sparkles size={10} className="text-brand-gold flex-shrink-0 mt-0.5" />
+              <span>
+                <strong className="text-brand-gold">Dica Noir:</strong> Para {requestedPageCount} páginas, recomendamos até <strong className="text-white">{requestedPageCount === 20 ? 30 : requestedPageCount === 40 ? 60 : requestedPageCount === 60 ? 90 : 120} fotos</strong> para uma diagramação limpa.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className={purchaseType === 'LINK' ? 'opacity-60 grayscale-[0.5] hover:grayscale-0 transition-all' : ''}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
+              <Box size={14} /> 3. Personalização
+            </h3>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <p className="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Tamanho do Álbum</p>
+              <div className="grid grid-cols-3 gap-2">
+                {(['20x30', '30x30', '30x40'] as AlbumSize[]).map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setAlbumSize(size)}
+                    className={`py-2 rounded-lg border text-[9px] font-bold tracking-widest transition-all ${
+                      albumSize === size 
+                        ? 'bg-brand-gold border-brand-gold text-black' 
+                        : 'bg-black/40 border-white/10 text-gray-400'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Acabamento da Capa</p>
+              <div className="grid grid-cols-2 gap-2">
+                {(['standard', 'premium', 'leather', 'acrylic', 'velvet', 'photo'] as MaterialType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setMaterialType(type)}
+                    className={`py-2 rounded-lg text-[8px] font-bold uppercase border transition-all ${
+                      materialType === type ? 'bg-brand-gold border-brand-gold text-black' : 'bg-white/5 border-white/10 text-gray-400'
+                    }`}
+                  >
+                    {type === 'standard' ? 'Padrão' : 
+                     type === 'premium' ? 'Premium' : 
+                     type === 'leather' ? 'Couro' : 
+                     type === 'acrylic' ? 'Acrílico' : 
+                     type === 'velvet' ? 'Veludo' : 'Fotográfica'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -869,9 +1196,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </div>
         )}
 
-        <div>
+        <div className={purchaseType === 'LINK' ? 'opacity-60 grayscale-[0.5] hover:grayscale-0 transition-all' : ''}>
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Layout size={14} /> Estilo Global
+            <Layout size={14} /> 4. Estilo Visual
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -899,61 +1226,61 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
         <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-3">
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
-            <Palette size={14} /> {hasPurchasedAlbum ? 'Edition Ativo' : 'Link Edition - Prévia'}
+            <Palette size={14} /> Resumo de Investimento
           </h3>
           <div className="space-y-2">
-            <div className="flex justify-between text-[10px] text-gray-400">
-              <span>{photos.length} Fotos (R$ {PRICES.photo.toFixed(2)}/un)</span>
-              <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${(photos.length * PRICES.photo).toFixed(2)}`}</span>
-            </div>
-            <div className="flex justify-between text-[10px] text-gray-400">
-              <span>{pages.length} Páginas Diagramadas</span>
-              <span className="text-brand-gold/60">{getPhotosTotalCapacity() < activePhotos.length ? 'Fotos Sobrando' : 'Espaço OK'}</span>
-            </div>
-            
-            <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
-              <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold">
-                <span className="text-gray-400">Capacidade Total</span>
-                <span className={getPhotosTotalCapacity() >= activePhotos.length ? 'text-green-500' : 'text-brand-gold text-white animate-pulse'}>
-                  {getPhotosTotalCapacity()} / {activePhotos.length} Fotos
-                </span>
-              </div>
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-500 ${getPhotosTotalCapacity() >= activePhotos.length ? 'bg-green-500' : 'bg-brand-gold'}`}
-                  style={{ width: `${Math.min(100, (getPhotosTotalCapacity() / activePhotos.length) * 100)}%` }}
-                />
-              </div>
-              <p className="text-[7px] text-gray-500 uppercase leading-tight italic">
-                {getPhotosTotalCapacity() < activePhotos.length 
-                  ? `Faltam ${activePhotos.length - getPhotosTotalCapacity()} slots para todas as suas fotos. Adicione páginas ou use Grades.`
-                  : 'Todas as suas fotos cabem no álbum atual!'}
-              </p>
+            <div className="flex justify-between text-[10px] text-gray-400 font-bold border-b border-white/5 pb-2 mb-2">
+              <span className="text-white uppercase tracking-widest flex items-center gap-1">
+                {purchaseType === 'LINK' ? 'Noir Link Digital' : 'Combo Álbum + Link'}
+              </span>
+              <span className="text-brand-gold">R$ {PRICES.edition[purchaseType === 'LINK' ? 'link' : 'album'].toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
 
-            {getPhotosTotalCapacity() < activePhotos.length && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
-                <p className="text-[8px] text-red-500 uppercase tracking-widest font-bold flex items-center gap-2">
-                  <AlertTriangle size={12} /> Fotos Restantes
-                </p>
-                <p className="text-[7px] text-gray-400 mt-1 leading-tight">
-                  Atenção: {activePhotos.length - getPhotosTotalCapacity()} fotos não serão exibidas. Adicione mais páginas ou mude para layout de Grade.
-                </p>
+            <div className="flex justify-between text-[10px] text-gray-400 leading-relaxed">
+              <span>{photos.length} Fotos sob Curadoria</span>
+              <span>R$ {(photos.length * PRICES.photo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            {purchaseType === 'FULL' && (
+              <div className="space-y-1.5 py-2 border-t border-white/5 mt-2">
+                <p className="text-[8px] text-brand-gold uppercase tracking-[0.2em] font-bold mb-1">Personalização Premium</p>
+                
+                {PRICES.size[albumSize] > 0 && (
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>Upgrade Tamanho {albumSize}</span>
+                    <span>+ R$ {PRICES.size[albumSize].toFixed(2)}</span>
+                  </div>
+                )}
+                {PRICES.material[materialType] > 0 && (
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>Capa {materialType.charAt(0).toUpperCase() + materialType.slice(1)}</span>
+                    <span>+ R$ {PRICES.material[materialType].toFixed(2)}</span>
+                  </div>
+                )}
+                {PRICES.pagePackage[requestedPageCount as keyof typeof PRICES.pagePackage] > 0 && (
+                  <div className="flex justify-between text-[10px] text-gray-500">
+                    <span>Pacote {requestedPageCount} Lâminas</span>
+                    <span>+ R$ {PRICES.pagePackage[requestedPageCount as keyof typeof PRICES.pagePackage].toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             )}
 
-            {PRICES.size[albumSize] > 0 && (
-              <div className="flex justify-between text-[10px] text-gray-400">
-                <span>Adicional Tamanho {albumSize}</span>
-                <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${PRICES.size[albumSize].toFixed(2)}`}</span>
+            {purchaseType === 'LINK' && (
+              <div className="mt-2 p-3 bg-brand-gold/5 border border-brand-gold/20 rounded-xl space-y-2">
+                <div className="flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-brand-gold/60">
+                  <span>Upgrade para Álbum Físico</span>
+                  <span>+ R$ {(totalPriceFull - totalPrice).toFixed(2)}</span>
+                </div>
+                <button 
+                  onClick={() => setPurchaseType('FULL')}
+                  className="w-full py-1.5 bg-brand-gold text-black text-[7px] font-bold uppercase tracking-widest rounded-lg hover:scale-[1.02] transition-transform"
+                >
+                  Adicionar Álbum ao Pedido
+                </button>
               </div>
             )}
-            {PRICES.material[materialType] > 0 && (
-              <div className="flex justify-between text-[10px] text-gray-400">
-                <span>Adicional Material {materialType}</span>
-                <span>{hasPurchasedAlbum ? 'Incluído' : `R$ ${PRICES.material[materialType].toFixed(2)}`}</span>
-              </div>
-            )}
+
             <div className="pt-2 border-t border-white/5 flex justify-between text-xs font-bold text-white">
               <span className="uppercase tracking-widest">{hasPurchasedAlbum ? 'Status do Álbum' : 'Valor do Álbum'}</span>
               <span className="text-brand-gold">
@@ -983,7 +1310,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               <ImageIcon size={14} /> Foto da Capa
             </h3>
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {activePhotos.map((photo) => (
+              {activePhotos.map((photo, index) => (
                 <button
                   key={photo.id}
                   onClick={() => setCoverPhotoId(photo.id)}
@@ -991,37 +1318,15 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                     coverPhotoId === photo.id ? 'border-brand-gold scale-110' : 'border-white/10 opacity-50'
                   }`}
                 >
+                  <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md rounded px-1.5 py-0.5 border border-white/10 z-10">
+                    <span className="text-[7px] font-bold text-white uppercase tracking-tighter">#{index + 1}</span>
+                  </div>
                   <img src={photo.url} alt="Cover option" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
           </div>
         )}
-
-        <div>
-          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Palette size={14} /> Efeito Global (Aplicar a Todos)
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'none', label: 'Original' },
-              { id: 'bw', label: 'P&B' },
-              { id: 'sepia', label: 'Sépia' },
-              { id: 'vintage', label: 'Vintage' },
-              { id: 'vibrant', label: 'Vibrante' }
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setPageEffects(pageEffects.map(() => item.id as EffectType));
-                }}
-                className="p-2 rounded-lg bg-white/5 border border-white/10 text-[8px] font-bold uppercase tracking-widest text-gray-400 hover:border-brand-gold/50 transition-all"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="mt-auto pt-6 border-t border-white/5 space-y-3">
           <div className="px-3 py-2 bg-white/5 border border-white/5 rounded-xl space-y-2">
@@ -1054,8 +1359,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             onClick={() => setShowPreview(!showPreview)}
             className="w-full bg-white/5 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/10"
           >
-            {showPreview ? <ImageIcon size={16} /> : <Sparkles size={16} />}
-            {showPreview ? 'Ver Diagramação' : 'Visualizar em 3D'}
+            {showPreview ? <ImageIcon size={16} /> : <Layers size={16} />}
+            {showPreview ? 'Diagramação Detalhada' : 'Visualizar em 3D'}
           </button>
           
           <button
@@ -1140,6 +1445,74 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   </div>
                 </div>
 
+                {/* Photo Order Curation Section */}
+                <div className="bg-zinc-900/40 border border-white/5 p-8 rounded-[40px] space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                        <ListOrdered className="text-brand-gold" size={18} />
+                        Curadoria de Ordem ({activePhotos.length} fotos)
+                      </h3>
+                      <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">
+                        Arraste ou use as setas para organizar a sequência narrativa do seu álbum.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-brand-gold/20 scrollbar-track-transparent">
+                    {activePhotos.map((photo, index) => (
+                      <div key={photo.id} className="group">
+                        <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-white/5 group-hover:border-brand-gold/50 transition-all shadow-xl bg-black">
+                          <img src={photo.thumbnail || photo.url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <div className="absolute top-1.5 left-1.5 bg-brand-gold text-black text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg z-10">
+                            #{index + 1}
+                          </div>
+                          
+                          {/* Reorder Controls Overlay */}
+                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                            <button 
+                              onClick={() => movePhotoInOrder(index, 'up')}
+                              disabled={index === 0}
+                              className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-brand-gold hover:text-black rounded-lg transition-all disabled:opacity-30"
+                              title="Mover para trás"
+                            >
+                              <ArrowLeft size={14} />
+                            </button>
+                            <button 
+                              onClick={() => movePhotoInOrder(index, 'down')}
+                              disabled={index === activePhotos.length - 1}
+                              className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-brand-gold hover:text-black rounded-lg transition-all disabled:opacity-30"
+                              title="Mover para frente"
+                            >
+                              <ArrowRight size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {activePhotos.length > getPhotosTotalCapacity() && (
+                  <div className="bg-brand-gold/10 border border-brand-gold/30 p-6 rounded-3xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center text-black">
+                        <AlertTriangle size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-brand-gold uppercase tracking-widest">Fotos fora do Álbum</p>
+                        <p className="text-[10px] text-gray-400">Você tem {activePhotos.length - getPhotosTotalCapacity()} fotos que ainda não aparecem nas páginas.</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={optimizeLayouts}
+                      className="px-6 py-2 bg-brand-gold text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-transform"
+                    >
+                      Otimizar Lâminas
+                    </button>
+                  </div>
+                )}
+
                 {isGenerating ? (
                   <div className="h-96 flex flex-col items-center justify-center gap-4">
                     <motion.div 
@@ -1201,15 +1574,29 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                             <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[110%] h-40 bg-gradient-to-b from-white/5 to-transparent blur-3xl opacity-50 -z-10" />
 
                             <div className="absolute top-4 left-4 bg-brand-gold/10 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] border border-brand-gold/20 text-brand-gold z-10">
-                              Página {i + 1}
+                              Lâmina {Math.floor(i / 2) + 1} - Página {i + 1}
                             </div>
                           </div>
                           
                           <div className="w-full lg:w-64 space-y-8">
-                            <div>
-                              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
-                                <Layout size={14} className="text-brand-gold" /> Layout da Página
-                              </h4>
+                            {pageLayouts[i] === 'panorama' && i % 2 !== 0 ? (
+                              <div className="bg-brand-gold/5 border border-brand-gold/20 p-6 rounded-3xl space-y-4">
+                                <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-brand-gold flex items-center gap-2">
+                                  <Sparkles size={14} /> Lâmina Panorâmica
+                                </h4>
+                                <p className="text-[9px] text-gray-400 leading-relaxed italic">
+                                  Esta página está integrada ao spread panorâmico anterior.
+                                </p>
+                                <div className="pt-4 border-t border-white/5">
+                                  <p className="text-[8px] text-gray-500 uppercase tracking-widest font-bold">Status: INTEGRADO</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
+                                    <Layout size={14} className="text-brand-gold" /> Layout da Página
+                                  </h4>
                               <div className="grid grid-cols-2 gap-2">
                                 {[
                                   { id: 'minimalist', label: 'Minimal' },
@@ -1265,27 +1652,38 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                 <CropIcon size={14} className="text-brand-gold" /> Ajustar Enquadramento
                               </h4>
                               <div className="space-y-2">
-                                {getPagePhotos(i).map((photo, pIdx) => (
-                                  <button 
-                                    key={photo.id}
-                                    onClick={() => openCropModalForPagePhoto(photo, pageLayouts[i])}
-                                    className="w-full flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 hover:border-brand-gold/50 transition-all group"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 bg-black">
-                                        <img src={photo.thumbnail || photo.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
-                                      </div>
-                                      <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400 group-hover:text-white">Ajustar Foto {pIdx + 1}</span>
-                                    </div>
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 group-hover:bg-brand-gold/10 transition-colors">
-                                      <CropIcon size={14} className="text-brand-gold" />
-                                    </div>
-                                  </button>
-                                ))}
+                                    {getPagePhotos(i).map((photo, pIdx) => {
+                                      const globalIndex = activePhotos.findIndex(p => p.id === photo.id);
+                                      return (
+                                        <button 
+                                          key={photo.id}
+                                          onClick={() => openCropModalForPagePhoto(photo, pageLayouts[i])}
+                                          className="w-full flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 hover:border-brand-gold/50 transition-all group"
+                                        >
+                                          <div className="flex items-center gap-3">
+                                            <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/10 bg-black">
+                                              <img src={photo.thumbnail || photo.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                                              <div className="absolute top-0 right-0 bg-brand-gold text-black text-[6px] font-bold px-1 rounded-bl">
+                                                #{globalIndex + 1}
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-col items-start">
+                                              <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400 group-hover:text-white">Posição {pIdx + 1}</span>
+                                              <span className="text-[7px] text-brand-gold/60 uppercase tracking-tighter">Na ordem global: #{globalIndex + 1}</span>
+                                            </div>
+                                          </div>
+                                          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 group-hover:bg-brand-gold/10 transition-colors">
+                                            <CropIcon size={14} className="text-brand-gold" />
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
                               </div>
                             </div>
+                          </>
+                        )}
 
-                            <div className="pt-6 border-t border-white/5">
+                          <div className="pt-6 border-t border-white/5">
                               <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
                                 <Palette size={14} className="text-brand-gold" /> Estilo Sugerido
                               </h4>
