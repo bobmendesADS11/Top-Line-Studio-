@@ -48,3 +48,25 @@
   pointer-events: none;
   animation: float-particle linear infinite;
 }
+
+.studio-bg {
+  background: radial-gradient(circle at 50% 40%, #252525 0%, #050505 100%);
+  position: relative;
+}
+
+.studio-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#ffffff05 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.album-page-depth {
+  box-shadow: 
+    0 20px 50px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(255,255,255,0.05),
+    -10px 10px 40px rgba(0,0,0,0.5);
+  transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
+}

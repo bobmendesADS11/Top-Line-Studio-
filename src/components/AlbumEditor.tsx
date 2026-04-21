@@ -17,14 +17,22 @@ import {
   Clock,
   ChevronLeft,
   Settings2,
-  Box
+  Box,
+  Crop as CropIcon,
+  X
 } from 'lucide-react';
+import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './Album3D';
 
 interface Photo {
   id: string;
   url: string;
+  thumbnail?: string;
   aspectRatio?: number;
+}
+
+interface PhotoCrop {
+  px?: Area;
 }
 
 interface AlbumEditorProps {
@@ -35,7 +43,7 @@ interface AlbumEditorProps {
   userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
 }
 
-type LayoutType = 'minimalist' | 'grid' | 'collage' | 'editorial' | 'spread';
+type LayoutType = 'minimalist' | 'grid' | 'vgrid' | 'panorama' | 'spread';
 type EffectType = 'none' | 'bw' | 'sepia' | 'vintage' | 'vibrant';
 type AlbumSize = '20x30' | '30x30' | '30x40';
 type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 'photo';
@@ -68,6 +76,8 @@ const DEMO_PHOTOS: Photo[] = [
 
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
+const STORAGE_KEY = 'noir_album_persistence';
+
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
   const activePhotos = photos.length > 0 ? photos : DEMO_PHOTOS;
   const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
@@ -81,24 +91,91 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  
+  // Crop state
+  const [photoCrops, setPhotoCrops] = useState<Record<string, PhotoCrop>>({});
+  const [croppingPhoto, setCroppingPhoto] = useState<{ id: string, url: string, aspect: number, baseZoom: number } | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [completedCrop, setCompletedCrop] = useState<Area | null>(null);
   
   const totalPrice = (activePhotos.length * PRICES.photo) + PRICES.size[albumSize] + PRICES.material[materialType];
-  
-  // Initialize page layouts and effects when photos change
+
+  // Persistence Load
   useEffect(() => {
-    const photosPerPage = 1; // Default
-    const numPages = Math.ceil(activePhotos.length / photosPerPage);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        // Only apply if the photo count matches roughly to avoid state corruption
+        // In a real app we would check photoid signatures
+        if (data.globalLayout) setGlobalLayout(data.globalLayout);
+        if (data.pageLayouts) setPageLayouts(data.pageLayouts);
+        if (data.pageEffects) setPageEffects(data.pageEffects);
+        if (data.coverPhotoId) setCoverPhotoId(data.coverPhotoId);
+        if (data.albumSize) setAlbumSize(data.albumSize);
+        if (data.materialType) setMaterialType(data.materialType);
+        if (data.photoCrops) setPhotoCrops(data.photoCrops);
+        if (data.videoUrl) setVideoUrl(data.videoUrl);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar rascunho:", e);
+    }
+    setIsFirstLoad(false);
+  }, []);
+
+  // Persistence Save
+  useEffect(() => {
+    if (isFirstLoad) return;
+    
+    const draft = {
+      globalLayout,
+      pageLayouts,
+      pageEffects,
+      coverPhotoId,
+      albumSize,
+      materialType,
+      photoCrops,
+      videoUrl
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+  }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, photoCrops, videoUrl, isFirstLoad]);
+
+  // Initialize page layouts and effects when photos change (only if no draft)
+  useEffect(() => {
+    if (!isFirstLoad) {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return; // Don't overwrite if we have a saved draft
+    }
+    
+    const photosPerPage = globalLayout === 'grid' ? 4 : (globalLayout === 'vgrid' ? 2 : 1);
+    const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
+    const numPages = globalLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
+    
     setPageLayouts(new Array(numPages).fill(globalLayout));
     setPageEffects(new Array(numPages).fill('none'));
     if (!coverPhotoId && activePhotos.length > 0) {
       setCoverPhotoId(activePhotos[0].id);
     }
-  }, [activePhotos.length]);
+  }, [activePhotos.length, globalLayout, isFirstLoad]);
 
   // Update all layouts when global layout changes
   const handleGlobalLayoutChange = (newLayout: LayoutType) => {
     setGlobalLayout(newLayout);
-    setPageLayouts(pageLayouts.map(() => newLayout));
+    const photosPerPage = newLayout === 'grid' ? 4 : (newLayout === 'vgrid' ? 2 : 1);
+    const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
+    const numPages = newLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
+    
+    setPageLayouts(new Array(numPages).fill(newLayout));
+    setPageEffects(new Array(numPages).fill('none'));
+  };
+
+  const clearDraft = () => {
+    if (confirm('Deseja realmente limpar todas as edições e começar do zero?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.reload();
+    }
   };
 
   const handlePageLayoutChange = (index: number, newLayout: LayoutType) => {
@@ -118,7 +195,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     if (activePhotos.length > 0 && pageLayouts.length > 0 && pageEffects.length > 0) {
       generateAllPages();
     }
-  }, [activePhotos, pageLayouts, pageEffects, albumSize]);
+  }, [activePhotos, pageLayouts, pageEffects, albumSize, photoCrops]);
 
   const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number, pageEffect: EffectType) => {
     if (pageEffect === 'none') return;
@@ -152,7 +229,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     ctx.putImageData(imageData, 0, 0);
   };
 
-  const drawPage = async (pagePhotos: Photo[], layout: LayoutType, pageEffect: EffectType): Promise<string> => {
+  const drawPage = async (pagePhotos: Photo[], layout: LayoutType, pageEffect: EffectType, side?: 'left' | 'right'): Promise<string> => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
@@ -166,34 +243,151 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     canvas.width = width;
     canvas.height = height;
 
-    // Background - use a slightly off-black for luxury feel
-    ctx.fillStyle = '#050505';
+    // Background - Enhanced Luxury Material (Noir Silk)
+    const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width * 0.8);
+    grad.addColorStop(0, '#1a1a1a');
+    grad.addColorStop(1, '#050505');
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
+
+    // Fine Silk Texture / Grain
+    ctx.globalAlpha = 0.08;
+    for (let i = 0; i < 4000; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = Math.random() * 2;
+      ctx.fillStyle = Math.random() > 0.5 ? '#222' : '#000';
+      ctx.fillRect(x, y, size, size);
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Subtle edge highlight (Inner border/bevel feel)
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10, 10, width - 20, height - 20);
 
     // Load images
     const loadedImages = await Promise.all(
-      pagePhotos.map(p => new Promise<HTMLImageElement>((resolve) => {
+      pagePhotos.map(p => new Promise<{ img: HTMLImageElement, id: string }>((resolve) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
+        img.onload = () => resolve({ img, id: p.id });
         img.src = p.url;
       }))
     );
 
+    const drawImageWithCrop = (imgObj: { img: HTMLImageElement, id: string }, x: number, y: number, w: number, h: number, panoramaSide?: 'left' | 'right') => {
+      const { img, id } = imgObj;
+      const cropData = photoCrops[id];
+      
+      // For panorama, the effective target is twice the width
+      const effectiveW = panoramaSide ? w * 2 : w;
+      const targetRatio = effectiveW / h;
+      
+      if (cropData?.px) {
+        let { x: sx, y: sy, width: sw, height: sh } = cropData.px;
+        
+        if (sw > 0 && sh > 0) {
+          const cropRatio = sw / sh;
+          
+          if (Math.abs(cropRatio - targetRatio) > 0.01) {
+            if (cropRatio > targetRatio) {
+              const oldSw = sw;
+              sw = sh * targetRatio;
+              sx += (oldSw - sw) / 2;
+            } else {
+              const oldSh = sh;
+              sh = sw / targetRatio;
+              sy += (oldSh - sh) * 0.1;
+            }
+          }
+          
+          if (panoramaSide === 'left') {
+            ctx.drawImage(img, sx, sy, sw / 2, sh, x, y, w, h);
+          } else if (panoramaSide === 'right') {
+            ctx.drawImage(img, sx + sw / 2, sy, sw / 2, sh, x, y, w, h);
+          } else {
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+          }
+          return;
+        }
+      }
+
+      // Fallback
+      const imgRatio = img.width / img.height;
+      let sw, sh, sx, sy;
+      
+      const isFit = Math.abs(imgRatio - targetRatio) < 0.01;
+
+      if (imgRatio > targetRatio) {
+        sh = img.height;
+        sw = sh * targetRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.width;
+        sh = sw / targetRatio;
+        sx = 0;
+        sy = isFit ? 0 : (img.height - sh) * 0.15;
+        if (sy < 0) sy = 0;
+      }
+
+      if (panoramaSide === 'left') {
+        ctx.drawImage(img, sx, sy, sw / 2, sh, x, y, w, h);
+      } else if (panoramaSide === 'right') {
+        ctx.drawImage(img, sx + sw / 2, sy, sw / 2, sh, x, y, w, h);
+      } else {
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+      }
+    };
+
     if (layout === 'minimalist') {
       if (loadedImages[0]) {
-        const img = loadedImages[0];
-        const margin = width * 0.12;
-        const drawW = width - margin * 2;
-        const drawH = (img.height / img.width) * drawW;
-        const y = (height - drawH) / 2;
+        const imgObj = loadedImages[0];
+        const { img } = imgObj;
         
-        // Shadow for the photo
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowBlur = 30;
-        ctx.drawImage(img, margin, y, drawW, drawH);
+        // Calculate fit dimensions within margins - Reduced for more impact
+        const marginX = width * 0.05;
+        const marginY = height * 0.05;
+        const maxW = width - marginX * 2;
+        const maxH = height - marginY * 2;
+        
+        const imgRatio = img.width / img.height;
+        const areaRatio = maxW / maxH;
+        
+        let drawW, drawH;
+        if (imgRatio > areaRatio) {
+          drawW = maxW;
+          drawH = drawW / imgRatio;
+        } else {
+          drawH = maxH;
+          drawW = drawH * imgRatio;
+        }
+        
+        const drawX = (width - drawW) / 2;
+        const drawY = (height - drawH) / 2;
+        
+        // Dynamic Paper Depth / Shadow behind the photo - Softer, centered shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 60;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 15;
+
+        // Fine Art Frame (Passepartout Effect) - Thinner and more subtle
+        ctx.fillStyle = '#111';
+        const framePadding = width * 0.005;
+        ctx.fillRect(drawX - framePadding, drawY - framePadding, drawW + framePadding * 2, drawH + framePadding * 2);
+        
+        drawImageWithCrop(imgObj, drawX, drawY, drawW, drawH);
+        
+        // Reset shadow for further drawing
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
       }
-    } else if (layout === 'grid') {
+    }
+ else if (layout === 'grid') {
       const margin = width * 0.06;
       const gap = width * 0.04;
       const cols = 2;
@@ -201,97 +395,155 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       const cellW = (width - margin * 2 - gap) / cols;
       const cellH = (height - margin * 2 - gap) / rows;
 
-      loadedImages.forEach((img, i) => {
+      loadedImages.forEach((imgObj, i) => {
         if (i >= 4) return;
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = margin + col * (cellW + gap);
         const y = margin + row * (cellH + gap);
-        
-        const imgRatio = img.width / img.height;
-        const cellRatio = cellW / cellH;
-        let sw, sh, sx, sy;
-        if (imgRatio > cellRatio) {
-          sh = img.height;
-          sw = sh * cellRatio;
-          sx = (img.width - sw) / 2;
-          sy = 0;
-        } else {
-          sw = img.width;
-          sh = sw / cellRatio;
-          sx = 0;
-          sy = (img.height - sh) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sw, sh, x, y, cellW, cellH);
+        drawImageWithCrop(imgObj, x, y, cellW, cellH);
       });
     } else if (layout === 'spread') {
       if (loadedImages[0]) {
-        const img = loadedImages[0];
-        const imgRatio = img.width / img.height;
-        const canvasRatio = width / height;
-        let sw, sh, sx, sy;
-        if (imgRatio > canvasRatio) {
-          sh = img.height;
-          sw = sh * canvasRatio;
-          sx = (img.width - sw) / 2;
-          sy = 0;
-        } else {
-          sw = img.width;
-          sh = sw / canvasRatio;
-          sx = 0;
-          sy = (img.height - sh) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+        drawImageWithCrop(loadedImages[0], 0, 0, width, height);
       }
-    } else if (layout === 'editorial') {
+    } else if (layout === 'panorama') {
       if (loadedImages[0]) {
-        const img = loadedImages[0];
-        ctx.drawImage(img, 0, 0, width, height * 0.7);
-        
-        // Gold line
-        ctx.strokeStyle = '#D4AF37';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(width * 0.1, height * 0.75);
-        ctx.lineTo(width * 0.9, height * 0.75);
-        ctx.stroke();
-
-        ctx.fillStyle = '#D4AF37';
-        ctx.font = `bold ${width * 0.05}px serif`;
-        ctx.fillText('TOP LINE', width * 0.1, height * 0.82);
-        ctx.fillStyle = '#fff';
-        ctx.font = `italic ${width * 0.03}px serif`;
-        ctx.fillText('Edition', width * 0.1, height * 0.87);
-        
-        ctx.fillStyle = '#666';
-        ctx.font = `${width * 0.02}px sans-serif`;
-        ctx.fillText('DIAGRAMAÇÃO EXCLUSIVA • 2026', width * 0.1, height * 0.92);
+        drawImageWithCrop(loadedImages[0], 0, 0, width, height, side);
       }
-    } else if (layout === 'collage') {
-      loadedImages.forEach((img, i) => {
+    } else if (layout === 'vgrid') {
+      const margin = width * 0.05;
+      const gap = width * 0.02;
+      const cellW = width - margin * 2;
+      const cellH = (height - margin * 2 - gap) / 2;
+
+      loadedImages.forEach((imgObj, i) => {
         if (i >= 2) return;
-        ctx.save();
-        const w = width * 0.6;
-        const h = (img.height / img.width) * w;
-        const x = i === 0 ? width * 0.05 : width - w - width * 0.05;
-        const y = i === 0 ? height * 0.15 : height - h - height * 0.15;
-        
-        ctx.translate(x + w/2, y + h/2);
-        ctx.rotate((i === 0 ? -3 : 3) * Math.PI / 180);
-        
-        // White border for collage look
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(-w/2 - 10, -h/2 - 10, w + 20, h + 20);
-        
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
-        ctx.shadowBlur = 20;
-        ctx.drawImage(img, -w/2, -h/2, w, h);
-        ctx.restore();
+        const y = margin + i * (cellH + gap);
+        drawImageWithCrop(imgObj, margin, y, cellW, cellH);
       });
     }
 
     applyEffect(ctx, width, height, pageEffect);
     return canvas.toDataURL('image/jpeg', 0.9);
+  };
+
+  const onCropSave = () => {
+    if (croppingPhoto && completedCrop) {
+      setPhotoCrops({
+        ...photoCrops,
+        [croppingPhoto.id]: { px: completedCrop }
+      });
+      setCroppingPhoto(null);
+    }
+  };
+
+  const getPagePhotos = (pageIdx: number) => {
+    let photoIdx = 0;
+    for (let i = 0; i < pageIdx; i++) {
+      const layout = pageLayouts[i];
+      let ppp = 1;
+      if (layout === 'grid') ppp = 4;
+      if (layout === 'vgrid') ppp = 2;
+      if (layout === 'panorama') {
+        // Find if this is the second half of a panorama
+        const isSecondHalf = i > 0 && pageLayouts[i-1] === 'panorama';
+        if (isSecondHalf) {
+          // If second half, we already consumed the photo in the first half logic in generateAllPages
+          // but for getPagePhotos (used for UI previews), we need the index.
+          // Actually, panorama logic is split.
+          photoIdx += 0; 
+        } else {
+          photoIdx += 1;
+        }
+        // This is complex. Let's simplify: generateAllPages is the source of truth.
+        // For UI, we'll just try to match.
+      } else {
+        photoIdx += ppp;
+      }
+    }
+    const layout = pageLayouts[pageIdx];
+    let ppp = 1;
+    if (layout === 'grid') ppp = 4;
+    if (layout === 'vgrid') ppp = 2;
+    
+    // For panorama, if it's the second page of a spread, we need the SAME photo as before
+    if (layout === 'panorama' && pageIdx > 0 && pageLayouts[pageIdx-1] === 'panorama') {
+      // Find the photo index shift
+      let adjustedIdx = 0;
+      for(let j=0; j<pageIdx; j++) {
+        if (pageLayouts[j] === 'panorama') {
+          if (j > 0 && pageLayouts[j-1] === 'panorama') continue;
+          adjustedIdx += 1;
+        } else {
+          let pp = 1;
+          if (pageLayouts[j] === 'grid') pp = 4;
+          if (pageLayouts[j] === 'vgrid') pp = 2;
+          adjustedIdx += pp;
+        }
+      }
+      return activePhotos.slice(adjustedIdx - 1, adjustedIdx);
+    }
+
+    return activePhotos.slice(photoIdx, photoIdx + ppp);
+  };
+
+  const openCropModalForPagePhoto = (photo: Photo, layout: LayoutType) => {
+    const { width, height } = getPageDimensions();
+    let aspect = 1;
+    
+    // Create temporary image to get real aspect ratio if missing
+    const img = new Image();
+    img.src = photo.url;
+    
+    const getPhotoAspect = () => {
+      if (photo.aspectRatio) return photo.aspectRatio;
+      
+      // Attempt to get from activePhotos if provided there
+      const found = activePhotos.find(p => p.id === photo.id);
+      if (found?.aspectRatio) return found.aspectRatio;
+
+      if (img.width > 0) return img.width / img.height;
+      // Fallback for demos or unloaded images
+      if (photo.url.includes('seed')) return 800 / 1200;
+      return 1;
+    };
+
+    const photoAspect = getPhotoAspect();
+
+    // The aspect ratio MUST match how drawImageWithCrop will eventually render it
+    if (layout === 'minimalist') {
+      aspect = photoAspect;
+    } else if (layout === 'grid') {
+      const margin = width * 0.06;
+      const gap = width * 0.04;
+      const cellW = (width - margin * 2 - gap) / 2;
+      const cellH = (height - margin * 2 - gap) / 2;
+      aspect = cellW / cellH;
+    } else if (layout === 'vgrid') {
+      aspect = (width - width * 0.1) / ((height - height * 0.12) / 2);
+    } else if (layout === 'spread') {
+      aspect = width / height;
+    } else if (layout === 'panorama') {
+      aspect = (width * 2) / height;
+    }
+    
+    // Calculate zoom level to FIT the whole photo in the crop area
+    const zoomToFit = photoAspect > aspect ? aspect / photoAspect : photoAspect / aspect;
+    
+    setCroppingPhoto({ id: photo.id, url: photo.url, aspect, baseZoom: zoomToFit });
+    
+    setCrop({ x: 0, y: 0 }); 
+    setZoom(zoomToFit); 
+    setCompletedCrop(null);
+  };
+
+  const getPageDimensions = () => {
+    let width = 1200;
+    let height = 1200;
+    if (albumSize === '20x30') { width = 800; height = 1200; }
+    if (albumSize === '30x40') { width = 1200; height = 1600; }
+    return { width, height };
   };
 
   const generateAllPages = async () => {
@@ -303,15 +555,34 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       const layout = pageLayouts[i];
       const pageEffect = pageEffects[i] || 'none';
       let photosPerPage = 1;
+      
       if (layout === 'grid') photosPerPage = 4;
-      if (layout === 'collage') photosPerPage = 2;
+      if (layout === 'vgrid') photosPerPage = 2;
       
-      const pagePhotos = activePhotos.slice(photoIdx, photoIdx + photosPerPage);
-      if (pagePhotos.length === 0) break;
-      
-      const pageData = await drawPage(pagePhotos, layout, pageEffect);
-      newPages.push(pageData);
-      photoIdx += photosPerPage;
+      if (layout === 'panorama') {
+        const pagePhotos = activePhotos.slice(photoIdx, photoIdx + 1);
+        if (pagePhotos.length === 0) break;
+
+        // Generate left half
+        const pageDataLeft = await drawPage(pagePhotos, 'panorama', pageEffect, 'left');
+        newPages.push(pageDataLeft);
+
+        // Check if next page is also panorama to avoid double consumption of layout slots
+        // But simpler to just push another index if we have more layout slots
+        if (i + 1 < pageLayouts.length) {
+          const pageDataRight = await drawPage(pagePhotos, 'panorama', pageEffect, 'right');
+          newPages.push(pageDataRight);
+          i++; // Skip next layout
+        }
+        photoIdx += 1;
+      } else {
+        const pagePhotos = activePhotos.slice(photoIdx, photoIdx + photosPerPage);
+        if (pagePhotos.length === 0) break;
+        
+        const pageData = await drawPage(pagePhotos, layout, pageEffect);
+        newPages.push(pageData);
+        photoIdx += photosPerPage;
+      }
     }
 
     setPages(newPages);
@@ -320,6 +591,132 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   return (
     <div className="flex flex-col lg:flex-row h-full bg-black overflow-hidden">
+      {/* Crop Modal */}
+      <AnimatePresence>
+        {croppingPhoto && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/98 backdrop-blur-2xl">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-zinc-900 w-full max-w-[95vw] h-[90vh] rounded-[40px] overflow-hidden flex flex-col lg:flex-row border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)]"
+            >
+              {/* Photo Area */}
+              <div className="flex-1 relative bg-black flex flex-col mb-[env(safe-area-inset-bottom)]">
+                <div className="absolute top-8 left-8 z-20 pointer-events-none">
+                  <div className="bg-black/60 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                      <CropIcon size={22} className="text-brand-gold" />
+                      Visualização do Álbum
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex-1 relative">
+                  <Cropper
+                    image={croppingPhoto.url}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={croppingPhoto.aspect}
+                    onCropChange={setCrop}
+                    onCropComplete={(_, px) => setCompletedCrop(px)}
+                    onZoomChange={setZoom}
+                    showGrid={true}
+                    restrictPosition={false}
+                    minZoom={croppingPhoto.baseZoom}
+                    maxZoom={croppingPhoto.baseZoom * 5}
+                    classes={{
+                      containerClassName: "rounded-lg",
+                      cropAreaClassName: "border-2 border-brand-gold shadow-[0_0_0_9999px_rgba(0,0,0,0.95)]",
+                      mediaClassName: "max-w-none"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Controls Sidebar */}
+              <div className="w-full lg:w-96 p-8 lg:p-12 bg-zinc-900 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col">
+                <div className="flex items-center justify-between mb-12">
+                  <div className="space-y-1">
+                    <h4 className="text-xs uppercase tracking-[0.3em] font-bold text-gray-500">Ajustes</h4>
+                    <p className="text-[10px] text-gray-400 font-medium">Refine o enquadramento final</p>
+                  </div>
+                  <button 
+                    onClick={() => setCroppingPhoto(null)}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-full text-gray-500 hover:text-white transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="flex-1 space-y-12">
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Nível de Zoom</span>
+                        <p className="text-[9px] text-gray-500 italic">Arraste para aproximar a foto</p>
+                      </div>
+                      <span className="text-xl font-mono text-brand-gold">{Math.round((zoom / (croppingPhoto?.baseZoom || 1)) * 100)}%</span>
+                    </div>
+                    <div className="relative group">
+                      <input
+                        type="range"
+                        value={zoom}
+                        min={croppingPhoto.baseZoom}
+                        max={croppingPhoto.baseZoom * 5}
+                        step={croppingPhoto.baseZoom / 100}
+                        aria-labelledby="Zoom"
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                        className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-brand-gold hover:accent-white transition-all overflow-hidden"
+                      />
+                    </div>
+                    <div className="flex justify-between text-[8px] text-gray-600 font-bold uppercase tracking-tighter">
+                      <span>100% (Cheio)</span>
+                      <span>300%</span>
+                      <span>500% (Máx)</span>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-4">
+                    <h5 className="text-[9px] uppercase tracking-widest font-bold text-brand-gold flex items-center gap-2">
+                      <Sparkles size={14} /> Dicas do Especialista
+                    </h5>
+                    <ul className="space-y-3">
+                      {[
+                        'Mantenha as feições centralizadas na grade.',
+                        'Evite cortar mãos ou partes vitais do corpo.',
+                        'O zoom ajuda a remover distrações do fundo.'
+                      ].map((tip, idx) => (
+                        <li key={idx} className="flex gap-3 text-[10px] text-gray-400 leading-relaxed">
+                          <span className="text-brand-gold font-bold">{idx + 1}.</span>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-8 mt-auto flex flex-col gap-4">
+                  <button 
+                    onClick={onCropSave}
+                    className="w-full py-5 rounded-2xl bg-brand-gold text-black font-bold text-[11px] uppercase tracking-[0.2em] hover:bg-white transition-all shadow-[0_20px_40px_rgba(212,175,55,0.2)] flex items-center justify-center gap-3 active:scale-[0.98]"
+                  >
+                    <Check size={18} />
+                    Confirmar Enquadramento
+                  </button>
+                  <button 
+                    onClick={() => setCroppingPhoto(null)}
+                    className="w-full py-4 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-gray-500 hover:text-white transition-colors border border-white/10 hover:border-white/20"
+                  >
+                    Descartar Alterações
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Sidebar Controls */}
       <div className="w-full lg:w-80 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-2">
@@ -422,9 +819,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             {[
               { id: 'minimalist', icon: Maximize, label: 'Minimalista' },
               { id: 'grid', icon: Grid, label: 'Grade (4)' },
-              { id: 'spread', icon: ImageIcon, label: 'Sangrado' },
-              { id: 'collage', icon: Layers, label: 'Artístico' },
-              { id: 'editorial', icon: Type, label: 'Revista' }
+              { id: 'vgrid', icon: Layout, label: 'Vertical (2)' },
+              { id: 'panorama', icon: Maximize, label: 'Panorâmico' },
+              { id: 'spread', icon: ImageIcon, label: 'Sangrado' }
             ].map((item) => (
               <button
                 key={item.id}
@@ -538,16 +935,17 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
         <div className="mt-auto pt-6 border-t border-white/5 space-y-3">
           <button
-            onClick={() => {
-              handleGlobalLayoutChange('minimalist');
-              setPageEffects(pageEffects.map(() => 'none'));
-              setAlbumSize('30x30');
-            }}
-            className="w-full bg-white/5 text-gray-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/5"
+            onClick={clearDraft}
+            className="w-full bg-white/5 text-red-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500/10 transition-all border border-white/5"
           >
             <RotateCcw size={14} />
-            Resetar Estilo
+            Limpar Todas Edições
           </button>
+
+          <div className="flex items-center justify-center gap-2 text-[8px] text-gray-500 uppercase tracking-widest font-bold pb-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500/50 animate-pulse" />
+            Edições Salvas Automaticamente
+          </div>
 
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -657,10 +1055,28 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                         transition={{ delay: i * 0.1 }}
                         className="group relative"
                       >
-                        <div className="flex flex-col lg:flex-row gap-8 bg-zinc-900/40 border border-white/5 p-8 rounded-[40px] hover:border-brand-gold/30 transition-all">
-                          <div className="flex-1 aspect-[1.414/1] bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/5 relative">
-                            <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
-                            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 text-brand-gold">
+                        <div className="flex flex-col lg:flex-row gap-12 bg-zinc-900/20 border border-white/5 p-12 rounded-[60px] hover:border-brand-gold/20 transition-all">
+                          <div className={`flex-1 studio-bg rounded-3xl overflow-hidden flex items-center justify-center p-8 lg:p-12 relative`}>
+                            <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-white/5 to-transparent pointer-events-none" />
+                            
+                            <div 
+                              className="relative album-page-depth bg-black rounded-lg overflow-hidden transition-all duration-500 group-hover:scale-[1.01] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.8)]"
+                              style={{ 
+                                width: '100%',
+                                maxWidth: albumSize === '30x30' ? '500px' : albumSize === '20x30' ? '333px' : '500px',
+                                aspectRatio: albumSize === '30x30' ? '1/1' : albumSize === '20x30' ? '2/3' : '3/4'
+                              }}
+                            >
+                              <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
+                              <div className="absolute inset-y-0 right-0 w-[4px] bg-gradient-to-l from-white/5 to-transparent border-r border-white/20" />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
+                            </div>
+
+                            {/* Lighting and Reflection on 'Floor' */}
+                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-full h-[1px] bg-white/20 blur-[1px]" />
+                            <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[110%] h-40 bg-gradient-to-b from-white/5 to-transparent blur-3xl opacity-50 -z-10" />
+
+                            <div className="absolute top-4 left-4 bg-brand-gold/10 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] border border-brand-gold/20 text-brand-gold z-10">
                               Página {i + 1}
                             </div>
                           </div>
@@ -674,9 +1090,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                 {[
                                   { id: 'minimalist', label: 'Minimal' },
                                   { id: 'grid', label: 'Grade' },
-                                  { id: 'spread', label: 'Sangrado' },
-                                  { id: 'collage', label: 'Artístico' },
-                                  { id: 'editorial', label: 'Revista' }
+                                  { id: 'vgrid', label: 'Vertical' },
+                                  { id: 'panorama', label: 'Panorâmico' },
+                                  { id: 'spread', label: 'Sangrado' }
                                 ].map(l => (
                                   <button
                                     key={l.id}
@@ -715,6 +1131,31 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                     }`}
                                   >
                                     {e.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 flex items-center gap-2">
+                                <CropIcon size={14} className="text-brand-gold" /> Ajustar Enquadramento
+                              </h4>
+                              <div className="space-y-2">
+                                {getPagePhotos(i).map((photo, pIdx) => (
+                                  <button 
+                                    key={photo.id}
+                                    onClick={() => openCropModalForPagePhoto(photo, pageLayouts[i])}
+                                    className="w-full flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 hover:border-brand-gold/50 transition-all group"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 bg-black">
+                                        <img src={photo.thumbnail || photo.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                                      </div>
+                                      <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400 group-hover:text-white">Ajustar Foto {pIdx + 1}</span>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 group-hover:bg-brand-gold/10 transition-colors">
+                                      <CropIcon size={14} className="text-brand-gold" />
+                                    </div>
                                   </button>
                                 ))}
                               </div>
