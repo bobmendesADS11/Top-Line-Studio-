@@ -28,7 +28,7 @@ class TextureErrorBoundary extends React.Component<{ children: React.ReactNode }
   }
 }
 
-function VideoContent({ videoUrl }: { videoUrl: string }) {
+function VideoContent({ videoUrl, width, height }: { videoUrl: string, width: number, height: number }) {
   const texture = useVideoTexture(videoUrl, {
     unsuspend: 'canplay',
     muted: true,
@@ -37,8 +37,8 @@ function VideoContent({ videoUrl }: { videoUrl: string }) {
   });
   
   return (
-    <mesh position={[0, 0, 0.03]} castShadow>
-      <planeGeometry args={[3.8, 5.3]} />
+    <mesh position={[0, 0, 0]} castShadow>
+      <planeGeometry args={[width, height]} />
       <meshStandardMaterial map={texture} toneMapped={false} />
     </mesh>
   );
@@ -50,6 +50,7 @@ function PageContent({
   isRightPage, 
   foldAngle = 0,
   materialType = 'standard',
+  albumSize = '30x30',
   customMaterialProps,
   coverTextureUrl,
   isCover = false
@@ -59,6 +60,7 @@ function PageContent({
   isRightPage?: boolean, 
   foldAngle?: number,
   materialType?: string,
+  albumSize?: string,
   customMaterialProps?: any,
   coverTextureUrl?: string,
   isCover?: boolean
@@ -66,13 +68,6 @@ function PageContent({
   const texture = textureUrl ? useTexture(textureUrl) : null;
   const coverTexture = coverTextureUrl ? useTexture(coverTextureUrl) : null;
   
-  // Load leather normal map for realism
-  const leatherNormal = useTexture('https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/leather/leather_normal.jpg');
-  if (leatherNormal) {
-    leatherNormal.wrapS = leatherNormal.wrapT = THREE.RepeatWrapping;
-    leatherNormal.repeat.set(2, 2);
-  }
-
   // Base materials with realistic properties
   const materialProps = useMemo(() => {
     if (customMaterialProps) return customMaterialProps;
@@ -80,95 +75,99 @@ function PageContent({
     switch (materialType) {
       case 'leather':
         return { 
-          color: '#121212', 
-          roughness: 0.7, 
-          metalness: 0.1,
-          normalMap: leatherNormal,
-          normalScale: new THREE.Vector2(0.5, 0.5),
-          clearcoat: 0.1,
-          clearcoatRoughness: 0.3
+          color: '#080808', 
+          roughness: 0.85, 
+          metalness: 0.2,
+          clearcoat: 0.2,
+          clearcoatRoughness: 0.4
         };
       case 'acrylic':
         return { 
           color: '#ffffff', 
-          transmission: 0.95,
+          transmission: 0.98,
           thickness: 1.5,
-          roughness: 0.02, 
+          roughness: 0.01, 
           metalness: 0,
-          ior: 1.5,
+          ior: 1.52,
           transparent: true,
           opacity: 1,
-          envMapIntensity: 2
+          envMapIntensity: 2.5
         };
       case 'velvet':
         return {
-          color: '#1a0a2a',
-          roughness: 0.9,
+          color: '#120520',
+          roughness: 0.95,
           metalness: 0,
           sheen: 1,
-          sheenColor: new THREE.Color('#ffffff'),
-          sheenRoughness: 0.8
+          sheenColor: new THREE.Color('#331144'),
+          sheenRoughness: 0.9
         };
       case 'photo':
         return {
           color: '#ffffff',
-          roughness: 0.2,
-          metalness: 0.05,
-          clearcoat: 0.5,
-          clearcoatRoughness: 0.1
+          roughness: 0.15,
+          metalness: 0,
+          clearcoat: 0.6,
+          clearcoatRoughness: 0.05
         };
       default:
         return { 
-          color: '#1a1a1a', 
-          roughness: 0.6, 
-          metalness: 0.1 
+          color: '#121212', 
+          roughness: 0.5, 
+          metalness: 0.05 
         };
     }
-  }, [materialType, customMaterialProps, leatherNormal]);
+  }, [materialType, customMaterialProps]);
 
   // Page stack to simulate depth
   const pageStack = useMemo(() => {
     const stack = [];
-    const numPages = 5;
-    const spacing = 0.01;
+    const numPages = 8;
+    const spacing = 0.005;
+    const width = albumSize === '30x30' ? 5 : albumSize === '20x30' ? 3.33 : 3.75;
     for (let i = 0; i < numPages; i++) {
       stack.push(
         <mesh key={i} position={[0, 0, -i * spacing]} receiveShadow>
-          <boxGeometry args={[4, 5.5, 0.01]} />
-          <meshStandardMaterial color="#fff" roughness={0.8} />
+          <boxGeometry args={[width, 5, 0.01]} />
+          <meshStandardMaterial color="#fff" roughness={1} />
         </mesh>
       );
     }
     return stack;
-  }, []);
+  }, [albumSize]);
+
+  const pageArgs = useMemo(() => {
+    const width = albumSize === '30x30' ? 5 : albumSize === '20x30' ? 3.33 : 3.75;
+    return [width, 5, 0.05];
+  }, [albumSize]);
 
   return (
     <group rotation={[0, isRightPage ? -foldAngle : foldAngle, 0]}>
       {/* The main page/cover body */}
-      <mesh castShadow receiveShadow position={[isRightPage ? 2 : -2, 0, 0]}>
-        <boxGeometry args={[4, 5.5, isCover ? 0.15 : 0.05]} />
+      <mesh castShadow receiveShadow position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0]}>
+        <boxGeometry args={pageArgs as [number, number, number]} />
         <meshPhysicalMaterial 
           {...materialProps} 
           map={isCover && materialType === 'photo' ? coverTexture : null} 
         />
       </mesh>
       
-      {/* Internal Page Stack (only if not cover or when open) */}
+      {/* Internal Page Stack (only if not cover) */}
       {!isCover && (
-        <group position={[isRightPage ? 2 : -2, 0, 0.03]}>
+        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.02]}>
           {pageStack}
         </group>
       )}
 
       {/* Content (Photo or Video) */}
       {videoUrl ? (
-        <group position={[isRightPage ? 2 : -2, 0, 0.04]}>
-          <VideoContent videoUrl={videoUrl} />
+        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.035]}>
+          <VideoContent videoUrl={videoUrl} width={pageArgs[0] * 0.99} height={pageArgs[1] * 0.99} />
         </group>
       ) : texture && (
-        <mesh position={[isRightPage ? 2 : -2, 0, 0.04]} castShadow>
-          <planeGeometry args={[3.8, 5.3]} />
-          <meshStandardMaterial map={texture} />
+        <mesh position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.035]} castShadow>
+          <planeGeometry args={[pageArgs[0] * 0.99, pageArgs[1] * 0.99]} />
+          <meshStandardMaterial map={texture} roughness={0.3} metalness={0.05} />
         </mesh>
       )}
     </group>
@@ -183,12 +182,13 @@ interface PageProps {
   isRightPage?: boolean;
   foldAngle?: number;
   materialType?: string;
+  albumSize?: string;
   customMaterialProps?: any;
   coverTextureUrl?: string;
   isCover?: boolean;
 }
 
-function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle = 0, materialType, customMaterialProps, coverTextureUrl, isCover }: PageProps) {
+function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle = 0, materialType, albumSize, customMaterialProps, coverTextureUrl, isCover }: PageProps) {
   return (
     <group position={position} rotation={rotation}>
       <Suspense fallback={
@@ -204,6 +204,7 @@ function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle
             isRightPage={isRightPage} 
             foldAngle={foldAngle} 
             materialType={materialType}
+            albumSize={albumSize}
             customMaterialProps={customMaterialProps}
             coverTextureUrl={coverTextureUrl}
             isCover={isCover}
@@ -220,12 +221,13 @@ interface Album3DProps {
   zoom?: number;
   isOpen?: boolean;
   videoUrl?: string;
+  albumSize?: string;
   materialType?: string;
   customMaterialProps?: any;
   coverTextureUrl?: string;
 }
 
-function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, materialType = 'standard', customMaterialProps, coverTextureUrl }: Album3DProps) {
+function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, albumSize = '30x30', materialType = 'standard', customMaterialProps, coverTextureUrl }: Album3DProps) {
   const leftPageUrl = pages[currentPage * 2];
   const rightPageUrl = pages[currentPage * 2 + 1];
   
@@ -234,7 +236,7 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
   const currentVideoUrl = isFirstPage ? videoUrl : undefined;
 
   const groupRef = useRef<THREE.Group>(null);
-  const [fold, setFold] = useState(Math.PI / 2); // Start closed
+  const [fold, setFold] = useState(0); // Start open
 
   useFrame((state, delta) => {
     if (groupRef.current) {
@@ -242,7 +244,7 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
     }
     
     // Animate opening/closing
-    const targetFold = isOpen ? 0 : Math.PI / 2;
+    const targetFold = isOpen ? 0 : Math.PI / 1.1;
     const nextFold = THREE.MathUtils.lerp(fold, targetFold, 0.05);
     if (Math.abs(nextFold - fold) > 0.001) {
       setFold(nextFold);
@@ -253,24 +255,26 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
     <>
       <OrbitControls 
         enablePan={false} 
-        minDistance={5} 
-        maxDistance={15} 
-        minPolarAngle={Math.PI / 4} 
-        maxPolarAngle={Math.PI / 1.5} 
+        minDistance={3} 
+        maxDistance={12} 
+        autoRotate={false}
+        enableDamping={true}
+        dampingFactor={0.05}
       />
-      <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
-        <group ref={groupRef} rotation={[0, 0, 0]}>
-          {/* Back Cover */}
+      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.2}>
+        <group ref={groupRef} position={[0, 0, 0]}>
+          {/* Back Cover - stays behind */}
           <Page 
-            position={[0, 0, -0.1]} 
+            position={[0, 0, -0.2]} 
             rotation={[0, 0, 0]} 
-            foldAngle={fold}
+            foldAngle={Math.max(0, fold - 0.1)}
             materialType={materialType}
+            albumSize={albumSize}
             customMaterialProps={customMaterialProps}
             isCover
           />
           
-          {/* Left Page */}
+          {/* Left Page content */}
           <Page 
             textureUrl={leftPageUrl} 
             videoUrl={currentVideoUrl}
@@ -278,10 +282,11 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
             rotation={[0, 0, 0]} 
             foldAngle={fold}
             materialType={materialType}
+            albumSize={albumSize}
             customMaterialProps={customMaterialProps}
           />
           
-          {/* Right Page */}
+          {/* Right Page content */}
           <Page 
             textureUrl={rightPageUrl} 
             position={[0, 0, 0]} 
@@ -289,28 +294,30 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
             isRightPage
             foldAngle={fold}
             materialType={materialType}
+            albumSize={albumSize}
             customMaterialProps={customMaterialProps}
           />
 
-          {/* Front Cover */}
+          {/* Front Cover - folds with pages */}
           <Page 
-            position={[0, 0, 0.1]} 
+            position={[0, 0, 0.2]} 
             rotation={[0, 0, 0]} 
             isRightPage
-            foldAngle={fold}
+            foldAngle={Math.max(0, fold - 0.1)}
             materialType={materialType}
+            albumSize={albumSize}
             customMaterialProps={customMaterialProps}
             coverTextureUrl={coverTextureUrl}
             isCover
           />
           
-          {/* Spine */}
+          {/* Spine - center logic */}
           <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[0.15, 5.5, 0.25]} />
+            <boxGeometry args={[0.2, albumSize === '20x30' ? 5 : 5, 0.4]} />
             <meshStandardMaterial 
               color={materialType === 'standard' ? "#D4AF37" : "#111"} 
-              metalness={0.8} 
-              roughness={0.2} 
+              metalness={0.9} 
+              roughness={0.1} 
             />
           </mesh>
         </group>
@@ -322,15 +329,16 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, material
 export default function Album3D(props: Album3DProps) {
   return (
     <div className="w-full h-full min-h-[500px] md:min-h-[600px]">
-      <Canvas shadows camera={{ position: [0, 0, 10], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} castShadow />
-        <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+      <Canvas shadows camera={{ position: [0, 0, 8], fov: 40 }}>
+        <ambientLight intensity={0.8} />
+        <pointLight position={[5, 5, 5]} intensity={1.5} castShadow />
+        <spotLight position={[-5, 8, 5]} angle={0.25} penumbra={1} intensity={2} castShadow />
+        <directionalLight position={[0, 10, 0]} intensity={0.5} />
         
         <AlbumContent {...props} />
 
-        <ContactShadows position={[0, -4, 0]} opacity={0.4} scale={20} blur={2} far={4.5} />
-        <Environment preset="city" />
+        <ContactShadows position={[0, -3.5, 0]} opacity={0.6} scale={15} blur={2.5} far={4} color="#000000" />
+        <Environment preset="studio" />
       </Canvas>
     </div>
   );

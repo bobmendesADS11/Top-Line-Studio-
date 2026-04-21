@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Layout, 
@@ -19,6 +19,7 @@ import {
   Settings2,
   Box,
   Crop as CropIcon,
+  AlertTriangle,
   X
 } from 'lucide-react';
 import Cropper, { Area } from 'react-easy-crop';
@@ -92,6 +93,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [currentPage, setCurrentPage] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
   
   // Crop state
   const [photoCrops, setPhotoCrops] = useState<Record<string, PhotoCrop>>({});
@@ -142,12 +144,15 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
   }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, photoCrops, videoUrl, isFirstLoad]);
 
-  // Initialize page layouts and effects when photos change (only if no draft)
+  // Initialize page layouts and effects when photos change (only if no draft and no previous state)
   useEffect(() => {
     if (!isFirstLoad) {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return; // Don't overwrite if we have a saved draft
+      if (saved) return; 
     }
+    
+    // Only auto-initialize if we don't have layouts yet
+    if (pageLayouts.length > 0) return;
     
     const photosPerPage = globalLayout === 'grid' ? 4 : (globalLayout === 'vgrid' ? 2 : 1);
     const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
@@ -158,7 +163,34 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     if (!coverPhotoId && activePhotos.length > 0) {
       setCoverPhotoId(activePhotos[0].id);
     }
-  }, [activePhotos.length, globalLayout, isFirstLoad]);
+  }, [activePhotos.length, globalLayout, isFirstLoad, pageLayouts.length]);
+
+  const getPhotosTotalCapacity = () => {
+    let cap = 0;
+    for (let i = 0; i < pageLayouts.length; i++) {
+      const layout = pageLayouts[i];
+      if (layout === 'grid') cap += 4;
+      else if (layout === 'vgrid') cap += 2;
+      else if (layout === 'panorama') {
+        cap += 1;
+        i++;
+      } else {
+        cap += 1;
+      }
+    }
+    return cap;
+  };
+
+  const addPage = () => {
+    setPageLayouts([...pageLayouts, globalLayout]);
+    setPageEffects([...pageEffects, 'none']);
+  };
+
+  const removePage = (index: number) => {
+    if (pageLayouts.length <= 1) return;
+    setPageLayouts(pageLayouts.filter((_, i) => i !== index));
+    setPageEffects(pageEffects.filter((_, i) => i !== index));
+  };
 
   // Update all layouts when global layout changes
   const handleGlobalLayoutChange = (newLayout: LayoutType) => {
@@ -170,6 +202,36 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     setPageLayouts(new Array(numPages).fill(newLayout));
     setPageEffects(new Array(numPages).fill('none'));
   };
+
+  const syncPageCount = useCallback(() => {
+    let photoIdx = 0;
+    let lastUsedPage = -1;
+    
+    for (let i = 0; i < pageLayouts.length; i++) {
+      if (photoIdx < activePhotos.length) {
+        lastUsedPage = i;
+        const layout = pageLayouts[i];
+        if (layout === 'grid') photoIdx += 4;
+        else if (layout === 'vgrid') photoIdx += 2;
+        else if (layout === 'panorama') {
+          photoIdx += 1;
+          lastUsedPage = i + 1 < pageLayouts.length ? i + 1 : i;
+          i++; 
+        } else photoIdx += 1;
+      }
+    }
+
+    if (lastUsedPage !== -1 && lastUsedPage < pageLayouts.length - 1) {
+      setPageLayouts(pageLayouts.slice(0, lastUsedPage + 1));
+      setPageEffects(pageEffects.slice(0, lastUsedPage + 1));
+    }
+  }, [activePhotos.length, pageLayouts, pageEffects]);
+
+  useEffect(() => {
+    if (isAutoSyncEnabled && !isFirstLoad) {
+      syncPageCount();
+    }
+  }, [syncPageCount, isAutoSyncEnabled, isFirstLoad]);
 
   const clearDraft = () => {
     if (confirm('Deseja realmente limpar todas as edições e começar do zero?')) {
@@ -560,28 +622,24 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       if (layout === 'vgrid') photosPerPage = 2;
       
       if (layout === 'panorama') {
-        const pagePhotos = activePhotos.slice(photoIdx, photoIdx + 1);
-        if (pagePhotos.length === 0) break;
+        const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + 1) : [];
 
         // Generate left half
         const pageDataLeft = await drawPage(pagePhotos, 'panorama', pageEffect, 'left');
         newPages.push(pageDataLeft);
 
         // Check if next page is also panorama to avoid double consumption of layout slots
-        // But simpler to just push another index if we have more layout slots
         if (i + 1 < pageLayouts.length) {
           const pageDataRight = await drawPage(pagePhotos, 'panorama', pageEffect, 'right');
           newPages.push(pageDataRight);
           i++; // Skip next layout
         }
-        photoIdx += 1;
+        if (pagePhotos.length > 0) photoIdx += 1;
       } else {
-        const pagePhotos = activePhotos.slice(photoIdx, photoIdx + photosPerPage);
-        if (pagePhotos.length === 0) break;
-        
+        const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + photosPerPage) : [];
         const pageData = await drawPage(pagePhotos, layout, pageEffect);
         newPages.push(pageData);
-        photoIdx += photosPerPage;
+        if (pagePhotos.length > 0) photoIdx += pagePhotos.length;
       }
     }
 
@@ -850,8 +908,40 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             </div>
             <div className="flex justify-between text-[10px] text-gray-400">
               <span>{pages.length} Páginas Diagramadas</span>
-              <span className="text-brand-gold/60">Grátis</span>
+              <span className="text-brand-gold/60">{getPhotosTotalCapacity() < activePhotos.length ? 'Fotos Sobrando' : 'Espaço OK'}</span>
             </div>
+            
+            <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
+              <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold">
+                <span className="text-gray-400">Capacidade Total</span>
+                <span className={getPhotosTotalCapacity() >= activePhotos.length ? 'text-green-500' : 'text-brand-gold text-white animate-pulse'}>
+                  {getPhotosTotalCapacity()} / {activePhotos.length} Fotos
+                </span>
+              </div>
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${getPhotosTotalCapacity() >= activePhotos.length ? 'bg-green-500' : 'bg-brand-gold'}`}
+                  style={{ width: `${Math.min(100, (getPhotosTotalCapacity() / activePhotos.length) * 100)}%` }}
+                />
+              </div>
+              <p className="text-[7px] text-gray-500 uppercase leading-tight italic">
+                {getPhotosTotalCapacity() < activePhotos.length 
+                  ? `Faltam ${activePhotos.length - getPhotosTotalCapacity()} slots para todas as suas fotos. Adicione páginas ou use Grades.`
+                  : 'Todas as suas fotos cabem no álbum atual!'}
+              </p>
+            </div>
+
+            {getPhotosTotalCapacity() < activePhotos.length && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+                <p className="text-[8px] text-red-500 uppercase tracking-widest font-bold flex items-center gap-2">
+                  <AlertTriangle size={12} /> Fotos Restantes
+                </p>
+                <p className="text-[7px] text-gray-400 mt-1 leading-tight">
+                  Atenção: {activePhotos.length - getPhotosTotalCapacity()} fotos não serão exibidas. Adicione mais páginas ou mude para layout de Grade.
+                </p>
+              </div>
+            )}
+
             {PRICES.size[albumSize] > 0 && (
               <div className="flex justify-between text-[10px] text-gray-400">
                 <span>Adicional Tamanho {albumSize}</span>
@@ -934,6 +1024,19 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         </div>
 
         <div className="mt-auto pt-6 border-t border-white/5 space-y-3">
+          <div className="px-3 py-2 bg-white/5 border border-white/5 rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] uppercase tracking-widest font-bold text-gray-500">Simetria Auto</span>
+              <button 
+                onClick={() => setIsAutoSyncEnabled(!isAutoSyncEnabled)}
+                className={`w-8 h-4 rounded-full relative transition-all ${isAutoSyncEnabled ? 'bg-brand-gold' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isAutoSyncEnabled ? 'left-4.5' : 'left-0.5'}`} />
+              </button>
+            </div>
+            <p className="text-[7px] text-gray-600 uppercase tracking-tighter leading-tight italic">Remove páginas vazias automaticamente quando os layouts mudam.</p>
+          </div>
+
           <button
             onClick={clearDraft}
             className="w-full bg-white/5 text-red-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500/10 transition-all border border-white/5"
@@ -984,6 +1087,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 zoom={1} 
                 videoUrl={videoUrl || undefined}
                 materialType={materialType}
+                albumSize={albumSize}
                 coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
               />
               
@@ -996,7 +1100,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   <ArrowLeft size={20} />
                 </button>
                 <div className="px-4 text-[10px] uppercase tracking-[0.2em] font-bold text-white/60">
-                  Página {currentPage + 1} / {Math.ceil(pages.length / 2)}
+                  Spread {currentPage + 1} ({currentPage * 2 + 1} & {currentPage * 2 + 2}) / {Math.ceil(pages.length / 2)}
                 </div>
                 <button 
                   onClick={() => setCurrentPage(Math.min(Math.floor(pages.length / 2), currentPage + 1))}
@@ -1056,6 +1160,13 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                         className="group relative"
                       >
                         <div className="flex flex-col lg:flex-row gap-12 bg-zinc-900/20 border border-white/5 p-12 rounded-[60px] hover:border-brand-gold/20 transition-all">
+                          <button 
+                            onClick={() => removePage(i)}
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white z-20"
+                            title="Remover Página"
+                          >
+                            <X size={20} />
+                          </button>
                           <div className={`flex-1 studio-bg rounded-3xl overflow-hidden flex items-center justify-center p-8 lg:p-12 relative`}>
                             <div className="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-white/5 to-transparent pointer-events-none" />
                             
@@ -1068,6 +1179,19 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                               }}
                             >
                               <img src={page} alt={`Página ${i+1}`} className="w-full h-full object-contain" />
+                              {getPagePhotos(i).length === 0 && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 p-6 text-center">
+                                  <AlertTriangle size={32} className="text-zinc-700 mb-2" />
+                                  <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Página Excedente</span>
+                                  <p className="text-[8px] text-zinc-600 mt-1 max-w-[150px]">Nenhuma foto restante para esta página. Remova ou mude layouts anteriores.</p>
+                                  <button 
+                                    onClick={() => removePage(i)}
+                                    className="mt-4 px-4 py-2 rounded-lg bg-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-400 transition-colors"
+                                  >
+                                    Excluir Página
+                                  </button>
+                                </div>
+                              )}
                               <div className="absolute inset-y-0 right-0 w-[4px] bg-gradient-to-l from-white/5 to-transparent border-r border-white/20" />
                               <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent pointer-events-none" />
                             </div>
@@ -1173,6 +1297,18 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                         </div>
                       </motion.div>
                     ))}
+
+                    <div className="pt-8 flex justify-center">
+                      <button 
+                        onClick={addPage}
+                        className="px-12 py-6 rounded-[30px] bg-white/5 border border-white/10 text-brand-gold font-bold uppercase tracking-[0.3em] text-[11px] hover:bg-brand-gold hover:text-black transition-all flex items-center gap-4 group"
+                      >
+                        <div className="w-8 h-8 rounded-full border border-current flex items-center justify-center group-hover:bg-black/10">
+                          <Sparkles size={16} />
+                        </div>
+                        Adicionar Nova Página
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
