@@ -71,11 +71,12 @@ service cloud.firestore {
 
     function isValidPhoto(data) {
       let requiredFields = ['url', 'createdAt'];
-      let allowedFields = ['url', 'createdAt', 'name'];
+      let allowedFields = ['url', 'createdAt', 'name', 'source'];
       return data.keys().hasAll(requiredFields) &&
              data.keys().hasOnly(allowedFields) &&
              data.url is string && data.url.size() < 1500000 &&
              (!('name' in data) || (data.name is string && data.name.size() < 255)) &&
+             (!('source' in data) || (data.source in ['admin', 'student'])) &&
              data.createdAt is timestamp;
     }
 
@@ -94,12 +95,17 @@ service cloud.firestore {
     }
 
     function isValidOrder(data) {
-      return data.keys().hasAll(['studentUid', 'package', 'photoIds', 'status', 'createdAt']) &&
+      let requiredFields = ['studentUid', 'package', 'photoIds', 'status', 'createdAt'];
+      let allowedFields = ['studentUid', 'package', 'photoIds', 'status', 'createdAt', 'studentEmail', 'studentName'];
+      return data.keys().hasAll(requiredFields) &&
+             data.keys().hasOnly(allowedFields) &&
              data.studentUid is string &&
-             data.package in ['link', 'black'] &&
+             data.package in ['link', 'black', 'album'] &&
              data.photoIds is list && data.photoIds.size() < 1000 &&
              data.status in ['pending', 'processing', 'completed', 'cancelled'] &&
-             data.createdAt is timestamp;
+             data.createdAt is timestamp &&
+             (!('studentEmail' in data) || isValidEmail(data.studentEmail)) &&
+             (!('studentName' in data) || (data.studentName is string && data.studentName.size() < 100));
     }
   }
 }
