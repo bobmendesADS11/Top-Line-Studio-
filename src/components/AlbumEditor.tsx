@@ -430,12 +430,20 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     setPageEffects(newEffects);
   };
 
-  // Generate pages whenever photos, layouts, or effects change
+  const generateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Generate pages whenever photos, layouts, or effects change - Debounced for performance
   useEffect(() => {
     if (activePhotos.length > 0 && pageLayouts.length > 0 && pageEffects.length > 0) {
-      generateAllPages();
+      if (generateTimerRef.current) clearTimeout(generateTimerRef.current);
+      generateTimerRef.current = setTimeout(() => {
+        generateAllPages();
+      }, 300);
     }
-  }, [activePhotos, pageLayouts, pageEffects, albumSize, photoCrops]);
+    return () => {
+      if (generateTimerRef.current) clearTimeout(generateTimerRef.current);
+    };
+  }, [activePhotos, pageLayouts, pageEffects, albumSize, JSON.stringify(photoCrops)]);
 
   const applyEffect = (ctx: CanvasRenderingContext2D, width: number, height: number, pageEffect: EffectType) => {
     if (pageEffect === 'none') return;
@@ -469,11 +477,27 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     ctx.putImageData(imageData, 0, 0);
   };
 
+  const imageCacheRef = useRef<Record<string, HTMLImageElement>>({});
+  const pageCacheRef = useRef<Record<string, { url: string, hash: string }>>({});
+
   const drawPage = async (pagePhotos: Photo[], layout: LayoutType, pageEffect: EffectType, side?: 'left' | 'right'): Promise<string> => {
+    // Generate simple hash for this page state
+    const pageHash = JSON.stringify({
+      photos: pagePhotos.map(p => ({ id: p.id, url: p.url, crop: photoCrops[p.id] })),
+      layout,
+      pageEffect,
+      side,
+      albumSize
+    });
+
+    if (pageCacheRef.current[pageHash]) {
+      return pageCacheRef.current[pageHash].url;
+    }
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return '';
-
+    
     // Resolution based on size
     let width = 1200;
     let height = 1200;
@@ -506,12 +530,24 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     ctx.lineWidth = 4;
     ctx.strokeRect(10, 10, width - 20, height - 20);
 
-    // Load images
+    // Load images - Using cache
     const loadedImages = await Promise.all(
       pagePhotos.map(p => new Promise<{ img: HTMLImageElement, id: string }>((resolve) => {
+        if (imageCacheRef.current[p.url]) {
+          resolve({ img: imageCacheRef.current[p.url], id: p.id });
+          return;
+        }
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => resolve({ img, id: p.id });
+        img.onload = () => {
+          imageCacheRef.current[p.url] = img;
+          resolve({ img, id: p.id });
+        };
+        img.onerror = () => {
+          const placeholder = new Image();
+          placeholder.src = "https://picsum.photos/seed/error/800/1200?blur=5";
+          placeholder.onload = () => resolve({ img: placeholder, id: p.id });
+        };
         img.src = p.url;
       }))
     );
@@ -665,7 +701,20 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     }
 
     applyEffect(ctx, width, height, pageEffect);
-    return canvas.toDataURL('image/jpeg', 0.9);
+    
+    const result = await new Promise<string>((resolve) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          pageCacheRef.current[pageHash] = { url, hash: pageHash };
+          resolve(url);
+        } else {
+          resolve(canvas.toDataURL('image/jpeg', 0.9));
+        }
+      }, 'image/jpeg', 0.9);
+    });
+    
+    return result;
   };
 
   const onCropSave = () => {
@@ -786,43 +835,58 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     return { width, height };
   };
 
+  // Cleanup old object URLs to prevent memory leaks
+  useEffect(() => {
+    const cache = pageCacheRef.current;
+    return () => {
+      Object.values(cache).forEach(item => {
+        URL.revokeObjectURL(item.url);
+      });
+    };
+  }, []);
+
   const generateAllPages = async () => {
     setIsGenerating(true);
-    const newPages: string[] = [];
-    
-    let photoIdx = 0;
-    for (let i = 0; i < pageLayouts.length; i++) {
-      const layout = pageLayouts[i];
-      const pageEffect = pageEffects[i] || 'none';
-      let photosPerPage = 1;
+    try {
+      const newPages: string[] = [];
       
-      if (layout === 'grid') photosPerPage = 4;
-      if (layout === 'vgrid') photosPerPage = 2;
-      
-      if (layout === 'panorama') {
-        const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + 1) : [];
+      let photoIdx = 0;
+      for (let i = 0; i < pageLayouts.length; i++) {
+        const layout = pageLayouts[i];
+        const pageEffect = pageEffects[i] || 'none';
+        let photosPerPage = 1;
+        
+        if (layout === 'grid') photosPerPage = 4;
+        if (layout === 'vgrid') photosPerPage = 2;
+        
+        if (layout === 'panorama') {
+          const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + 1) : [];
 
-        // Generate left half
-        const pageDataLeft = await drawPage(pagePhotos, 'panorama', pageEffect, 'left');
-        newPages.push(pageDataLeft);
+          // Generate left half
+          const pageDataLeft = await drawPage(pagePhotos, 'panorama', pageEffect, 'left');
+          newPages.push(pageDataLeft);
 
-        // Check if next page is also panorama to avoid double consumption of layout slots
-        if (i + 1 < pageLayouts.length) {
-          const pageDataRight = await drawPage(pagePhotos, 'panorama', pageEffect, 'right');
-          newPages.push(pageDataRight);
-          i++; // Skip next layout
+          // Check if next page is also panorama to avoid double consumption of layout slots
+          if (i + 1 < pageLayouts.length) {
+            const pageDataRight = await drawPage(pagePhotos, 'panorama', pageEffect, 'right');
+            newPages.push(pageDataRight);
+            i++; // Skip next layout
+          }
+          if (pagePhotos.length > 0) photoIdx += 1;
+        } else {
+          const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + photosPerPage) : [];
+          const pageData = await drawPage(pagePhotos, layout, pageEffect);
+          newPages.push(pageData);
+          if (pagePhotos.length > 0) photoIdx += pagePhotos.length;
         }
-        if (pagePhotos.length > 0) photoIdx += 1;
-      } else {
-        const pagePhotos = photoIdx < activePhotos.length ? activePhotos.slice(photoIdx, photoIdx + photosPerPage) : [];
-        const pageData = await drawPage(pagePhotos, layout, pageEffect);
-        newPages.push(pageData);
-        if (pagePhotos.length > 0) photoIdx += pagePhotos.length;
       }
-    }
 
-    setPages(newPages);
-    setIsGenerating(false);
+      setPages(newPages);
+    } catch (e) {
+      console.error("Layout generation error", e);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -954,7 +1018,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       </AnimatePresence>
 
       {/* Sidebar Controls */}
-      <div className="w-full lg:w-80 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto">
+      <div className="w-full lg:w-96 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 relative z-10 shadow-2xl">
         <div className="flex items-center justify-between mb-2">
           <button 
             onClick={onBack}
@@ -1337,7 +1401,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       </div>
 
       {/* Main Preview Area */}
-      <div className="flex-1 relative bg-[#050505] overflow-hidden">
+      <div className="flex-1 relative bg-[#030303] overflow-hidden flex flex-col">
         <AnimatePresence mode="wait">
           {showPreview ? (
             <motion.div
@@ -1345,21 +1409,23 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="h-full"
+              className="flex-1 min-h-0 relative"
             >
-              <Album3D 
-                pages={pages} 
-                currentPage={currentPage} 
-                isOpen={true} 
-                zoom={1} 
-                videoUrl={videoUrl || undefined}
-                materialType={materialType}
-                albumSize={albumSize}
-                coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
-              />
+              <div className="absolute inset-0 pb-20">
+                <Album3D 
+                  pages={pages} 
+                  currentPage={currentPage} 
+                  isOpen={true} 
+                  zoom={1} 
+                  videoUrl={videoUrl || undefined}
+                  materialType={materialType}
+                  albumSize={albumSize}
+                  coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
+                />
+              </div>
               
               {/* 3D Controls Overlay */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-xl border border-white/10 p-2 rounded-2xl z-10">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/80 backdrop-blur-2xl border border-white/5 p-1.5 rounded-2xl z-20 shadow-2xl scale-90 sm:scale-100">
                 <button 
                   onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
                   className="p-3 hover:bg-white/10 rounded-xl transition-colors text-brand-gold"

@@ -67,6 +67,21 @@ function PageContent({
 }) {
   const texture = textureUrl ? useTexture(textureUrl) : null;
   const coverTexture = coverTextureUrl ? useTexture(coverTextureUrl) : null;
+
+  useMemo(() => {
+    if (texture) {
+      texture.anisotropy = 16;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.needsUpdate = true;
+    }
+    if (coverTexture) {
+      coverTexture.anisotropy = 16;
+      coverTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      coverTexture.magFilter = THREE.LinearFilter;
+      coverTexture.needsUpdate = true;
+    }
+  }, [texture, coverTexture]);
   
   // Base materials with realistic properties
   const materialProps = useMemo(() => {
@@ -119,17 +134,22 @@ function PageContent({
     }
   }, [materialType, customMaterialProps]);
 
-  // Page stack to simulate depth
+  // Page stack to simulate depth with high-quality paper feel
   const pageStack = useMemo(() => {
     const stack = [];
-    const numPages = 8;
-    const spacing = 0.005;
+    const numPages = 15; // More pages for thicker feel
+    const spacing = 0.004;
     const width = albumSize === '30x30' ? 5 : albumSize === '20x30' ? 3.33 : 3.75;
-    for (let i = 0; i < numPages; i++) {
+    for (let i = 1; i <= numPages; i++) {
       stack.push(
         <mesh key={i} position={[0, 0, -i * spacing]} receiveShadow>
-          <boxGeometry args={[width, 5, 0.01]} />
-          <meshStandardMaterial color="#fff" roughness={1} />
+          <boxGeometry args={[width, 5, 0.005]} />
+          <meshPhysicalMaterial 
+            color="#ffffff" 
+            roughness={0.8} 
+            metalness={0}
+            clearcoat={0.1}
+          />
         </mesh>
       );
     }
@@ -161,13 +181,25 @@ function PageContent({
 
       {/* Content (Photo or Video) */}
       {videoUrl ? (
-        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.035]}>
-          <VideoContent videoUrl={videoUrl} width={pageArgs[0] * 0.99} height={pageArgs[1] * 0.99} />
+        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.04]}>
+          <VideoContent videoUrl={videoUrl} width={pageArgs[0] * 0.98} height={pageArgs[1] * 0.98} />
         </group>
       ) : texture && (
-        <mesh position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.035]} castShadow>
-          <planeGeometry args={[pageArgs[0] * 0.99, pageArgs[1] * 0.99]} />
-          <meshStandardMaterial map={texture} roughness={0.3} metalness={0.05} />
+        <mesh 
+          position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.04]} 
+          castShadow 
+          rotation={[0, 0, 0]}
+        >
+          <planeGeometry args={[pageArgs[0] * 0.98, pageArgs[1] * 0.98]} />
+          <meshPhysicalMaterial 
+            map={texture} 
+            roughness={0.2} 
+            metalness={0.05}
+            clearcoat={0.8}
+            clearcoatRoughness={0.1}
+            envMapIntensity={1.5}
+            reflectivity={0.5}
+          />
         </mesh>
       )}
     </group>
@@ -328,17 +360,31 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, albumSiz
 
 export default function Album3D(props: Album3DProps) {
   return (
-    <div className="w-full h-full min-h-[500px] md:min-h-[600px]">
-      <Canvas shadows camera={{ position: [0, 0, 8], fov: 40 }}>
-        <ambientLight intensity={0.8} />
-        <pointLight position={[5, 5, 5]} intensity={1.5} castShadow />
-        <spotLight position={[-5, 8, 5]} angle={0.25} penumbra={1} intensity={2} castShadow />
-        <directionalLight position={[0, 10, 0]} intensity={0.5} />
+    <div className="w-full h-full min-h-[500px] md:min-h-[600px] cursor-grab active:cursor-grabbing">
+      <Canvas 
+        shadows 
+        camera={{ position: [0, 0, 10], fov: 35 }}
+        gl={{ 
+          antialias: true, 
+          toneMapping: THREE.ACESFilmicToneMapping,
+          powerPreference: "high-performance"
+        }}
+      >
+        <ambientLight intensity={0.4} />
+        <spotLight position={[10, 15, 10]} angle={0.3} penumbra={1} intensity={2} castShadow />
+        <pointLight position={[-10, -5, 5]} intensity={0.5} color="#D4AF37" />
         
         <AlbumContent {...props} />
 
-        <ContactShadows position={[0, -3.5, 0]} opacity={0.6} scale={15} blur={2.5} far={4} color="#000000" />
-        <Environment preset="studio" />
+        <ContactShadows 
+          position={[0, -3.5, 0]} 
+          opacity={0.4} 
+          scale={20} 
+          blur={2} 
+          far={4.5} 
+          color="#000000" 
+        />
+        <Environment preset="apartment" />
       </Canvas>
     </div>
   );
