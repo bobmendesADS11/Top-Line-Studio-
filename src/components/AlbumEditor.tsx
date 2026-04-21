@@ -135,80 +135,69 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   };
 
   const optimizeHelper = (layoutsArr: LayoutType[], targetCount: number, updateFn: (arr: LayoutType[]) => void) => {
-    let currentCap = 0;
+    let photoIdx = 0;
     const newLayouts = [...layoutsArr];
-    const pageBudget = requestedPageCount;
+    const totalPages = newLayouts.length;
     
-    // Calculate the density needed (photos per page)
-    const density = targetCount / pageBudget;
-    
-    for (let spreadIdx = 0; spreadIdx < Math.floor(newLayouts.length / 2); spreadIdx++) {
-      const p1 = spreadIdx * 2;
-      const p2 = p1 + 1;
+    // Reset all to minimalist first to have a clean slate
+    for (let i = 0; i < totalPages; i++) newLayouts[i] = 'minimalist';
+
+    for (let i = 0; i < totalPages; i++) {
+      if (photoIdx >= targetCount) break;
+
+      const remainingPhotos = targetCount - photoIdx;
+      const remainingPages = totalPages - i;
       
-      // If density is low (e.g. 1.5 photos per page), we use lighter patterns
-      // 30 photos / 20 pages = 1.5 density
-      
-      const pattern = spreadIdx % 4;
-      
-      if (density <= 1.2) {
-        // Very light: Mostly 1 photo per page, occasional 2
-        newLayouts[p1] = pattern === 0 ? 'vgrid' : 'minimalist';
-        newLayouts[p2] = 'minimalist';
-      } else if (density <= 1.8) {
-        // Medium (Your 30/20 case): Mix of 1, 2 and occasional Panorama
-        if (pattern === 0) {
-          newLayouts[p1] = 'vgrid';
-          newLayouts[p2] = 'minimalist';
-        } else if (pattern === 1) {
-          newLayouts[p1] = 'panorama';
-          newLayouts[p2] = 'panorama';
-        } else if (pattern === 2) {
-          newLayouts[p1] = 'minimalist';
-          newLayouts[p2] = 'vgrid';
+      // If we have more photos than pages left, we need higher density
+      if (remainingPhotos > remainingPages) {
+        // Can we do a panorama? (Needs at least 2 pages and 1 photo)
+        // Only if it doesn't leave too many photos for too few pages
+        const isIdealForPanorama = i % 4 === 2 && remainingPages >= 2 && (remainingPhotos - 1) <= (remainingPages - 2) * 4;
+        
+        if (isIdealForPanorama) {
+          newLayouts[i] = 'panorama';
+          if (i + 1 < totalPages) newLayouts[i + 1] = 'panorama';
+          photoIdx += 1;
+          i++; // skip next page
         } else {
-          newLayouts[p1] = 'vgrid';
-          newLayouts[p2] = 'vgrid';
+          // Choose density based on what's needed to finish exactly
+          const densityNeeded = remainingPhotos / remainingPages;
+          
+          if (densityNeeded > 2.5 && remainingPhotos >= 4) {
+            newLayouts[i] = 'grid';
+            photoIdx += 4;
+          } else if (densityNeeded > 1.2 && remainingPhotos >= 2) {
+            newLayouts[i] = 'vgrid';
+            photoIdx += 2;
+          } else {
+            newLayouts[i] = 'minimalist';
+            photoIdx += 1;
+          }
         }
       } else {
-        // High density (>2): Use the rhythmic grid pattern
-        if (pattern === 0) {
-          newLayouts[p1] = 'grid';
-          newLayouts[p2] = 'vgrid';
-        } else if (pattern === 1) {
-          newLayouts[p1] = 'panorama';
-          newLayouts[p2] = 'panorama';
-        } else if (pattern === 2) {
-          newLayouts[p1] = 'vgrid';
-          newLayouts[p2] = 'grid';
-        } else {
-          newLayouts[p1] = 'spread';
-          newLayouts[p2] = 'grid';
-        }
-      }
-      
-      currentCap = newLayouts.slice(0, p2 + 1).reduce((acc, layout, i) => {
-        if (layout === 'panorama') return i % 2 === 0 ? acc + 1 : acc;
-        if (layout === 'grid') return acc + 4;
-        if (layout === 'vgrid') return acc + 2;
-        return acc + 1;
-      }, 0);
-
-      // Special check: if we are at the end and still haven't reached target, force high density on last spreads
-      if (spreadIdx === Math.floor(newLayouts.length / 2) - 1 && currentCap < targetCount) {
-        // Backtrack a bit if needed or just force last spread to be grids
-        newLayouts[p1] = 'grid';
-        newLayouts[p2] = 'grid';
-      }
-      
-      if (currentCap >= targetCount && (p2 + 1) >= pageBudget) {
-        // Fill remaining with minimalist
-        for (let j = p2 + 1; j < newLayouts.length; j++) {
-          newLayouts[j] = 'minimalist';
-        }
-        break;
+        // 1 photo per page is enough
+        newLayouts[i] = 'minimalist';
+        photoIdx += 1;
       }
     }
+
+    // Final safety check: if we still have photos left (shouldn't happen with 30/20, but for safety)
+    if (photoIdx < targetCount) {
+       // Bump the last few pages to grid until satisfied
+       for (let i = totalPages - 1; i >= 0 && photoIdx < targetCount; i--) {
+          const oldLayout = newLayouts[i];
+          if (oldLayout === 'panorama') continue; // don't break spreads
+          
+          if (oldLayout === 'minimalist') {
+            newLayouts[i] = 'vgrid';
+            photoIdx += 1;
+          } else if (oldLayout === 'vgrid') {
+            newLayouts[i] = 'grid';
+            photoIdx += 2;
+          }
+       }
+    }
+
     updateFn([...newLayouts]);
   };
 
@@ -1196,33 +1185,6 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </div>
         )}
 
-        <div className={purchaseType === 'LINK' ? 'opacity-60 grayscale-[0.5] hover:grayscale-0 transition-all' : ''}>
-          <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-            <Layout size={14} /> 4. Estilo Visual
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { id: 'minimalist', icon: Maximize, label: 'Minimalista' },
-              { id: 'grid', icon: Grid, label: 'Grade (4)' },
-              { id: 'vgrid', icon: Layout, label: 'Vertical (2)' },
-              { id: 'panorama', icon: Maximize, label: 'Panorâmico' },
-              { id: 'spread', icon: ImageIcon, label: 'Sangrado' }
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleGlobalLayoutChange(item.id as LayoutType)}
-                className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                  globalLayout === item.id 
-                    ? 'bg-brand-gold border-brand-gold text-black' 
-                    : 'bg-black/40 border-white/10 text-gray-400 hover:border-brand-gold/50'
-                }`}
-              >
-                <item.icon size={18} />
-                <span className="text-[9px] uppercase font-bold tracking-widest">{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-3">
           <h3 className="text-brand-gold text-[10px] uppercase tracking-[0.2em] font-bold flex items-center gap-2">
