@@ -1,251 +1,8 @@
-import React, { useRef, useMemo, useState, Suspense } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { useTexture, Environment, ContactShadows, Float, OrbitControls, Html, useVideoTexture } from '@react-three/drei';
+import { OrbitControls, Float, ContactShadows, Environment } from '@react-three/drei';
 import * as THREE from 'three';
-
-// Error Boundary for 3D textures
-class TextureErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <mesh>
-          <boxGeometry args={[4, 5.5, 0.05]} />
-          <meshStandardMaterial color="#333" />
-          <Html center>
-            <div className="bg-black/80 text-white p-2 rounded text-[8px] whitespace-nowrap">
-              Erro ao carregar mídia
-            </div>
-          </Html>
-        </mesh>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-function VideoContent({ videoUrl, width, height }: { videoUrl: string, width: number, height: number }) {
-  const texture = useVideoTexture(videoUrl, {
-    unsuspend: 'canplay',
-    muted: true,
-    loop: true,
-    start: true,
-  });
-  
-  return (
-    <mesh position={[0, 0, 0]} castShadow>
-      <planeGeometry args={[width, height]} />
-      <meshStandardMaterial map={texture} toneMapped={false} />
-    </mesh>
-  );
-}
-
-function PageContent({ 
-  textureUrl, 
-  videoUrl,
-  isRightPage, 
-  foldAngle = 0,
-  materialType = 'standard',
-  albumSize = '30x30',
-  customMaterialProps,
-  coverTextureUrl,
-  isCover = false
-}: { 
-  textureUrl?: string, 
-  videoUrl?: string,
-  isRightPage?: boolean, 
-  foldAngle?: number,
-  materialType?: string,
-  albumSize?: string,
-  customMaterialProps?: any,
-  coverTextureUrl?: string,
-  isCover?: boolean
-}) {
-  const texture = textureUrl ? useTexture(textureUrl) : null;
-  const coverTexture = coverTextureUrl ? useTexture(coverTextureUrl) : null;
-
-  useMemo(() => {
-    if (texture) {
-      texture.anisotropy = 16;
-      texture.minFilter = THREE.LinearMipmapLinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      texture.needsUpdate = true;
-    }
-    if (coverTexture) {
-      coverTexture.anisotropy = 16;
-      coverTexture.minFilter = THREE.LinearMipmapLinearFilter;
-      coverTexture.magFilter = THREE.LinearFilter;
-      coverTexture.needsUpdate = true;
-    }
-  }, [texture, coverTexture]);
-  
-  // Base materials with realistic properties
-  const materialProps = useMemo(() => {
-    if (customMaterialProps) return customMaterialProps;
-
-    switch (materialType) {
-      case 'leather':
-        return { 
-          color: '#080808', 
-          roughness: 0.85, 
-          metalness: 0.2,
-          clearcoat: 0.2,
-          clearcoatRoughness: 0.4
-        };
-      case 'acrylic':
-        return { 
-          color: '#ffffff', 
-          transmission: 0.98,
-          thickness: 1.5,
-          roughness: 0.01, 
-          metalness: 0,
-          ior: 1.52,
-          transparent: true,
-          opacity: 1,
-          envMapIntensity: 2.5
-        };
-      case 'velvet':
-        return {
-          color: '#120520',
-          roughness: 0.95,
-          metalness: 0,
-          sheen: 1,
-          sheenColor: new THREE.Color('#331144'),
-          sheenRoughness: 0.9
-        };
-      case 'photo':
-        return {
-          color: '#ffffff',
-          roughness: 0.15,
-          metalness: 0,
-          clearcoat: 0.6,
-          clearcoatRoughness: 0.05
-        };
-      default:
-        return { 
-          color: '#121212', 
-          roughness: 0.5, 
-          metalness: 0.05 
-        };
-    }
-  }, [materialType, customMaterialProps]);
-
-  // Page stack to simulate depth with high-quality paper feel
-  const pageStack = useMemo(() => {
-    const stack = [];
-    const numPages = 15; // More pages for thicker feel
-    const spacing = 0.004;
-    const width = albumSize === '30x30' ? 5 : albumSize === '20x30' ? 3.33 : 3.75;
-    for (let i = 1; i <= numPages; i++) {
-      stack.push(
-        <mesh key={i} position={[0, 0, -i * spacing]} receiveShadow>
-          <boxGeometry args={[width, 5, 0.005]} />
-          <meshPhysicalMaterial 
-            color="#ffffff" 
-            roughness={0.8} 
-            metalness={0}
-            clearcoat={0.1}
-          />
-        </mesh>
-      );
-    }
-    return stack;
-  }, [albumSize]);
-
-  const pageArgs = useMemo(() => {
-    const width = albumSize === '30x30' ? 5 : albumSize === '20x30' ? 3.33 : 3.75;
-    return [width, 5, 0.05];
-  }, [albumSize]);
-
-  return (
-    <group rotation={[0, isRightPage ? -foldAngle : foldAngle, 0]}>
-      {/* The main page/cover body */}
-      <mesh castShadow receiveShadow position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0]}>
-        <boxGeometry args={pageArgs as [number, number, number]} />
-        <meshPhysicalMaterial 
-          {...materialProps} 
-          map={isCover && materialType === 'photo' ? coverTexture : null} 
-        />
-      </mesh>
-      
-      {/* Internal Page Stack (only if not cover) */}
-      {!isCover && (
-        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.02]}>
-          {pageStack}
-        </group>
-      )}
-
-      {/* Content (Photo or Video) */}
-      {videoUrl ? (
-        <group position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.04]}>
-          <VideoContent videoUrl={videoUrl} width={pageArgs[0] * 0.98} height={pageArgs[1] * 0.98} />
-        </group>
-      ) : texture && (
-        <mesh 
-          position={[isRightPage ? pageArgs[0] / 2 : -pageArgs[0] / 2, 0, 0.04]} 
-          castShadow 
-          rotation={[0, 0, 0]}
-        >
-          <planeGeometry args={[pageArgs[0] * 0.98, pageArgs[1] * 0.98]} />
-          <meshPhysicalMaterial 
-            map={texture} 
-            roughness={0.2} 
-            metalness={0.05}
-            clearcoat={0.8}
-            clearcoatRoughness={0.1}
-            envMapIntensity={1.5}
-            reflectivity={0.5}
-          />
-        </mesh>
-      )}
-    </group>
-  );
-}
-
-interface PageProps {
-  textureUrl?: string;
-  videoUrl?: string;
-  position: [number, number, number];
-  rotation: [number, number, number];
-  isRightPage?: boolean;
-  foldAngle?: number;
-  materialType?: string;
-  albumSize?: string;
-  customMaterialProps?: any;
-  coverTextureUrl?: string;
-  isCover?: boolean;
-}
-
-function Page({ textureUrl, videoUrl, position, rotation, isRightPage, foldAngle = 0, materialType, albumSize, customMaterialProps, coverTextureUrl, isCover }: PageProps) {
-  return (
-    <group position={position} rotation={rotation}>
-      <Suspense fallback={
-        <mesh position={[isRightPage ? 2 : -2, 0, 0]}>
-          <boxGeometry args={[4, 5.5, 0.05]} />
-          <meshStandardMaterial color="#222" />
-        </mesh>
-      }>
-        <TextureErrorBoundary>
-          <PageContent 
-            textureUrl={textureUrl} 
-            videoUrl={videoUrl}
-            isRightPage={isRightPage} 
-            foldAngle={foldAngle} 
-            materialType={materialType}
-            albumSize={albumSize}
-            customMaterialProps={customMaterialProps}
-            coverTextureUrl={coverTextureUrl}
-            isCover={isCover}
-          />
-        </TextureErrorBoundary>
-      </Suspense>
-    </group>
-  );
-}
+import { ChevronLeft, ChevronRight, RotateCcw, BookOpen, Eye, Sparkles } from 'lucide-react';
 
 interface Album3DProps {
   pages: string[];
@@ -257,101 +14,411 @@ interface Album3DProps {
   materialType?: string;
   customMaterialProps?: any;
   coverTextureUrl?: string;
+  onPageChange?: (page: number) => void;
 }
 
-function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, albumSize = '30x30', materialType = 'standard', customMaterialProps, coverTextureUrl }: Album3DProps) {
-  const leftPageUrl = pages[currentPage * 2];
-  const rightPageUrl = pages[currentPage * 2 + 1];
-  
-  // If it's the first page and we have a videoUrl, use it for the left page
-  const isFirstPage = currentPage === 0;
-  const currentVideoUrl = isFirstPage ? videoUrl : undefined;
+// Fallback texture generator for canvas
+function createFallbackTexture(text: string, subtext?: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Dark luxury gradient
+    const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+    grad.addColorStop(0, '#161616');
+    grad.addColorStop(0.5, '#0d0d0d');
+    grad.addColorStop(1, '#050505');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 1024);
 
-  const groupRef = useRef<THREE.Group>(null);
-  const [fold, setFold] = useState(0); // Start open
+    // Gold border line
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(40, 40, 944, 944);
 
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      groupRef.current.scale.lerp(new THREE.Vector3(zoom, zoom, zoom), 0.1);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(60, 60, 904, 904);
+
+    // Text
+    ctx.fillStyle = '#D4AF37';
+    ctx.font = 'bold 36px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TOP LINE STUDIO', 512, 480);
+
+    ctx.fillStyle = '#888888';
+    ctx.font = '24px sans-serif';
+    ctx.fillText(text, 512, 540);
+
+    if (subtext) {
+      ctx.fillStyle = '#555555';
+      ctx.font = '18px sans-serif';
+      ctx.fillText(subtext, 512, 580);
     }
-    
-    // Animate opening/closing
-    const targetFold = isOpen ? 0 : Math.PI / 1.1;
-    const nextFold = THREE.MathUtils.lerp(fold, targetFold, 0.05);
-    if (Math.abs(nextFold - fold) > 0.001) {
-      setFold(nextFold);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 8;
+  return texture;
+}
+
+// Custom hook to load texture safely without throwing or hanging Suspense
+function useSafeTexture(url?: string, fallbackLabel = 'Página'): THREE.Texture {
+  const [texture, setTexture] = useState<THREE.Texture>(() => createFallbackTexture(fallbackLabel));
+
+  useEffect(() => {
+    if (!url) {
+      setTexture(createFallbackTexture(fallbackLabel));
+      return;
+    }
+
+    let isMounted = true;
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+
+    loader.load(
+      url,
+      (loadedTexture) => {
+        if (!isMounted) return;
+        loadedTexture.anisotropy = 16;
+        loadedTexture.minFilter = THREE.LinearMipmapLinearFilter;
+        loadedTexture.magFilter = THREE.LinearFilter;
+        loadedTexture.generateMipmaps = true;
+        loadedTexture.needsUpdate = true;
+        setTexture(loadedTexture);
+      },
+      undefined,
+      (err) => {
+        if (!isMounted) return;
+        console.warn('Failed to load texture for 3D page:', url, err);
+        setTexture(createFallbackTexture(fallbackLabel, 'Registro Top Line'));
+      }
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url, fallbackLabel]);
+
+  return texture;
+}
+
+// Single Page Surface
+function PageMesh({
+  texture,
+  width,
+  height,
+  side = 'right',
+  materialType = 'standard'
+}: {
+  texture: THREE.Texture;
+  width: number;
+  height: number;
+  side: 'left' | 'right';
+  materialType?: string;
+}) {
+  return (
+    <mesh position={[side === 'right' ? width / 2 : -width / 2, 0, 0]} receiveShadow castShadow>
+      <planeGeometry args={[width, height, 16, 16]} />
+      <meshStandardMaterial
+        map={texture}
+        roughness={0.25}
+        metalness={0.05}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+// Turning Leaf with front and back textures
+function FlippingLeaf({
+  frontTexture,
+  backTexture,
+  width,
+  height,
+  progress, // 0 (flat on right) to 1 (flat on left)
+}: {
+  frontTexture: THREE.Texture;
+  backTexture: THREE.Texture;
+  width: number;
+  height: number;
+  progress: number;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Rotation angle around the spine (Y axis at x=0)
+  // 0 rad = right side; -Math.PI rad = left side
+  const angle = -progress * Math.PI;
+
+  // Gentle bend along page curl
+  const curlAngle = Math.sin(progress * Math.PI) * 0.15;
+
+  return (
+    <group ref={groupRef} rotation={[0, angle, 0]} position={[0, 0, 0.03]}>
+      {/* Front Face (visible when on the right, facing up) */}
+      <mesh position={[width / 2, 0, 0.002]} rotation={[0, 0, curlAngle]} castShadow receiveShadow>
+        <planeGeometry args={[width, height, 8, 8]} />
+        <meshStandardMaterial
+          map={frontTexture}
+          roughness={0.25}
+          metalness={0.05}
+          side={THREE.FrontSide}
+        />
+      </mesh>
+
+      {/* Back Face (visible when on the left, facing up) */}
+      <mesh position={[width / 2, 0, -0.002]} rotation={[0, Math.PI, -curlAngle]} castShadow receiveShadow>
+        <planeGeometry args={[width, height, 8, 8]} />
+        <meshStandardMaterial
+          map={backTexture}
+          roughness={0.25}
+          metalness={0.05}
+          side={THREE.FrontSide}
+        />
+      </mesh>
+
+      {/* Page Thickness Core */}
+      <mesh position={[width / 2, 0, 0]}>
+        <boxGeometry args={[width, height, 0.003]} />
+        <meshStandardMaterial color="#ffffff" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+// Book Spine and Luxury Cover
+function BookCover({
+  width,
+  height,
+  materialType = 'standard',
+  isOpen,
+  coverTexture
+}: {
+  width: number;
+  height: number;
+  materialType: string;
+  isOpen: boolean;
+  coverTexture?: THREE.Texture;
+}) {
+  const frontCoverRef = useRef<THREE.Group>(null);
+  const targetCoverAngle = isOpen ? -Math.PI : 0;
+  const currentAngle = useRef(isOpen ? -Math.PI : 0);
+
+  useFrame((_, delta) => {
+    currentAngle.current = THREE.MathUtils.damp(currentAngle.current, targetCoverAngle, 4, delta);
+    if (frontCoverRef.current) {
+      frontCoverRef.current.rotation.y = currentAngle.current;
     }
   });
 
+  const coverMaterial = useMemo(() => {
+    switch (materialType) {
+      case 'leather':
+        return new THREE.MeshStandardMaterial({
+          color: '#1a1412',
+          roughness: 0.8,
+          metalness: 0.15
+        });
+      case 'acrylic':
+        return new THREE.MeshPhysicalMaterial({
+          color: '#ffffff',
+          transmission: 0.9,
+          roughness: 0.05,
+          thickness: 0.8,
+          ior: 1.5
+        });
+      case 'velvet':
+        return new THREE.MeshStandardMaterial({
+          color: '#1a0b2e',
+          roughness: 0.95,
+          metalness: 0
+        });
+      default:
+        return new THREE.MeshStandardMaterial({
+          color: '#141414',
+          roughness: 0.4,
+          metalness: 0.2
+        });
+    }
+  }, [materialType]);
+
+  const coverThickness = 0.08;
+
+  return (
+    <group position={[0, 0, -0.05]}>
+      {/* Back Cover (Left stationary base) */}
+      <mesh position={[-width / 2 - 0.02, 0, -0.02]} receiveShadow castShadow>
+        <boxGeometry args={[width + 0.08, height + 0.12, coverThickness]} />
+        <primitive object={coverMaterial} attach="material" />
+      </mesh>
+
+      {/* Book Spine */}
+      <mesh position={[0, 0, -0.01]} castShadow>
+        <boxGeometry args={[0.22, height + 0.12, coverThickness * 1.5]} />
+        <meshStandardMaterial color="#D4AF37" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Front Cover (Hinged at spine) */}
+      <group ref={frontCoverRef} position={[0, 0, 0.05]}>
+        <mesh position={[width / 2 + 0.02, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[width + 0.08, height + 0.12, coverThickness]} />
+          <primitive object={coverMaterial} attach="material" />
+        </mesh>
+
+        {/* Cover Plate / Gold Logo Stamp */}
+        <mesh position={[width / 2 + 0.02, 0, coverThickness / 2 + 0.002]}>
+          <planeGeometry args={[width * 0.7, height * 0.5]} />
+          <meshStandardMaterial
+            map={coverTexture}
+            color={coverTexture ? '#ffffff' : '#D4AF37'}
+            metalness={coverTexture ? 0.1 : 0.8}
+            roughness={coverTexture ? 0.2 : 0.2}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+// Main 3D Book Scene
+function BookScene({
+  pages,
+  currentPage,
+  zoom = 1,
+  isOpen = true,
+  albumSize = '30x30',
+  materialType = 'standard',
+  coverTextureUrl
+}: Album3DProps) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Compute page dimensions in 3D units based on selected albumSize
+  const { width, height } = useMemo(() => {
+    if (albumSize === '20x30') return { width: 3.2, height: 4.8 };
+    if (albumSize === '30x40') return { width: 3.8, height: 5.0 };
+    return { width: 4.2, height: 4.2 }; // 30x30 square
+  }, [albumSize]);
+
+  // Page index management
+  // Spread K represents left page: K*2, right page: K*2 + 1
+  const totalSpreads = Math.max(1, Math.ceil(pages.length / 2));
+  const validCurrentPage = Math.min(Math.max(0, currentPage), totalSpreads - 1);
+
+  // Animated turning leaf state
+  const [flippingDirection, setFlippingDirection] = useState<'forward' | 'backward' | null>(null);
+  const [flipProgress, setFlipProgress] = useState(0);
+  const prevPageRef = useRef(validCurrentPage);
+
+  useEffect(() => {
+    if (validCurrentPage > prevPageRef.current) {
+      setFlippingDirection('forward');
+      setFlipProgress(0);
+    } else if (validCurrentPage < prevPageRef.current) {
+      setFlippingDirection('backward');
+      setFlipProgress(1);
+    }
+    prevPageRef.current = validCurrentPage;
+  }, [validCurrentPage]);
+
+  // Animate flip progress smoothly
+  useFrame((_, delta) => {
+    if (flippingDirection === 'forward') {
+      setFlipProgress((prev) => {
+        const next = prev + delta * 2.8;
+        if (next >= 1) {
+          setFlippingDirection(null);
+          return 1;
+        }
+        return next;
+      });
+    } else if (flippingDirection === 'backward') {
+      setFlipProgress((prev) => {
+        const next = prev - delta * 2.8;
+        if (next <= 0) {
+          setFlippingDirection(null);
+          return 0;
+        }
+        return next;
+      });
+    }
+  });
+
+  // Current stationary spread textures
+  const leftPageUrl = pages[validCurrentPage * 2];
+  const rightPageUrl = pages[validCurrentPage * 2 + 1];
+
+  const leftTexture = useSafeTexture(leftPageUrl, `Página ${validCurrentPage * 2 + 1}`);
+  const rightTexture = useSafeTexture(rightPageUrl, `Página ${validCurrentPage * 2 + 2}`);
+  const coverTexture = useSafeTexture(coverTextureUrl, 'Capa Top Line Studio');
+
+  // Textures for turning leaf
+  const turningFrontUrl = flippingDirection === 'forward' 
+    ? pages[(validCurrentPage - 1) * 2 + 1] 
+    : pages[validCurrentPage * 2 + 1];
+
+  const turningBackUrl = flippingDirection === 'forward'
+    ? pages[validCurrentPage * 2]
+    : pages[(validCurrentPage + 1) * 2];
+
+  const turningFrontTexture = useSafeTexture(turningFrontUrl, 'Folheando');
+  const turningBackTexture = useSafeTexture(turningBackUrl, 'Folheando');
+
   return (
     <>
-      <OrbitControls 
-        enablePan={false} 
-        minDistance={3} 
-        maxDistance={12} 
-        autoRotate={false}
+      <OrbitControls
+        enablePan={false}
+        minDistance={4}
+        maxDistance={14}
+        minPolarAngle={Math.PI / 6}
+        maxPolarAngle={Math.PI / 2.1}
         enableDamping={true}
-        dampingFactor={0.05}
+        dampingFactor={0.08}
       />
-      <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.2}>
-        <group ref={groupRef} position={[0, 0, 0]}>
-          {/* Back Cover - stays behind */}
-          <Page 
-            position={[0, 0, -0.2]} 
-            rotation={[0, 0, 0]} 
-            foldAngle={Math.max(0, fold - 0.1)}
+
+      <Float speed={1.2} rotationIntensity={0.12} floatIntensity={0.15}>
+        <group ref={groupRef} scale={[zoom, zoom, zoom]}>
+          {/* Book Hardcover Base */}
+          <BookCover
+            width={width}
+            height={height}
             materialType={materialType}
-            albumSize={albumSize}
-            customMaterialProps={customMaterialProps}
-            isCover
-          />
-          
-          {/* Left Page content */}
-          <Page 
-            textureUrl={leftPageUrl} 
-            videoUrl={currentVideoUrl}
-            position={[0, 0, 0]} 
-            rotation={[0, 0, 0]} 
-            foldAngle={fold}
-            materialType={materialType}
-            albumSize={albumSize}
-            customMaterialProps={customMaterialProps}
-          />
-          
-          {/* Right Page content */}
-          <Page 
-            textureUrl={rightPageUrl} 
-            position={[0, 0, 0]} 
-            rotation={[0, 0, 0]} 
-            isRightPage
-            foldAngle={fold}
-            materialType={materialType}
-            albumSize={albumSize}
-            customMaterialProps={customMaterialProps}
+            isOpen={isOpen}
+            coverTexture={coverTexture}
           />
 
-          {/* Front Cover - folds with pages */}
-          <Page 
-            position={[0, 0, 0.2]} 
-            rotation={[0, 0, 0]} 
-            isRightPage
-            foldAngle={Math.max(0, fold - 0.1)}
-            materialType={materialType}
-            albumSize={albumSize}
-            customMaterialProps={customMaterialProps}
-            coverTextureUrl={coverTextureUrl}
-            isCover
-          />
-          
-          {/* Spine - center logic */}
-          <mesh position={[0, 0, 0]}>
-            <boxGeometry args={[0.2, albumSize === '20x30' ? 5 : 5, 0.4]} />
-            <meshStandardMaterial 
-              color={materialType === 'standard' ? "#D4AF37" : "#111"} 
-              metalness={0.9} 
-              roughness={0.1} 
-            />
-          </mesh>
+          {/* If book is open, show spreads */}
+          {isOpen && (
+            <group position={[0, 0, 0.02]}>
+              {/* Stationary Left Spread Page */}
+              <PageMesh
+                texture={leftTexture}
+                width={width}
+                height={height}
+                side="left"
+                materialType={materialType}
+              />
+
+              {/* Stationary Right Spread Page */}
+              <PageMesh
+                texture={rightTexture}
+                width={width}
+                height={height}
+                side="right"
+                materialType={materialType}
+              />
+
+              {/* Animated Flipping Leaf during page transitions */}
+              {flippingDirection !== null && (
+                <FlippingLeaf
+                  frontTexture={turningFrontTexture}
+                  backTexture={turningBackTexture}
+                  width={width}
+                  height={height}
+                  progress={flipProgress}
+                />
+              )}
+            </group>
+          )}
         </group>
       </Float>
     </>
@@ -359,33 +426,155 @@ function AlbumContent({ pages, currentPage, zoom = 1, isOpen, videoUrl, albumSiz
 }
 
 export default function Album3D(props: Album3DProps) {
-  return (
-    <div className="w-full h-full min-h-[500px] md:min-h-[600px] cursor-grab active:cursor-grabbing">
-      <Canvas 
-        shadows 
-        camera={{ position: [0, 0, 10], fov: 35 }}
-        gl={{ 
-          antialias: true, 
-          toneMapping: THREE.ACESFilmicToneMapping,
-          powerPreference: "high-performance"
-        }}
-      >
-        <ambientLight intensity={0.4} />
-        <spotLight position={[10, 15, 10]} angle={0.3} penumbra={1} intensity={2} castShadow />
-        <pointLight position={[-10, -5, 5]} intensity={0.5} color="#D4AF37" />
-        
-        <AlbumContent {...props} />
+  const { pages = [], currentPage = 0, onPageChange } = props;
+  const totalSpreads = Math.max(1, Math.ceil(pages.length / 2));
+  const [viewMode, setViewMode] = useState<'3d' | 'flat'>('3d');
 
-        <ContactShadows 
-          position={[0, -3.5, 0]} 
-          opacity={0.4} 
-          scale={20} 
-          blur={2} 
-          far={4.5} 
-          color="#000000" 
-        />
-        <Environment preset="apartment" />
-      </Canvas>
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!onPageChange) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        if (currentPage < totalSpreads - 1) onPageChange(currentPage + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentPage > 0) onPageChange(currentPage - 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, totalSpreads, onPageChange]);
+
+  const leftPageUrl = pages[currentPage * 2];
+  const rightPageUrl = pages[currentPage * 2 + 1];
+
+  return (
+    <div className="w-full h-full min-h-[500px] md:min-h-[600px] relative select-none bg-gradient-to-b from-[#0a0a0a] via-[#050505] to-black rounded-3xl overflow-hidden flex flex-col">
+      {/* Top HUD Controls */}
+      <div className="absolute top-4 left-4 right-4 z-30 flex items-center justify-between pointer-events-none">
+        <div className="flex items-center gap-2 bg-black/70 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-2xl pointer-events-auto shadow-2xl">
+          <Sparkles size={14} className="text-brand-gold animate-pulse" />
+          <span className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/80">
+            Top Line Studio 3D
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={() => setViewMode(viewMode === '3d' ? 'flat' : '3d')}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 backdrop-blur-xl border border-white/10 text-white/80 hover:text-brand-gold hover:border-brand-gold/40 text-[9px] uppercase tracking-widest font-bold transition-all shadow-xl"
+            title="Alternar modo de visualização"
+          >
+            {viewMode === '3d' ? <BookOpen size={14} /> : <Eye size={14} />}
+            <span>{viewMode === '3d' ? 'Visão Lâmina HD' : 'Visão 3D Espacial'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main View Area */}
+      <div className="flex-1 w-full h-full relative">
+        {viewMode === '3d' ? (
+          <Canvas
+            shadows
+            camera={{ position: [0, 2, 8.5], fov: 42 }}
+            gl={{
+              antialias: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              toneMappingExposure: 1.1,
+              powerPreference: 'high-performance'
+            }}
+          >
+            <ambientLight intensity={0.6} />
+            <spotLight
+              position={[8, 12, 10]}
+              angle={0.45}
+              penumbra={1}
+              intensity={2.2}
+              castShadow
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
+            />
+            <pointLight position={[-8, -4, 6]} intensity={0.8} color="#D4AF37" />
+
+            <BookScene {...props} />
+
+            <ContactShadows
+              position={[0, -2.8, 0]}
+              opacity={0.6}
+              scale={16}
+              blur={2.5}
+              far={4.5}
+              color="#000000"
+            />
+            <Environment preset="city" />
+          </Canvas>
+        ) : (
+          /* HD Flat Spread Mode */
+          <div className="w-full h-full flex items-center justify-center p-6 md:p-12 overflow-hidden">
+            <div className="relative max-w-5xl w-full aspect-[2/1] bg-black rounded-2xl shadow-[0_20px_80px_rgba(0,0,0,0.9)] border border-white/10 flex overflow-hidden">
+              {/* Left Page */}
+              <div className="w-1/2 h-full border-r border-white/5 relative bg-zinc-950 flex items-center justify-center p-2">
+                {leftPageUrl ? (
+                  <img src={leftPageUrl} alt="Lado Esquerdo" className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <div className="text-center p-6 text-gray-600 text-xs uppercase tracking-widest">
+                    Página {currentPage * 2 + 1}
+                  </div>
+                )}
+                <div className="absolute bottom-3 left-4 text-[9px] font-mono text-gray-500">
+                  #{currentPage * 2 + 1}
+                </div>
+              </div>
+
+              {/* Right Page */}
+              <div className="w-1/2 h-full relative bg-zinc-950 flex items-center justify-center p-2">
+                {rightPageUrl ? (
+                  <img src={rightPageUrl} alt="Lado Direito" className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <div className="text-center p-6 text-gray-600 text-xs uppercase tracking-widest">
+                    Página {currentPage * 2 + 2}
+                  </div>
+                )}
+                <div className="absolute bottom-3 right-4 text-[9px] font-mono text-gray-500">
+                  #{currentPage * 2 + 2}
+                </div>
+              </div>
+
+              {/* Subtle Book Crease Shadow */}
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-8 bg-gradient-to-r from-black/40 via-black/80 to-black/40 pointer-events-none" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Bottom Navigator */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-black/85 backdrop-blur-2xl border border-white/10 px-4 py-2 rounded-2xl shadow-2xl">
+        <button
+          onClick={() => onPageChange?.(Math.max(0, currentPage - 1))}
+          disabled={currentPage <= 0}
+          className="p-2.5 rounded-xl hover:bg-white/10 text-brand-gold disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+          title="Página Anterior (Seta Esquerda)"
+        >
+          <ChevronLeft size={20} />
+        </button>
+
+        <div className="px-3 text-center">
+          <div className="text-[10px] uppercase tracking-[0.25em] font-bold text-white">
+            Lâmina {currentPage + 1} de {totalSpreads}
+          </div>
+          <div className="text-[8px] text-gray-400 font-mono tracking-widest">
+            Páginas {currentPage * 2 + 1} & {currentPage * 2 + 2}
+          </div>
+        </div>
+
+        <button
+          onClick={() => onPageChange?.(Math.min(totalSpreads - 1, currentPage + 1))}
+          disabled={currentPage >= totalSpreads - 1}
+          className="p-2.5 rounded-xl hover:bg-white/10 text-brand-gold disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+          title="Próxima Página (Seta Direita)"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
     </div>
   );
 }

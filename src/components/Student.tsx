@@ -41,7 +41,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
             <span className="font-script text-xl md:text-2xl gold-gradient -mt-4">anos</span>
           </div>
           
-          <span className="font-script text-6xl md:text-8xl gold-gradient leading-none pt-4">edition</span>
+          <span className="font-script text-6xl md:text-8xl gold-gradient leading-none pt-4">Studio</span>
         </div>
 
         <h2 className="text-2xl font-bold text-white mb-4 leading-tight">
@@ -57,7 +57,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
             ? 'Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte em sua casa.'
             : userTier === 'LINK'
               ? 'Acesse sua galeria exclusiva, baixe suas fotos e experimente como elas ficariam no nosso álbum físico de luxo.'
-              : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder da Edition.'}
+              : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder do Top Line Studio.'}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -71,7 +71,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
           <button 
             onClick={() => {
               setShowWelcome(false);
-              onOpenChat("Olá! Acabei de entrar na minha área do aluno e gostaria de saber mais sobre como eternizar minha formatura com a Top Line Edition.");
+              onOpenChat("Olá! Acabei de entrar na minha área do aluno e gostaria de saber mais sobre como eternizar minha formatura com a Top Line Studio.");
             }}
             className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
           >
@@ -112,7 +112,7 @@ const Dashboard: React.FC<{
           <div className="flex-1 relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
             <div className="flex items-center gap-4 mb-6">
               <div className="h-[1px] w-12 bg-brand-gold/40" />
-              <span className="text-brand-gold text-[10px] uppercase tracking-[0.4em] font-bold">Studio Edition • 2026</span>
+              <span className="text-brand-gold text-[10px] uppercase tracking-[0.4em] font-bold">Top Line Studio • 2026</span>
             </div>
             
             <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-none tracking-tight">
@@ -123,7 +123,7 @@ const Dashboard: React.FC<{
               {userTier === 'ALBUM' 
                 ? 'Sua jornada de excelência continua. Suas fotos estão prontas para serem eternizadas em seu álbum exclusivo.'
                 : userTier === 'LINK'
-                  ? 'Explore o poder da Edition. Suas fotos digitais já estão disponíveis, mas a experiência física aguarda por você.'
+                  ? 'Explore o poder do Studio. Suas fotos digitais já estão disponíveis, mas a experiência física aguarda por você.'
                   : 'Sua formatura está sendo preparada com o requinte que você merece. Enquanto aguardamos os registros, planeje seu legado.'}
             </p>
 
@@ -133,29 +133,29 @@ const Dashboard: React.FC<{
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-4">
               <Link to="galeria" className="gold-button px-8 py-4 text-sm">
-                {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Acessar Galeria Edition'}
+                {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Acessar Galeria Studio'}
               </Link>
               
               {userTier === 'PROSPECT' && (
                 <>
                   <button 
-                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Álbum Edition (Físico) para minha formatura.')}
+                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Álbum Studio (Físico) para minha formatura.')}
                     className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                   >
-                    Adquirir Álbum Edition
+                    Adquirir Álbum Studio
                   </button>
                   <button 
-                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Link Edition para minhas fotos.')}
+                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Link Studio para minhas fotos.')}
                     className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                   >
-                    Adquirir Link Edition
+                    Adquirir Link Studio
                   </button>
                 </>
               )}
 
               {userTier === 'LINK' && (
                 <button 
-                  onClick={() => onOpenChat('Gostaria de saber mais sobre como fazer o upgrade para o Álbum Físico Edition.')}
+                  onClick={() => onOpenChat('Gostaria de saber mais sobre como fazer o upgrade para o Álbum Físico Studio.')}
                   className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                 >
                   Upgrade para Álbum
@@ -217,7 +217,7 @@ const Dashboard: React.FC<{
               <div className="flex flex-col items-center justify-center w-full py-8 border-2 border-dashed border-white/5 rounded-3xl group-hover:border-brand-gold/20 transition-colors">
                 <ImageIcon size={24} className="text-gray-600 mb-2 group-hover:text-brand-gold/40 transition-colors" />
                 <p className="text-[10px] text-gray-500 uppercase tracking-widest font-medium group-hover:text-brand-gold/60 transition-colors">
-                  Adicione suas fotos na Top Line Edition
+                  Adicione suas fotos na Top Line Studio
                 </p>
               </div>
             )}
@@ -240,7 +240,7 @@ const Dashboard: React.FC<{
           <div className="w-14 h-14 bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center text-brand-gold mb-8 shadow-[0_0_20px_rgba(212,175,55,0.1)] group-hover:shadow-[0_0_30px_rgba(212,175,55,0.2)] transition-all">
             <Sparkles size={28} className="drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]" />
           </div>
-          <h3 className="text-3xl font-serif mb-3 gold-gradient">Concierge Edition</h3>
+          <h3 className="text-3xl font-serif mb-3 gold-gradient">Concierge Studio</h3>
           <p className="text-gray-400 text-sm leading-relaxed font-light">
             Suporte personalizado para a criação do seu legado. Fale com nosso especialista em design de álbuns e materiais nobres.
           </p>
@@ -319,7 +319,7 @@ const Dashboard: React.FC<{
       <section className="pt-8">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h3 className="text-3xl font-serif mb-2">Catálogo <span className="italic gold-gradient">Edition</span></h3>
+            <h3 className="text-3xl font-serif mb-2">Catálogo <span className="italic gold-gradient">Studio</span></h3>
             <p className="text-gray-500 text-sm">Modelos exclusivos desenvolvidos para eternizar sua história.</p>
           </div>
           <div className="h-[1px] flex-1 bg-white/5 mx-12 hidden md:block" />
@@ -328,31 +328,31 @@ const Dashboard: React.FC<{
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             {
-              title: 'Link Edition',
+              title: 'Link Studio',
               desc: 'Sua galeria digital premium com acesso vitalício e compartilhamento instantâneo.',
               img: 'digital-connection-network',
               tag: 'Digital'
             },
             {
-              title: 'Leather Edition',
+              title: 'Leather Studio',
               desc: 'Couro legítimo com costura artesanal e gravação a laser.',
               img: 'leather-bound-book',
               tag: 'Clássico'
             },
             {
-              title: 'Acrylic Edition',
+              title: 'Acrylic Studio',
               desc: 'Capa em acrílico cristalino de alta espessura, proporcionando profundidade e brilho eterno às suas fotos.',
               img: 'modern-glass-architecture',
               tag: 'Moderno'
             },
             {
-              title: 'Velvet Edition',
+              title: 'Velvet Studio',
               desc: 'Toque aveludado com detalhes em hot-stamping dourado.',
               img: 'velvet-curtain-texture',
               tag: 'Sofisticado'
             },
             {
-              title: 'Video Edition',
+              title: 'Video Studio',
               desc: 'Um álbum físico de luxo com uma tela de alta definição integrada na capa, reproduzindo seus vídeos automaticamente.',
               img: 'modern-technology-structure',
               tag: 'Tecnológico'
@@ -473,7 +473,7 @@ const Student: React.FC = () => {
   };
 
   const hasPurchasedAlbum = studentData?.package === 'black' || myOrders.some(order => 
-    (order.type === 'album' || order.type === 'premium' || order.type === 'black_edition') && 
+    (order.type === 'album' || order.type === 'premium' || order.type === 'black_edition' || order.type === 'black_studio') && 
     (order.status === 'pago' || order.status === 'concluido')
   );
 
@@ -483,6 +483,8 @@ const Student: React.FC = () => {
   );
 
   const userTier = hasPurchasedAlbum ? 'ALBUM' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
+
+  const [viewerPage, setViewerPage] = useState(0);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -522,7 +524,7 @@ const Student: React.FC = () => {
                   <span className="font-script text-[10px] md:text-xs gold-gradient -mt-1.5">anos</span>
                 </div>
 
-                <span className="font-script text-3xl md:text-5xl gold-gradient leading-none pt-2 pb-1 ml-1">edition</span>
+                <span className="font-script text-3xl md:text-5xl gold-gradient leading-none pt-2 pb-1 ml-1">Studio</span>
               </div>
             </Link>
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />
@@ -605,7 +607,8 @@ const Student: React.FC = () => {
             <div className="h-full pt-12">
               <Album3D 
                 pages={selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages} 
-                currentPage={0} 
+                currentPage={viewerPage} 
+                onPageChange={setViewerPage}
                 zoom={1} 
                 isOpen={true} 
               />
@@ -620,8 +623,7 @@ const Student: React.FC = () => {
               hasPurchasedAlbum={hasPurchasedAlbum}
               userTier={userTier}
               onSave={(finalPages) => {
-                console.log('Saving album...', finalPages);
-                navigate('/area-do-aluno/album');
+                console.log('Saved album pages state');
               }}
             />
           </div>

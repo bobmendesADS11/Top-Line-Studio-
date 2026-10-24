@@ -408,7 +408,7 @@ const Auth: React.FC = () => {
               <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Top</span>
               <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Line</span>
             </div>
-            <span className="font-serif text-4xl text-brand-gold italic lowercase tracking-tight">edition</span>
+            <span className="font-script text-4xl gold-gradient leading-none pt-2 pb-1">Studio</span>
             
             {/* 20 Anos Badge - Increased Visibility with Cap */}
             <div className="absolute -right-12 -top-5 flex flex-col items-center">
@@ -794,7 +794,7 @@ const Auth: React.FC = () => {
         </div>
 
         <p className="mt-8 text-center text-[10px] text-gray-600 uppercase tracking-widest">
-          Top Line Edition • 2026
+          Top Line Studio • 2026
         </p>
       </motion.div>
     </div>

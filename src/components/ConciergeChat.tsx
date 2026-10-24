@@ -28,7 +28,7 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, ini
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
-      text: `Olá ${studentName || 'Formando'}, sou seu Especialista Concierge da Top Line Edition. Como posso ajudar a tornar seu legado ainda mais extraordinário hoje?`
+      text: `Olá ${studentName || 'Formando'}, sou seu Especialista Concierge da Top Line Studio. Como posso ajudar a tornar seu legado ainda mais extraordinário hoje?`
     }
   ]);
   const [input, setInput] = useState('');
@@ -73,22 +73,22 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, ini
           { role: 'user', parts: [{ text: userMessage }] }
         ],
         config: {
-          systemInstruction: `Você é o Especialista Concierge da Top Line Edition, uma empresa de luxo focada em formaturas premium. 
+          systemInstruction: `Você é o Especialista Concierge da Top Line Studio, uma empresa de luxo focada em formaturas premium. 
           Seu tom de voz é extremamente sofisticado, atencioso, profissional e inspirador. 
           Você é um expert em:
           1. Design de Álbuns: Layouts, curadoria de fotos e narrativa visual.
-          2. Materiais Nobres e Edições: 
-             - Link Edition: Galeria digital premium com acesso vitalício e compartilhamento instantâneo.
-             - Leather Edition: Couro legítimo trabalhado artesanalmente, um clássico atemporal.
-             - Acrylic Edition: Capa em acrílico cristalino de alta espessura, que traz profundidade e brilho às fotos.
-             - Velvet Edition: Toque aveludado e sofisticado com detalhes em hot-stamping.
-             - Video Edition: Um álbum físico de luxo com uma tela de alta definição embutida na capa, que reproduz seus vídeos de formatura automaticamente ao ser aberto.
+          2. Materiais Nobres e Modelos Studio: 
+             - Link Studio: Galeria digital premium com acesso vitalício e compartilhamento instantâneo.
+             - Leather Studio: Couro legítimo trabalhado artesanalmente, um clássico atemporal.
+             - Acrylic Studio: Capa em acrílico cristalino de alta espessura, que traz profundidade e brilho às fotos.
+             - Velvet Studio: Toque aveludado e sofisticado com detalhes em hot-stamping.
+             - Video Studio: Um álbum físico de luxo com uma tela de alta definição embutida na capa, que reproduz seus vídeos de formatura automaticamente ao ser aberto.
           3. Experiência do Formando: Como eternizar o legado da conquista.
           
           Regras:
           - Nunca mencione que você é uma IA, a menos que seja estritamente necessário. Aja como um concierge humano de alto nível.
           - Use termos como "Legado", "Excelência", "Extraordinário", "Eternizar".
-          - Se o aluno perguntar sobre preços, pacotes ou como adquirir seu álbum, oriente-o a explorar o **Catálogo Edition** ao final da sua página principal ou acessar o **Estúdio Digital 3D**. Nessas seções, ele poderá visualizar cada modelo em detalhes, escolher sua edição favorita e conferir as condições exclusivas para eternizar seu momento.
+          - Se o aluno perguntar sobre preços, pacotes ou como adquirir seu álbum, oriente-o a explorar o **Catálogo Studio** ao final da sua página principal ou acessar o **Estúdio Digital 3D**. Nessas seções, ele poderá visualizar cada modelo em detalhes, escolher seu modelo Studio favorito e conferir as condições exclusivas para eternizar seu momento.
           - Seja breve mas impactante.`,
           temperature: 0.7,
         }
@@ -121,7 +121,7 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, ini
                   <Sparkles size={24} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-serif gold-gradient">Concierge Edition</h3>
+                  <h3 className="text-xl font-serif gold-gradient">Concierge Studio</h3>
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest">Atendimento Exclusivo AI</p>
                 </div>
               </div>
@@ -189,7 +189,7 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, ini
                 </button>
               </div>
               <p className="text-center text-[9px] text-gray-600 mt-4 uppercase tracking-[0.2em]">
-                Top Line Edition • Inteligência Artificial de Design
+                Top Line Studio • Inteligência Artificial de Design
               </p>
             </div>
       </div>

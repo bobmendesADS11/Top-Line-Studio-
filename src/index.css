@@ -30,6 +30,11 @@
   @apply font-serif tracking-[0.8em] uppercase text-white;
 }
 
+.topline-Studio,
+.topline-studio {
+  @apply font-serif tracking-[0.8em] uppercase bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-transparent bg-clip-text;
+}
+
 .gold-button {
   @apply inline-flex items-center justify-center text-center bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-brand-navy font-bold py-3 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:shadow-[0_0_40px_rgba(212,175,55,0.6)] leading-none;
 }

@@ -150,7 +150,7 @@ function Logo() {
           <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
         </div>
 
-        <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-1">edition</span>
+        <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-1">Studio</span>
       </div>
     </div>
   );
@@ -162,6 +162,52 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
   const [isGenerating, setIsGenerating] = useState(false);
   const [layoutSeed, setLayoutSeed] = useState(0);
   const [selectedPhotos, setSelectedPhotos] = useState<number[]>([1, 2, 3, 5]);
+  const [albumSpread, setAlbumSpread] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
+
+  const albumSpreads = [
+    {
+      title: "Lâmina Master · Colação Solene",
+      category: "Rito Tradicional",
+      pageLeft: "Pág. 12",
+      pageRight: "Pág. 13",
+      leftImg: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+      rightImg1: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
+      rightImg2: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+      rightTag1: "Discurso & Juramento",
+      rightTag2: "Entrega do Diploma"
+    },
+    {
+      title: "Lâmina Master · O Grande Baile",
+      category: "Noite de Gala",
+      pageLeft: "Pág. 24",
+      pageRight: "Pág. 25",
+      leftImg: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80",
+      rightImg1: "https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&w=800&q=80",
+      rightImg2: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
+      rightTag1: "Valsa dos Formandos",
+      rightTag2: "Brinde com a Turma"
+    },
+    {
+      title: "Lâmina Master · Família & Conquista",
+      category: "Legado Eterno",
+      pageLeft: "Pág. 36",
+      pageRight: "Pág. 37",
+      leftImg: "https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?auto=format&fit=crop&w=1200&q=80",
+      rightImg1: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
+      rightImg2: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=800&q=80",
+      rightTag1: "Abraço de Vitória",
+      rightTag2: "Chuva de Ouro"
+    }
+  ];
+
+  const handleNextSpread = () => {
+    setIsFlipping(true);
+    setTimeout(() => {
+      setAlbumSpread(prev => (prev + 1) % albumSpreads.length);
+      setIsFlipping(false);
+    }, 250);
+  };
 
   const handleGenerate = () => {
     setIsGenerating(true);
@@ -398,67 +444,162 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
             </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center relative w-full my-auto py-2">
-            <div className="relative w-full max-w-xl aspect-[1.8/1] flex perspective-2000">
-              <motion.div 
-                initial={{ rotateY: -22, rotateX: 8 }}
-                animate={{ 
-                  rotateY: [-22, -6, -22],
-                  rotateX: [8, 4, 8],
-                }}
-                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                className="relative w-full h-full flex preserve-3d"
+          {/* Main 3D Showroom Canvas */}
+          <div className="relative flex-1 rounded-2xl bg-zinc-900/90 border border-brand-gold/30 shadow-2xl overflow-hidden p-5 flex flex-col justify-between group">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none" />
+
+            {/* Showroom Spotlight Cone from above */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-4/5 h-44 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.22)_0%,rgba(212,175,55,0.03)_60%,transparent_80%)] blur-2xl pointer-events-none" />
+
+            {/* Top Canvas Bar inside the frame */}
+            <div className="relative z-10 flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-serif uppercase tracking-[0.18em] text-white/90 flex items-center gap-1.5">
+                  <BookOpen size={11} className="text-brand-gold" />
+                  {albumSpreads[albumSpread].title}
+                </span>
+                <span className="text-[8px] uppercase tracking-widest px-2 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 font-semibold">
+                  {albumSpreads[albumSpread].category}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] font-mono tracking-wider text-brand-gold/80 bg-brand-gold/10 px-2 py-0.5 rounded-full border border-brand-gold/20">
+                  {albumSpreads[albumSpread].pageLeft} · {albumSpreads[albumSpread].pageRight}
+                </span>
+              </div>
+            </div>
+
+            {/* 3D Stage with commanding Album Presence */}
+            <div className="flex-1 flex items-center justify-center relative w-full my-auto py-2">
+              <div className="relative w-full max-w-xl lg:max-w-2xl aspect-[1.9/1] flex perspective-2000 items-center justify-center">
+                {/* Contact Shadow & Pedestal Glow */}
+                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-[92%] h-7 bg-black/90 blur-xl rounded-full pointer-events-none" />
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-[75%] h-3.5 bg-brand-gold/25 blur-md rounded-full pointer-events-none" />
+
+                <motion.div 
+                  key={albumSpread}
+                  initial={{ rotateY: -18, rotateX: 6, scale: 0.96 }}
+                  animate={{ 
+                    rotateY: [-18, -4, -18],
+                    rotateX: [6, 2, 6],
+                    scale: 1,
+                  }}
+                  transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative w-full h-full flex preserve-3d shadow-[0_25px_60px_rgba(0,0,0,0.85)] rounded-lg"
+                >
+                  {/* Heavy Hardcover Frame (Spine & Backing with gold border) */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 rounded-lg -z-10 border border-brand-gold/45 shadow-[0_0_25px_rgba(212,175,55,0.2)]" />
+
+                  {/* Gilded Page Edges (Borda Dourada / Gold Foil) */}
+                  <div className="absolute -bottom-0.5 left-2 right-2 h-1 bg-gradient-to-r from-brand-gold/50 via-brand-gold to-brand-gold/50 shadow-[0_2px_8px_rgba(212,175,55,0.6)]" />
+
+                  {/* Left Page (Full Panoramic / Bleed Masterpiece) */}
+                  <div className="flex-1 bg-[#141414] rounded-l-md relative overflow-hidden shadow-[inset_-20px_0_35px_rgba(0,0,0,0.7)] origin-right border-y border-l border-white/10 group/page">
+                    <img 
+                      src={albumSpreads[albumSpread].leftImg} 
+                      alt="Lâmina Panorâmica"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover/page:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    {/* Layflat curvature shading */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-transparent" />
+                    <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-black/80 to-transparent" />
+                    
+                    {/* Gold watermark badge */}
+                    <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md border border-brand-gold/30">
+                      <GraduationCap size={10} className="text-brand-gold" />
+                      <span className="text-[7px] font-serif tracking-[0.2em] text-brand-gold uppercase">Top Line Studio</span>
+                    </div>
+
+                    {/* Lamination sheen */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none opacity-50" />
+                  </div>
+
+                  {/* Central Layflat Spine Gutter (180° seamless) */}
+                  <div className="w-1.5 bg-[#0a0a0a] relative z-20 shadow-[0_0_16px_rgba(0,0,0,1)] border-x border-white/10 flex flex-col justify-between py-2">
+                    <div className="w-full h-2 bg-brand-gold/60 rounded-full" />
+                    <div className="w-full h-2 bg-brand-gold/60 rounded-full" />
+                  </div>
+
+                  {/* Right Page (Double Photo Composition) */}
+                  <div className="flex-1 bg-[#141414] rounded-r-md relative overflow-hidden shadow-[inset_20px_0_35px_rgba(0,0,0,0.7)] p-2.5 sm:p-3.5 flex flex-col gap-2.5 border-y border-r border-white/10 group/page">
+                    {/* Top photo */}
+                    <div className="flex-1 rounded-sm overflow-hidden relative shadow-md group/sub">
+                      <img 
+                        src={albumSpreads[albumSpread].rightImg1} 
+                        alt="Momento 1"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/sub:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                      <span className="absolute bottom-1 left-1.5 text-[7px] font-mono tracking-wider text-white/90">
+                        {albumSpreads[albumSpread].rightTag1}
+                      </span>
+                    </div>
+
+                    {/* Bottom photo */}
+                    <div className="flex-1 rounded-sm overflow-hidden relative shadow-md group/sub">
+                      <img 
+                        src={albumSpreads[albumSpread].rightImg2} 
+                        alt="Momento 2"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/sub:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                      <span className="absolute bottom-1 left-1.5 text-[7px] font-mono tracking-wider text-white/90">
+                        {albumSpreads[albumSpread].rightTag2}
+                      </span>
+                    </div>
+
+                    {/* Inner gutter shadow */}
+                    <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-black/80 to-transparent pointer-events-none" />
+
+                    {/* Lamination sheen */}
+                    <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-white/10 to-transparent pointer-events-none opacity-50" />
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Canvas bottom controls (matching Step 2) */}
+            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+              <button 
+                onClick={handleNextSpread}
+                disabled={isFlipping}
+                className={`px-5 py-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 text-brand-gold text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-brand-gold hover:text-black active:scale-95 flex items-center gap-2 ${isFlipping ? 'opacity-50' : ''}`}
               >
-                {/* Left Page (Full Photo) */}
-                <div className="flex-1 bg-[#1a1a1a] rounded-l-md border-y border-l border-white/10 relative overflow-hidden shadow-[inset_-12px_0_25px_rgba(0,0,0,0.6)] origin-right">
-                  <img 
-                    src={`https://picsum.photos/seed/3d_album_spread_preview_${layoutSeed}/800/1200`} 
-                    className="w-full h-full object-cover opacity-100"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
-                  <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black/60 to-transparent" />
-                </div>
+                <Sparkles size={11} />
+                {isFlipping ? 'Virando Lâmina...' : 'Folhear Lâmina 3D'}
+              </button>
 
-                {/* Spine / Gutter */}
-                <div className="w-1.5 bg-[#111] relative z-10 shadow-[0_0_12px_rgba(0,0,0,0.9)]">
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10" />
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] uppercase tracking-wider text-white/40 hidden sm:inline">Acabamento:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70">
+                    Silk 800g
+                  </span>
+                  <span className="text-[8px] uppercase tracking-wider px-2 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 font-semibold">
+                    Borda Dourada
+                  </span>
+                  <span className="text-[8px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/70 hidden sm:inline">
+                    Layflat 180°
+                  </span>
                 </div>
-
-                {/* Right Page (2 Photos) */}
-                <div className="flex-1 bg-[#1a1a1a] rounded-r-md border-y border-r border-white/10 relative overflow-hidden shadow-[inset_12px_0_25px_rgba(0,0,0,0.6)] p-4 sm:p-5 flex flex-col gap-3.5">
-                  <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
-                    <img 
-                      src={`https://picsum.photos/seed/premium_album_detail_view_${layoutSeed}/800/600`} 
-                      className="w-full h-full object-cover opacity-100"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-                  </div>
-                  <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
-                    <img 
-                      src={`https://picsum.photos/seed/graduation_celebration_memory_${layoutSeed}/800/600`} 
-                      className="w-full h-full object-cover opacity-100"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-                  </div>
-                  <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/60 to-transparent" />
-                </div>
-
-                {/* Cover Depth Effect */}
-                <div className="absolute -inset-2 -z-10 bg-brand-gold/15 rounded-xl blur-xl opacity-60" />
-              </motion.div>
+              </div>
             </div>
           </div>
 
           <div className="mt-6 flex justify-center">
             <button 
               onClick={() => navigate('/login')}
-              className="group relative px-8 py-3 rounded-full bg-brand-gold text-black text-[10px] font-black uppercase tracking-widest overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(212,175,55,0.35)]"
+              className="group relative px-10 py-3.5 rounded-full bg-brand-gold text-black text-[10px] font-black uppercase tracking-[0.2em] overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_35px_rgba(212,175,55,0.4)]"
             >
               <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500" />
-              <span className="relative z-10 group-hover:text-black">Criar meu Álbum Agora</span>
+              <span className="relative z-10 group-hover:text-black flex items-center gap-2">
+                <Sparkles size={13} className="text-black" />
+                Criar meu Álbum Agora
+              </span>
             </button>
           </div>
         </div>
@@ -666,7 +807,7 @@ export default function Landing() {
                 <div className="relative z-10 flex items-center justify-center gap-8">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
                   <span className="gold-gradient text-5xl md:text-7xl font-script drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] py-4">
-                    Edition
+                    Studio
                   </span>
                   <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-brand-gold/30 to-transparent" />
                 </div>
@@ -955,7 +1096,7 @@ export default function Landing() {
             <div className="flex flex-col items-center md:items-start gap-8">
               <Logo />
               <p className="text-gray-500 text-[10px] tracking-[0.2em] uppercase leading-relaxed text-center md:text-left max-w-xs">
-                Eternizando momentos com a sofisticação e exclusividade da Top Line Edition.
+                Eternizando momentos com a sofisticação e exclusividade da Top Line Studio.
               </p>
             </div>
           

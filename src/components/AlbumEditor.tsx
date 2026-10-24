@@ -21,10 +21,17 @@ import {
   Crop as CropIcon,
   AlertTriangle,
   X,
-  ListOrdered
+  ListOrdered,
+  History,
+  MessageCircle,
+  Save,
+  BookmarkCheck
 } from 'lucide-react';
 import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './Album3D';
+import CheckoutModal from './CheckoutModal';
+import { auth, db } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface Photo {
   id: string;
@@ -52,7 +59,7 @@ type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 
 
 const PRICES = {
   edition: {
-    link: 1200.00,       // Noir Link Edition (Digital)
+    link: 1200.00,       // Noir Link Studio (Digital)
     album: 1850.00,     // Full Experience (Physical + Link)
   },
   photo: 45.00,         // Unit price per photo curated
@@ -88,7 +95,19 @@ const DEMO_PHOTOS: Photo[] = [
 
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
-const STORAGE_KEY = 'noir_album_persistence';
+const getStorageKey = () => `topline_album_draft_${auth.currentUser?.uid || 'guest'}`;
+const getVersionsKey = () => `topline_album_versions_${auth.currentUser?.uid || 'guest'}`;
+
+interface AlbumSnapshot {
+  id: string;
+  label: string;
+  timestamp: string;
+  date: string;
+  pageCount: number;
+  photoCount: number;
+  purchaseType: 'LINK' | 'FULL';
+  snapshot: any;
+}
 
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
   const [activePhotos, setActivePhotos] = useState<Photo[]>([]);
@@ -117,6 +136,14 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
   const [requestedPageCount, setRequestedPageCount] = useState<number>(20);
   const [purchaseType, setPurchaseType] = useState<'LINK' | 'FULL'>('FULL');
+
+  // Auto-Save, Versions & Checkout State
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showVersionsModal, setShowVersionsModal] = useState(false);
+  const [newVersionLabel, setNewVersionLabel] = useState('');
+  const [savedVersions, setSavedVersions] = useState<AlbumSnapshot[]>([]);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [draftRestoredToast, setDraftRestoredToast] = useState(false);
   
   const getPhotosTotalCapacity = () => {
     let cap = 0;
@@ -233,54 +260,190 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   const totalPrice = purchaseType === 'LINK' ? totalPriceLink : totalPriceFull;
 
-  // Persistence Load
+  // Load Draft and Versions
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        // Only apply if the photo count matches roughly to avoid state corruption
-        // In a real app we would check photoid signatures
-        if (data.globalLayout) setGlobalLayout(data.globalLayout);
-        if (data.pageLayouts) setPageLayouts(data.pageLayouts);
-        if (data.pageEffects) setPageEffects(data.pageEffects);
-        if (data.coverPhotoId) setCoverPhotoId(data.coverPhotoId);
-        if (data.albumSize) setAlbumSize(data.albumSize);
-        if (data.materialType) setMaterialType(data.materialType);
-        if (data.requestedPageCount) setRequestedPageCount(data.requestedPageCount);
-        if (data.purchaseType) setPurchaseType(data.purchaseType);
-        if (data.photoCrops) setPhotoCrops(data.photoCrops);
-        if (data.videoUrl) setVideoUrl(data.videoUrl);
+    const loadDraftAndVersions = async () => {
+      try {
+        const userStorageKey = getStorageKey();
+        const saved = localStorage.getItem(userStorageKey) || localStorage.getItem('noir_album_persistence');
+        const savedVersionsRaw = localStorage.getItem(getVersionsKey());
+
+        if (savedVersionsRaw) {
+          try {
+            setSavedVersions(JSON.parse(savedVersionsRaw));
+          } catch (e) {
+            console.warn('Error parsing saved versions:', e);
+          }
+        }
+
+        let draftData: any = null;
+        if (saved) {
+          draftData = JSON.parse(saved);
+        } else if (auth.currentUser) {
+          // Attempt loading from Firestore if local draft is empty
+          try {
+            const draftDoc = await getDoc(doc(db, 'users', auth.currentUser.uid, 'drafts', 'album_editor'));
+            if (draftDoc.exists()) {
+              draftData = draftDoc.data();
+            }
+          } catch (e) {
+            console.warn('Firestore draft read error:', e);
+          }
+        }
+
+        if (draftData) {
+          if (draftData.globalLayout) setGlobalLayout(draftData.globalLayout);
+          if (draftData.pageLayouts) setPageLayouts(draftData.pageLayouts);
+          if (draftData.pageEffects) setPageEffects(draftData.pageEffects);
+          if (draftData.coverPhotoId) setCoverPhotoId(draftData.coverPhotoId);
+          if (draftData.albumSize) setAlbumSize(draftData.albumSize);
+          if (draftData.materialType) setMaterialType(draftData.materialType);
+          if (draftData.requestedPageCount) setRequestedPageCount(draftData.requestedPageCount);
+          if (draftData.purchaseType) setPurchaseType(draftData.purchaseType);
+          if (draftData.photoCrops) setPhotoCrops(draftData.photoCrops);
+          if (draftData.videoUrl) setVideoUrl(draftData.videoUrl);
+          if (draftData.activePhotos && Array.isArray(draftData.activePhotos) && draftData.activePhotos.length > 0) {
+            setActivePhotos(draftData.activePhotos);
+          }
+
+          setDraftRestoredToast(true);
+          setLastSavedTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+          setTimeout(() => setDraftRestoredToast(false), 5000);
+        }
+      } catch (e) {
+        console.error("Erro ao carregar rascunho:", e);
+      } finally {
+        setIsFirstLoad(false);
       }
-    } catch (e) {
-      console.error("Erro ao carregar rascunho:", e);
-    }
-    setIsFirstLoad(false);
+    };
+
+    loadDraftAndVersions();
   }, []);
 
-  // Persistence Save
+  // Continuous Auto-Save to LocalStorage and Firestore
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (isFirstLoad) return;
     
-    const draft = {
-      globalLayout,
-      pageLayouts,
-      pageEffects,
-      coverPhotoId,
-      albumSize,
-      materialType,
-      requestedPageCount,
-      purchaseType,
-      photoCrops,
-      videoUrl
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+      const draft = {
+        globalLayout,
+        pageLayouts,
+        pageEffects,
+        coverPhotoId,
+        albumSize,
+        materialType,
+        requestedPageCount,
+        purchaseType,
+        photoCrops,
+        videoUrl,
+        activePhotos: activePhotos.map(p => ({ id: p.id, url: p.url, thumbnail: p.thumbnail, aspectRatio: p.aspectRatio })),
+        lastSavedAt: now.toISOString()
+      };
+
+      // 1. Save to LocalStorage
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(draft));
+        setLastSavedTime(timeStr);
+      } catch (err) {
+        console.warn('LocalStorage save error:', err);
+      }
+
+      // 2. Sync to Firestore if authenticated
+      if (auth.currentUser) {
+        try {
+          await setDoc(doc(db, 'users', auth.currentUser.uid, 'drafts', 'album_editor'), {
+            ...draft,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) {
+          console.warn('Firestore draft sync error:', err);
+        }
+      }
+    }, 600);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, requestedPageCount, purchaseType, photoCrops, videoUrl, isFirstLoad]);
+  }, [globalLayout, pageLayouts, pageEffects, coverPhotoId, albumSize, materialType, requestedPageCount, purchaseType, photoCrops, videoUrl, activePhotos, isFirstLoad]);
+
+  // Version management functions
+  const handleSaveNewVersion = (label?: string) => {
+    const versionLabel = label || newVersionLabel.trim() || `Versão ${savedVersions.length + 1}`;
+    const now = new Date();
+    const newVersion: AlbumSnapshot = {
+      id: 'ver_' + Date.now(),
+      label: versionLabel,
+      timestamp: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      date: now.toLocaleDateString('pt-BR'),
+      pageCount: pageLayouts.length,
+      photoCount: activePhotos.length,
+      purchaseType,
+      snapshot: {
+        globalLayout,
+        pageLayouts: [...pageLayouts],
+        pageEffects: [...pageEffects],
+        coverPhotoId,
+        albumSize,
+        materialType,
+        requestedPageCount,
+        purchaseType,
+        photoCrops: { ...photoCrops },
+        videoUrl,
+        activePhotos: [...activePhotos]
+      }
+    };
+
+    const updated = [newVersion, ...savedVersions].slice(0, 15);
+    setSavedVersions(updated);
+    setNewVersionLabel('');
+    try {
+      localStorage.setItem(getVersionsKey(), JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Error saving version list:', e);
+    }
+  };
+
+  const handleRestoreVersion = (ver: AlbumSnapshot) => {
+    if (!ver.snapshot) return;
+    const s = ver.snapshot;
+    if (s.globalLayout) setGlobalLayout(s.globalLayout);
+    if (s.pageLayouts) setPageLayouts(s.pageLayouts);
+    if (s.pageEffects) setPageEffects(s.pageEffects);
+    if (s.coverPhotoId) setCoverPhotoId(s.coverPhotoId);
+    if (s.albumSize) setAlbumSize(s.albumSize);
+    if (s.materialType) setMaterialType(s.materialType);
+    if (s.requestedPageCount) setRequestedPageCount(s.requestedPageCount);
+    if (s.purchaseType) setPurchaseType(s.purchaseType);
+    if (s.photoCrops) setPhotoCrops(s.photoCrops);
+    if (s.videoUrl) setVideoUrl(s.videoUrl);
+    if (s.activePhotos) setActivePhotos(s.activePhotos);
+
+    setShowVersionsModal(false);
+    setDraftRestoredToast(true);
+    setTimeout(() => setDraftRestoredToast(false), 4000);
+  };
+
+  const handleDeleteVersion = (verId: string) => {
+    const updated = savedVersions.filter(v => v.id !== verId);
+    setSavedVersions(updated);
+    try {
+      localStorage.setItem(getVersionsKey(), JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Error deleting version:', e);
+    }
+  };
 
   // Initialize page layouts and effects when photos change (only if no draft and no previous state)
   useEffect(() => {
     if (!isFirstLoad) {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(getStorageKey()) || localStorage.getItem('noir_album_persistence');
       // If we have a saved draft, we only auto-trigger optimization if photos exceed current capacity
       if (saved && getPhotosTotalCapacity() >= activePhotos.length) return; 
     }
@@ -392,7 +555,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   const clearDraft = () => {
     if (confirm('Deseja realmente limpar todas as edições e começar do zero?')) {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(getStorageKey());
+      localStorage.removeItem('noir_album_persistence');
       window.location.reload();
     }
   };
@@ -544,9 +708,27 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           resolve({ img, id: p.id });
         };
         img.onerror = () => {
+          const fbCanvas = document.createElement('canvas');
+          fbCanvas.width = 800;
+          fbCanvas.height = 1200;
+          const fbCtx = fbCanvas.getContext('2d');
+          if (fbCtx) {
+            fbCtx.fillStyle = '#18181b';
+            fbCtx.fillRect(0, 0, 800, 1200);
+            fbCtx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+            fbCtx.lineWidth = 8;
+            fbCtx.strokeRect(30, 30, 740, 1140);
+            fbCtx.fillStyle = '#D4AF37';
+            fbCtx.font = 'bold 32px serif';
+            fbCtx.textAlign = 'center';
+            fbCtx.fillText('TOP LINE STUDIO', 400, 580);
+            fbCtx.fillStyle = '#a1a1aa';
+            fbCtx.font = '20px sans-serif';
+            fbCtx.fillText('Registro Oficial', 400, 630);
+          }
           const placeholder = new Image();
-          placeholder.src = "https://picsum.photos/seed/error/800/1200?blur=5";
           placeholder.onload = () => resolve({ img: placeholder, id: p.id });
+          placeholder.src = fbCanvas.toDataURL('image/jpeg', 0.85);
         };
         img.src = p.url;
       }))
@@ -702,18 +884,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
     applyEffect(ctx, width, height, pageEffect);
     
-    const result = await new Promise<string>((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          pageCacheRef.current[pageHash] = { url, hash: pageHash };
-          resolve(url);
-        } else {
-          resolve(canvas.toDataURL('image/jpeg', 0.9));
-        }
-      }, 'image/jpeg', 0.9);
-    });
-    
+    const result = canvas.toDataURL('image/jpeg', 0.88);
+    pageCacheRef.current[pageHash] = { url: result, hash: pageHash };
     return result;
   };
 
@@ -834,16 +1006,6 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     if (albumSize === '30x40') { width = 1200; height = 1600; }
     return { width, height };
   };
-
-  // Cleanup old object URLs to prevent memory leaks
-  useEffect(() => {
-    const cache = pageCacheRef.current;
-    return () => {
-      Object.values(cache).forEach(item => {
-        URL.revokeObjectURL(item.url);
-      });
-    };
-  }, []);
 
   const generateAllPages = async () => {
     setIsGenerating(true);
@@ -1034,7 +1196,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                 : 'bg-white/5 border-white/10 text-gray-400'
           }`}>
-            {userTier === 'ALBUM' ? 'Edition' : userTier === 'LINK' ? 'Link Edition' : 'Modo Demonstração'}
+            {userTier === 'ALBUM' ? 'Studio' : userTier === 'LINK' ? 'Link Studio' : 'Modo Demonstração'}
           </div>
         </div>
 
@@ -1045,8 +1207,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             </p>
             <p className="text-[9px] text-gray-400 leading-relaxed">
               {userTier === 'PROSPECT' 
-                ? 'Estamos usando fotos de exemplo para você conhecer a qualidade. Adquira o Link Edition para usar suas próprias fotos!'
-                : 'Você está visualizando suas fotos no modelo físico. Adquira a Edition para finalizar e receber seu álbum em casa.'}
+                ? 'Estamos usando fotos de exemplo para você conhecer a qualidade. Adquira o Link Studio para usar suas próprias fotos!'
+                : 'Você está visualizando suas fotos no modelo físico. Adquira o Studio para finalizar e receber seu álbum em casa.'}
             </p>
           </div>
         )}
@@ -1257,19 +1419,19 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           <div className="space-y-2">
             <div className="flex justify-between text-[10px] text-gray-400 font-bold border-b border-white/5 pb-2 mb-2">
               <span className="text-white uppercase tracking-widest flex items-center gap-1">
-                {purchaseType === 'LINK' ? 'Noir Link Digital' : 'Combo Álbum + Link'}
+                {purchaseType === 'LINK' ? 'Top Line Link Studio (Digital)' : 'Álbum Físico Studio + Link'}
               </span>
               <span className="text-brand-gold">R$ {PRICES.edition[purchaseType === 'LINK' ? 'link' : 'album'].toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
 
             <div className="flex justify-between text-[10px] text-gray-400 leading-relaxed">
-              <span>{photos.length} Fotos sob Curadoria</span>
-              <span>R$ {(photos.length * PRICES.photo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              <span>{activePhotos.length} Fotos sob Curadoria</span>
+              <span>R$ {(activePhotos.length * PRICES.photo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
 
             {purchaseType === 'FULL' && (
               <div className="space-y-1.5 py-2 border-t border-white/5 mt-2">
-                <p className="text-[8px] text-brand-gold uppercase tracking-[0.2em] font-bold mb-1">Personalização Premium</p>
+                <p className="text-[8px] text-brand-gold uppercase tracking-[0.2em] font-bold mb-1">Personalização do Álbum</p>
                 
                 {PRICES.size[albumSize] > 0 && (
                   <div className="flex justify-between text-[10px] text-gray-500">
@@ -1293,38 +1455,36 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             )}
 
             {purchaseType === 'LINK' && (
-              <div className="mt-2 p-3 bg-brand-gold/5 border border-brand-gold/20 rounded-xl space-y-2">
-                <div className="flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-brand-gold/60">
-                  <span>Upgrade para Álbum Físico</span>
+              <div className="mt-2 p-3 bg-brand-gold/10 border border-brand-gold/30 rounded-xl space-y-2">
+                <p className="text-[8px] text-gray-300 leading-relaxed">
+                  ✨ <strong>Apenas Link Studio:</strong> Nossa equipe incluirá todas as suas fotos em alta resolução no seu login para download. Você pode montar o álbum à vontade para experimentar!
+                </p>
+                <div className="flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-brand-gold/80 pt-1 border-t border-brand-gold/20">
+                  <span>Adicionar Álbum Físico</span>
                   <span>+ R$ {(totalPriceFull - totalPrice).toFixed(2)}</span>
                 </div>
                 <button 
+                  type="button"
                   onClick={() => setPurchaseType('FULL')}
-                  className="w-full py-1.5 bg-brand-gold text-black text-[7px] font-bold uppercase tracking-widest rounded-lg hover:scale-[1.02] transition-transform"
+                  className="w-full py-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all shadow-md"
                 >
-                  Adicionar Álbum ao Pedido
+                  + Incluir Álbum Físico de Luxo
                 </button>
               </div>
             )}
 
             <div className="pt-2 border-t border-white/5 flex justify-between text-xs font-bold text-white">
-              <span className="uppercase tracking-widest">{hasPurchasedAlbum ? 'Status do Álbum' : 'Valor do Álbum'}</span>
+              <span className="uppercase tracking-widest">{purchaseType === 'LINK' ? 'Total Link Studio' : 'Total Álbum + Link'}</span>
               <span className="text-brand-gold">
-                {hasPurchasedAlbum ? 'PAGO' : `R$ ${totalPrice.toFixed(2)}`}
+                R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
             
-            {!hasPurchasedAlbum && (
-              <div className="mt-2 p-3 bg-brand-gold/10 border border-brand-gold/30 rounded-xl">
-                <p className="text-[9px] text-brand-gold uppercase tracking-wider font-bold mb-2">
-                  ✨ Upgrade Disponível
+            {purchaseType === 'FULL' && !hasPurchasedAlbum && (
+              <div className="mt-2 p-3 bg-brand-gold/5 border border-brand-gold/20 rounded-xl">
+                <p className="text-[8px] text-gray-400 leading-relaxed">
+                  👑 O álbum físico inclui encadernação artesanal, lâminas panorâmicas de abertura 180° e o Link Studio vitalício integrado.
                 </p>
-                <p className="text-[8px] text-gray-400 leading-relaxed mb-3">
-                  Transforme seu link digital em um álbum físico **Edition** com diagramação profissional.
-                </p>
-                <button className="w-full bg-brand-gold text-black py-2 rounded-lg text-[8px] font-bold uppercase tracking-widest hover:scale-105 transition-transform">
-                  Adquirir Álbum Físico
-                </button>
               </div>
             )}
           </div>
@@ -1355,6 +1515,30 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         )}
 
         <div className="mt-auto pt-6 border-t border-white/5 space-y-3">
+          {/* Auto-Save & Versions Status Pill */}
+          <div className="px-3.5 py-2.5 bg-zinc-950 border border-white/10 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex flex-col">
+                <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-400">
+                  Salvo Automaticamente
+                </span>
+                <span className="text-[7px] text-gray-400 font-mono">
+                  {lastSavedTime ? `Última sincronização às ${lastSavedTime}` : 'Sincronizado na nuvem'}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowVersionsModal(true)}
+              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-brand-gold/20 text-brand-gold text-[8px] uppercase font-bold tracking-widest flex items-center gap-1.5 transition-colors border border-brand-gold/30"
+              title="Ver e restaurar versões salvas"
+            >
+              <History size={11} />
+              <span>Versões ({savedVersions.length})</span>
+            </button>
+          </div>
+
           <div className="px-3 py-2 bg-white/5 border border-white/5 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[8px] uppercase tracking-widest font-bold text-gray-500">Simetria Auto</span>
@@ -1373,13 +1557,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             className="w-full bg-white/5 text-red-400 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500/10 transition-all border border-white/5"
           >
             <RotateCcw size={14} />
-            Limpar Todas Edições
+            Limpar e Recomeçar
           </button>
-
-          <div className="flex items-center justify-center gap-2 text-[8px] text-gray-500 uppercase tracking-widest font-bold pb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500/50 animate-pulse" />
-            Edições Salvas Automaticamente
-          </div>
 
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -1390,12 +1569,16 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </button>
           
           <button
-            onClick={() => onSave?.(pages)}
+            onClick={() => setIsCheckoutOpen(true)}
             disabled={isGenerating}
-            className="w-full bg-brand-gold text-black py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 shadow-[0_0_30px_rgba(212,175,55,0.4)] animate-pulse"
+            className="w-full bg-brand-gold text-black py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 shadow-[0_0_30px_rgba(212,175,55,0.4)]"
           >
-            <Check size={16} />
-            {hasPurchasedAlbum ? 'Finalizar Diagramação' : 'Confirmar e Comprar Álbum'}
+            <MessageCircle size={16} />
+            {purchaseType === 'LINK'
+              ? 'Finalizar Pedido do Link Studio'
+              : hasPurchasedAlbum
+                ? 'Atualizar Diagramação'
+                : 'Finalizar Pedido do Álbum + Link'}
           </button>
         </div>
       </div>
@@ -1421,23 +1604,26 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   materialType={materialType}
                   albumSize={albumSize}
                   coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
+                  onPageChange={(p) => setCurrentPage(p)}
                 />
               </div>
               
               {/* 3D Controls Overlay */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/80 backdrop-blur-2xl border border-white/5 p-1.5 rounded-2xl z-20 shadow-2xl scale-90 sm:scale-100">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/85 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl z-20 shadow-2xl scale-90 sm:scale-100">
                 <button 
                   onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
                   className="p-3 hover:bg-white/10 rounded-xl transition-colors text-brand-gold"
+                  title="Lâmina Anterior"
                 >
                   <ArrowLeft size={20} />
                 </button>
-                <div className="px-4 text-[10px] uppercase tracking-[0.2em] font-bold text-white/60">
-                  Spread {currentPage + 1} ({currentPage * 2 + 1} & {currentPage * 2 + 2}) / {Math.ceil(pages.length / 2)}
+                <div className="px-4 text-[10px] uppercase tracking-[0.2em] font-bold text-white/80">
+                  Lâmina {currentPage + 1} ({currentPage * 2 + 1} & {currentPage * 2 + 2}) / {Math.max(1, Math.ceil(pages.length / 2))}
                 </div>
                 <button 
                   onClick={() => setCurrentPage(Math.min(Math.floor(pages.length / 2), currentPage + 1))}
                   className="p-3 hover:bg-white/10 rounded-xl transition-colors text-brand-gold"
+                  title="Próxima Lâmina"
                 >
                   <ArrowRight size={20} />
                 </button>
@@ -1445,11 +1631,11 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 <div className="w-[1px] h-8 bg-white/10 mx-2" />
                 
                 <button 
-                  onClick={() => onSave?.(pages)}
+                  onClick={() => setIsCheckoutOpen(true)}
                   className="bg-brand-gold text-black px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2"
                 >
-                  <Check size={16} />
-                  Confirmar Pagamento
+                  <MessageCircle size={16} />
+                  {purchaseType === 'LINK' ? 'Contratar Link Studio' : 'Comprar Álbum Físico'}
                 </button>
               </div>
             </motion.div>
@@ -1742,8 +1928,166 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           )}
         </AnimatePresence>
       </div>
+
+      {/* Auto-Save Restored Toast */}
+      <AnimatePresence>
+        {draftRestoredToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 right-6 z-[220] bg-zinc-900 border border-brand-gold/40 shadow-[0_0_30px_rgba(212,175,55,0.25)] rounded-2xl p-4 flex items-center gap-3 text-white max-w-sm"
+          >
+            <div className="w-8 h-8 rounded-full bg-brand-gold/20 flex items-center justify-center text-brand-gold shrink-0">
+              <BookmarkCheck size={18} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Projeto Restaurado</p>
+              <p className="text-[10px] text-gray-400">Você continuou exatamente de onde parou. Nenhuma alteração foi perdida.</p>
+            </div>
+            <button 
+              onClick={() => setDraftRestoredToast(false)}
+              className="text-gray-500 hover:text-white p-1 ml-auto"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Project Versions History Modal */}
+      <AnimatePresence>
+        {showVersionsModal && (
+          <div className="fixed inset-0 z-[240] flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-xl bg-zinc-950 border border-brand-gold/30 rounded-3xl p-6 md:p-8 shadow-[0_0_80px_rgba(212,175,55,0.15)] space-y-6 max-h-[85vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-gold/10 border border-brand-gold/30 flex items-center justify-center text-brand-gold">
+                    <History size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-serif text-white">Histórico de Versões</h3>
+                    <p className="text-[10px] text-gray-400">Salve marcos do seu projeto e restaure quando quiser.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowVersionsModal(false)}
+                  className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Create new version snapshot */}
+              <div className="p-4 bg-zinc-900/60 border border-white/5 rounded-2xl space-y-3">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-gold block">
+                  Criar Nova Versão deste Momento
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newVersionLabel}
+                    onChange={(e) => setNewVersionLabel(e.target.value)}
+                    placeholder="Ex: Diagramação com foco nos amigos, 40 fotos..."
+                    className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-600 focus:border-brand-gold outline-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveNewVersion();
+                    }}
+                  />
+                  <button
+                    onClick={() => handleSaveNewVersion()}
+                    className="px-4 py-2 bg-brand-gold hover:bg-white text-black font-bold text-[10px] uppercase tracking-widest rounded-xl transition-all shrink-0 flex items-center gap-1.5"
+                  >
+                    <Save size={14} />
+                    Salvar
+                  </button>
+                </div>
+              </div>
+
+              {/* Versions List */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {savedVersions.length === 0 ? (
+                  <div className="text-center py-10 space-y-2">
+                    <History size={28} className="mx-auto text-gray-600" />
+                    <p className="text-xs text-gray-400 font-medium">Nenhuma versão manual criada ainda.</p>
+                    <p className="text-[10px] text-gray-500 max-w-xs mx-auto">
+                      Seu projeto atual já está sendo salvo continuamente de forma automática. Use o campo acima para criar marcos nomeados.
+                    </p>
+                  </div>
+                ) : (
+                  savedVersions.map((ver) => (
+                    <div
+                      key={ver.id}
+                      className="p-4 bg-zinc-900/40 hover:bg-zinc-900/70 border border-white/5 hover:border-brand-gold/30 rounded-2xl flex items-center justify-between gap-4 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white">{ver.label}</span>
+                          <span className="text-[8px] bg-white/5 text-gray-400 px-1.5 py-0.5 rounded uppercase font-mono">
+                            {ver.purchaseType === 'LINK' ? 'Link Studio' : 'Álbum Físico'}
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-gray-400">
+                          {ver.date} às {ver.timestamp} • {ver.pageCount} páginas • {ver.photoCount} fotos
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => handleRestoreVersion(ver)}
+                          className="px-3 py-1.5 rounded-lg bg-brand-gold/10 hover:bg-brand-gold text-brand-gold hover:text-black border border-brand-gold/30 text-[9px] font-bold uppercase tracking-widest transition-all"
+                        >
+                          Restaurar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVersion(ver.id)}
+                          className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-white/5 transition-colors"
+                          title="Excluir versão"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-white/5 flex justify-end">
+                <button
+                  onClick={() => setShowVersionsModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* WhatsApp Checkout Modal */}
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        purchaseType={purchaseType}
+        albumSize={albumSize}
+        materialType={materialType}
+        requestedPageCount={requestedPageCount}
+        photoCount={activePhotos.length}
+        totalPrice={totalPrice}
+        photos={activePhotos}
+        coverPhotoUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
+        videoUrl={videoUrl}
+        onSwitchToFullAlbum={() => setPurchaseType('FULL')}
+      />
     </div>
   );
 };
 
 export default AlbumEditor;
+

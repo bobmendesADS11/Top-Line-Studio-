@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
@@ -8,6 +8,76 @@ import Landing from './components/Landing';
 import Auth from './components/Auth';
 import Admin from './components/Admin';
 import Student from './components/Student';
+
+interface RouteWrapperProps {
+  currentLocation: ReturnType<typeof useLocation>;
+  user: any;
+  role: string | null;
+}
+
+const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentLocation, user, role }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      className="w-full min-h-screen bg-black"
+    >
+      <Routes location={currentLocation}>
+        <Route path="/" element={<Landing />} />
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} replace /> : <Auth />} 
+        />
+        <Route 
+          path="/admin/*" 
+          element={role === 'admin' ? <Admin /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/area-do-aluno/*" 
+          element={
+            role === 'admin' ? <Navigate to="/admin" replace /> :
+            role === 'student' ? <Student /> : 
+            role === 'pending' ? <PendingAccess /> : 
+            <Navigate to="/login" replace />
+          } 
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </motion.div>
+  );
+});
+
+AnimatedRouteWrapper.displayName = 'AnimatedRouteWrapper';
+
+const AnimatedRoutes: React.FC<{ user: any; role: string | null }> = ({ user, role }) => {
+  const location = useLocation();
+
+  // Top-level section key so that main views (Landing, Login, Admin, Student) transition smoothly
+  const sectionKey = location.pathname.startsWith('/admin')
+    ? 'admin'
+    : location.pathname.startsWith('/area-do-aluno')
+      ? 'student'
+      : location.pathname === '/login'
+        ? 'login'
+        : 'landing';
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [sectionKey]);
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <AnimatedRouteWrapper
+        key={sectionKey}
+        currentLocation={location}
+        user={user}
+        role={role}
+      />
+    </AnimatePresence>
+  );
+};
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
@@ -128,27 +198,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} /> : <Auth />} 
-        />
-        <Route 
-          path="/admin/*" 
-          element={role === 'admin' ? <Admin /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/area-do-aluno/*" 
-          element={
-            role === 'admin' ? <Navigate to="/admin" /> :
-            role === 'student' ? <Student /> : 
-            role === 'pending' ? <PendingAccess /> : 
-            <Navigate to="/login" />
-          } 
-        />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <AnimatedRoutes user={user} role={role} />
     </Router>
   );
 };
@@ -164,7 +214,7 @@ const PendingAccess: React.FC = () => {
         <div className="w-20 h-20 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-brand-gold/20">
           <div className="w-10 h-10 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
         </div>
-        <h1 className="topline-edition text-3xl text-brand-gold mb-4">Acesso em Processamento</h1>
+        <h1 className="topline-Studio text-3xl mb-4">Acesso em Processamento</h1>
         <p className="text-gray-400 mb-8 leading-relaxed">
           Olá! Recebemos sua solicitação. Sua conta está sendo configurada pela nossa equipe. 
           Em breve você terá acesso total à sua área exclusiva Top Line.

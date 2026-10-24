@@ -239,7 +239,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                   <span className="font-script text-sm gold-gradient -mt-2">anos</span>
                 </div>
 
-                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2 ml-6">edition</span>
+                <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2 ml-6">Studio</span>
               </div>
             </div>
 
@@ -511,7 +511,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                   <h4 className="text-lg font-bold mb-2">Somente Fotos</h4>
                   <p className="text-xs text-gray-500 mb-4">Receba o link com todas as suas fotos em alta resolução.</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-xl font-bold text-blue-400">Link Edition</p>
+                    <p className="text-xl font-bold text-blue-400">Link Studio</p>
                     <p className="text-lg font-bold text-white">R$ 197,00</p>
                   </div>
                 </button>
@@ -526,7 +526,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                   <h4 className="text-lg font-bold mb-2">Álbum + Fotos</h4>
                   <p className="text-xs text-gray-500 mb-4">Receba seu álbum físico premium e o link com as fotos.</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-xl font-bold text-brand-gold">Album Edition</p>
+                    <p className="text-xl font-bold text-brand-gold">Album Studio</p>
                     <p className="text-lg font-bold text-white">R$ 897,00</p>
                   </div>
                 </button>
@@ -539,7 +539,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                       {userProfile?.package === 'album' ? <Check size={20} /> : <ImageIcon size={20} />}
                     </div>
                     <div>
-                      <p className="font-bold">{userProfile?.package === 'album' ? 'Album Edition Ativo' : 'Link Edition Ativo'}</p>
+                      <p className="font-bold">{userProfile?.package === 'album' ? 'Album Studio Ativo' : 'Link Studio Ativo'}</p>
                       <p className="text-xs text-gray-500">Seu pacote já permite o acesso completo às fotos.</p>
                     </div>
                   </div>
@@ -550,7 +550,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                       className="w-full mb-4 bg-brand-gold/10 text-brand-gold border border-brand-gold/30 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={18} />
-                      Upgrade para Album Edition (R$ 700,00)
+                      Upgrade para Album Studio (R$ 700,00)
                     </button>
                   )}
 

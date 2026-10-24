@@ -124,7 +124,7 @@ const Admin: React.FC = () => {
 
   const sendWhatsApp = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    const message = encodeURIComponent(`Olá ${name}! Seu acesso ao Top Line Edition foi aprovado. 🎓\n\nAgora você já pode acessar o site, conferir suas fotos e criar o seu álbum 3D exclusivo! ✨\n\nAcesse aqui: ${window.location.origin}/login`);
+    const message = encodeURIComponent(`Olá ${name}! Seu acesso ao Top Line Studio foi aprovado. 🎓\n\nAgora você já pode acessar o site, conferir suas fotos e criar o seu álbum 3D exclusivo! ✨\n\nAcesse aqui: ${window.location.origin}/login`);
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
 
@@ -133,6 +133,24 @@ const Admin: React.FC = () => {
       await updateDoc(doc(db, 'users', id), { package: newPackage });
     } catch (error) {
       console.error("Error updating package:", error);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (id: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', id), { status: newStatus });
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
+
+  const sendOrderWhatsApp = (order: any) => {
+    const phone = order.studentPhone || '';
+    const cleanPhone = phone.replace(/\D/g, '');
+    const name = order.studentName || 'Formando';
+    const msg = encodeURIComponent(`Olá ${name}! Aqui é da equipe Top Line Studio. Estamos acompanhando seu pedido #${order.id.slice(0, 8).toUpperCase()} (${order.productName || 'Top Line Studio'}) e gostaríamos de confirmar os detalhes.`);
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
     }
   };
 
@@ -215,7 +233,7 @@ const Admin: React.FC = () => {
               <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
             </div>
 
-            <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-3">edition</span>
+            <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-3">Studio</span>
           </div>
         </div>
         <p className="text-[8px] text-gray-500 uppercase tracking-widest ml-11">Admin Panel</p>
@@ -296,7 +314,7 @@ const Admin: React.FC = () => {
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 md:mb-12 gap-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold capitalize">{activeTab}</h2>
-            <p className="text-gray-500 text-sm">Gerencie sua plataforma Top Line Edition</p>
+            <p className="text-gray-500 text-sm">Gerencie sua plataforma Top Line Studio</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -345,8 +363,8 @@ const Admin: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
               {[
-                { label: 'Link Edition', count: students.filter(s => s.package === 'link').length, color: 'bg-blue-500', icon: ImageIcon },
-                { label: 'Album Edition', count: students.filter(s => s.package === 'album').length, color: 'bg-brand-gold', icon: Check },
+                { label: 'Link Studio', count: students.filter(s => s.package === 'link').length, color: 'bg-blue-500', icon: ImageIcon },
+                { label: 'Album Studio', count: students.filter(s => s.package === 'album').length, color: 'bg-brand-gold', icon: Check },
                 { label: 'Demonstração', count: students.filter(s => s.package === 'prospect' || !s.package).length, color: 'bg-gray-500', icon: Search },
               ].map((pkg, i) => (
                 <div key={i} className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex items-center gap-6">
@@ -369,8 +387,14 @@ const Admin: React.FC = () => {
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="border-b border-white/5 bg-white/5">
-                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Item</th>
-                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Status / Info</th>
+                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Item / Aluno</th>
+                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Status</th>
+                  {activeTab === 'orders' && (
+                    <>
+                      <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Produto</th>
+                      <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Valor</th>
+                    </>
+                  )}
                   {activeTab === 'students' && (
                     <>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Pacote</th>
@@ -387,29 +411,70 @@ const Admin: React.FC = () => {
                   <tr key={order.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="p-4 md:p-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-gold/10 rounded-lg flex items-center justify-center text-brand-gold">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-brand-gold/10 rounded-lg flex items-center justify-center text-brand-gold shrink-0">
                           <ShoppingBag size={18} />
                         </div>
                         <div>
-                          <p className="font-bold text-sm md:text-base">Pedido #{order.id.slice(0, 8)}</p>
-                          <p className="text-[10px] md:text-xs text-gray-500">{order.studentEmail}</p>
+                          <p className="font-bold text-sm md:text-base text-white">
+                            {order.studentName || `Pedido #${order.id.slice(0, 8).toUpperCase()}`}
+                          </p>
+                          <p className="text-[10px] md:text-xs text-gray-400">
+                            {order.studentEmail || order.studentPhone || `ID: ${order.id.slice(0, 8)}`}
+                          </p>
+                          {order.course && (
+                            <span className="text-[9px] text-brand-gold/80 block mt-0.5">
+                              {order.course}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
                     <td className="p-4 md:p-6">
-                      <span className="px-2 md:px-3 py-1 rounded-full bg-brand-gold/10 text-brand-gold text-[8px] md:text-[10px] font-bold uppercase">
-                        {order.status}
-                      </span>
+                      <select
+                        value={order.status || 'aguardando_contato'}
+                        onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                        className="bg-black/60 border border-white/10 text-white rounded-lg px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider outline-none focus:border-brand-gold"
+                      >
+                        <option value="aguardando_contato">Aguardando Contato</option>
+                        <option value="em_producao">Em Produção</option>
+                        <option value="pago">Pago</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="cancelado">Cancelado</option>
+                      </select>
+                    </td>
+                    <td className="p-4 md:p-6">
+                      <div>
+                        <span className="px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider bg-brand-gold/10 text-brand-gold border border-brand-gold/20 inline-block">
+                          {order.productName || (order.productType === 'link_studio' ? 'Link Studio' : 'Álbum Studio')}
+                        </span>
+                        {order.albumSpecs?.size && (
+                          <p className="text-[9px] text-gray-500 mt-1">
+                            {order.albumSpecs.size} cm • {order.albumSpecs.material}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 md:p-6 text-xs md:text-sm font-bold text-brand-gold">
+                      R$ {(order.totalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
-                      {order.createdAt?.toDate().toLocaleDateString()}
+                      {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Hoje'}
                     </td>
                     <td className="p-4 md:p-6 text-right">
                       <div className="flex items-center justify-end gap-1 md:gap-2">
-                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors"><Edit2 size={16} /></button>
+                        {order.studentPhone && (
+                          <button
+                            onClick={() => sendOrderWhatsApp(order)}
+                            title="Conversar no WhatsApp com o aluno"
+                            className="p-2 hover:bg-green-500/20 text-green-400 rounded-lg transition-colors border border-green-500/30"
+                          >
+                            <MessageCircle size={16} />
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleDelete('orders', order.id)}
                           className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
+                          title="Excluir pedido"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -488,8 +553,8 @@ const Admin: React.FC = () => {
                         }`}
                       >
                         <option value="prospect">Demonstração</option>
-                        <option value="link">Link Edition</option>
-                        <option value="album">Album Edition</option>
+                        <option value="link">Link Studio</option>
+                        <option value="album">Album Studio</option>
                       </select>
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
@@ -577,8 +642,8 @@ const Admin: React.FC = () => {
                 <div className="grid grid-cols-1 gap-3">
                   {[
                     { id: 'prospect', label: 'Demonstração (Prospect)', desc: 'Acesso limitado para visualização' },
-                    { id: 'link', label: 'Link Edition', desc: 'Acesso às fotos digitais' },
-                    { id: 'album', label: 'Album Edition', desc: 'Acesso completo + Álbum Físico' }
+                    { id: 'link', label: 'Link Studio', desc: 'Acesso às fotos digitais' },
+                    { id: 'album', label: 'Album Studio', desc: 'Acesso completo + Álbum Físico' }
                   ].map((tier) => (
                     <button
                       key={tier.id}
