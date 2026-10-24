@@ -6,17 +6,29 @@ import { useNavigate } from 'react-router-dom';
 function ParticleBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Deep Dark Gradient Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(45,25,10,0.15)_0%,rgba(0,0,0,1)_100%)]" />
+      {/* Deep Obsidian Radial Vignette - Pure luxury black with subtle center illumination */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,rgba(22,20,18,0.45)_0%,rgba(8,8,8,0.95)_75%,rgba(4,4,4,1)_100%)]" />
       
-      {/* Soft Warm Light Beam from the Right */}
-      <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_85%_35%,rgba(212,175,55,0.05)_0%,transparent_60%)] blur-[100px]" />
+      {/* Refined, Elegant Atmospheric Smoke / Mist (Subtle & Soft) */}
+      <motion.div 
+        animate={{ 
+          opacity: [0.12, 0.22, 0.12],
+          scale: [1, 1.04, 1],
+          x: [0, 15, 0]
+        }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[650px] h-[380px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.05)_0%,rgba(180,140,40,0.015)_50%,transparent_75%)] blur-[80px]"
+      />
+      
+      {/* Delicate Edge Mist (Far softer than before to prevent side haze) */}
+      <div className="absolute -top-20 -right-20 w-[450px] h-[450px] bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.025)_0%,transparent_70%)] blur-[100px]" />
+      <div className="absolute -bottom-20 -left-20 w-[450px] h-[450px] bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.02)_0%,transparent_70%)] blur-[100px]" />
 
-      {/* Flowing Curved Wave of Particles (Optimized count) */}
-      {[...Array(30)].map((_, i) => {
-        const size = Math.random() * 3 + 1;
-        const delay = i * 0.3;
-        const duration = 15 + Math.random() * 5;
+      {/* Flowing Curved Wave of Particles (Delicate gold dust) */}
+      {[...Array(24)].map((_, i) => {
+        const size = Math.random() * 2.5 + 1;
+        const delay = i * 0.35;
+        const duration = 16 + Math.random() * 6;
         
         return (
           <motion.div
@@ -27,7 +39,7 @@ function ParticleBackground() {
               y: (45 + Math.sin(i * 0.5) * 10) + "%",
             }}
             animate={{ 
-              opacity: [0, 0.7, 0.7, 0],
+              opacity: [0, 0.6, 0.6, 0],
               x: "110%",
               y: (45 + Math.sin((i + 15) * 0.5) * 15) + "%",
             }}
@@ -37,16 +49,16 @@ function ParticleBackground() {
               delay: delay,
               ease: "linear"
             }}
-            className="absolute rounded-full bg-brand-gold shadow-[0_0_8px_rgba(212,175,55,0.4)] blur-[0.5px]"
+            className="absolute rounded-full bg-brand-gold shadow-[0_0_6px_rgba(212,175,55,0.3)]"
             style={{ width: size, height: size }}
           />
         );
       })}
 
-      {/* Background Gold Dust (Bokeh) */}
-      {[...Array(12)].map((_, i) => {
-        const size = Math.random() * 5 + 2;
-        const opacity = Math.random() * 0.1 + 0.05;
+      {/* Subtle Background Stardust */}
+      {[...Array(10)].map((_, i) => {
+        const size = Math.random() * 3 + 1.5;
+        const opacity = Math.random() * 0.1 + 0.03;
         
         return (
           <motion.div
@@ -58,21 +70,21 @@ function ParticleBackground() {
             }}
             animate={{ 
               opacity: [0, opacity, 0],
-              y: [null, (Math.random() * -30 - 15) + "px"]
+              y: [null, (Math.random() * -25 - 10) + "px"]
             }}
             transition={{ 
-              duration: Math.random() * 10 + 10, 
+              duration: Math.random() * 8 + 8, 
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: Math.random() * 4,
             }}
-            className="absolute rounded-full bg-brand-gold/20 blur-[3px]"
+            className="absolute rounded-full bg-brand-gold/30 blur-[1.5px]"
             style={{ width: size, height: size }}
           />
         );
       })}
 
       {/* Subtle Twinkling Sparkles */}
-      {[...Array(6)].map((_, i) => (
+      {[...Array(5)].map((_, i) => (
         <motion.div
           key={`sparkle-${i}`}
           initial={{ 
@@ -82,17 +94,17 @@ function ParticleBackground() {
             scale: 0
           }}
           animate={{ 
-            opacity: [0, 0.5, 0],
+            opacity: [0, 0.4, 0],
             scale: [0, 1, 0],
           }}
           transition={{ 
             duration: Math.random() * 4 + 4, 
             repeat: Infinity,
-            delay: Math.random() * 10,
+            delay: Math.random() * 8,
           }}
           className="absolute"
         >
-          <Sparkles className="text-brand-gold/30 w-3 h-3" />
+          <Sparkles className="text-brand-gold/25 w-2.5 h-2.5" />
         </motion.div>
       ))}
     </div>
@@ -179,34 +191,37 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       title: "Escolha suas Fotos",
       icon: MousePointer2,
       content: (
-        <div className="flex flex-col h-full p-8">
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
-              {selectedPhotos.length} fotos selecionadas
-            </span>
-            <div className="flex gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[8px] uppercase tracking-widest text-white/60">Sincronizado</span>
+        <div className="flex flex-col justify-between h-full p-8 min-h-[580px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-bold">
+                {selectedPhotos.length} fotos selecionadas
+              </span>
+              <span className="text-white/20">·</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[9px] uppercase tracking-widest text-white/60">Sincronizado</span>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 flex-1">
+          <div className="grid grid-cols-3 gap-4 flex-1 items-stretch">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.05 }}
                 onClick={() => togglePhoto(i)}
-                className={`aspect-square rounded-xl border overflow-hidden relative group cursor-pointer transition-all ${selectedPhotos.includes(i) ? 'border-brand-gold ring-2 ring-brand-gold/20' : 'border-white/10 grayscale hover:grayscale-0'}`}
+                className={`aspect-square rounded-xl border overflow-hidden relative group cursor-pointer transition-all duration-300 ${selectedPhotos.includes(i) ? 'border-brand-gold ring-2 ring-brand-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
               >
                 <img 
                   src={`https://picsum.photos/seed/graduation_cap_${i}/400/400`} 
                   alt="Graduation" 
-                  className={`w-full h-full object-cover transition-all duration-500 ${selectedPhotos.includes(i) ? 'scale-110 opacity-100' : 'opacity-50 group-hover:opacity-100'}`}
+                  className={`w-full h-full object-cover transition-all duration-500 ${selectedPhotos.includes(i) ? 'scale-105 opacity-100' : 'opacity-50 group-hover:opacity-100'}`}
                   referrerPolicy="no-referrer"
                 />
-                <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${selectedPhotos.includes(i) ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-colors ${selectedPhotos.includes(i) ? 'bg-brand-gold text-black' : 'bg-white/20 text-white'}`}>
+                <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${selectedPhotos.includes(i) ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-transform ${selectedPhotos.includes(i) ? 'bg-brand-gold text-black scale-100' : 'bg-white/20 text-white scale-90'}`}>
                     <CheckCircle2 size={16} />
                   </div>
                 </div>
@@ -216,7 +231,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
           <div className="mt-6 flex justify-center">
             <button 
               onClick={() => onStepChange(1)}
-              className="px-8 py-3 rounded-full bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-brand-gold transition-all active:scale-95"
+              className="px-8 py-3 rounded-full bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-brand-gold transition-all duration-300 active:scale-95 shadow-lg"
             >
               Próximo Passo
             </button>
@@ -228,137 +243,140 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       title: "Design Inteligente",
       icon: Sparkles,
       content: (
-        <div className="flex items-center justify-center h-full p-8">
-          <div className="relative w-full max-w-md aspect-[4/3] bg-zinc-900 rounded-2xl border border-brand-gold/30 shadow-2xl shadow-brand-gold/10 overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/10 to-transparent opacity-50" />
-            
-            {/* Processing Scan Line */}
+        <div className="flex flex-col justify-between h-full p-8 min-h-[580px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-brand-gold font-bold flex items-center gap-2">
+                <Sparkles size={13} className="text-brand-gold" />
+                Inteligência Artificial Top Line
+              </span>
+              <div className="flex items-center gap-2.5 mt-1">
+                <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div 
+                    animate={{ x: isGenerating ? ['-100%', '100%'] : ['-100%', '100%'] }}
+                    transition={{ duration: isGenerating ? 0.8 : 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="h-full w-1/2 bg-brand-gold rounded-full"
+                  />
+                </div>
+                <span className="text-[9px] text-white/50 tracking-wider">
+                  {isGenerating ? 'Analisando proporções e narrativa...' : 'Otimizando layout e harmonia visual'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Workspace Canvas */}
+          <div className="relative flex-1 rounded-2xl bg-zinc-900/90 border border-brand-gold/30 shadow-2xl overflow-hidden p-5 flex flex-col justify-between group">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/5 via-transparent to-transparent pointer-events-none" />
+
+            {/* Scan line effect */}
             <motion.div 
               animate={{ top: isGenerating ? ['-10%', '110%'] : ['-10%', '110%'] }}
               transition={{ duration: isGenerating ? 1.5 : 4, repeat: Infinity, ease: "linear" }}
-              className={`absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent z-20 blur-sm ${isGenerating ? 'opacity-100' : 'opacity-50'}`}
+              className={`absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-gold to-transparent z-20 blur-sm ${isGenerating ? 'opacity-100' : 'opacity-40'}`}
             />
 
-            <div className="p-6 h-full flex flex-col relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-[0.3em] text-brand-gold font-bold">Inteligência Artificial</span>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1 w-24 bg-brand-gold/20 rounded-full overflow-hidden">
-                      <motion.div 
-                        animate={{ x: isGenerating ? ['-100%', '100%'] : ['-100%', '100%'] }}
-                        transition={{ duration: isGenerating ? 0.8 : 2, repeat: Infinity }}
-                        className="h-full w-1/2 bg-brand-gold"
-                      />
-                    </div>
-                    <span className="text-[8px] text-white/40 uppercase tracking-widest">
-                      {isGenerating ? 'Analisando Fotos...' : 'Otimizando Layout...'}
-                    </span>
-                  </div>
-                </div>
-                <motion.div 
-                  animate={{ rotate: isGenerating ? 360 : 360 }}
-                  transition={{ duration: isGenerating ? 2 : 8, repeat: Infinity, ease: "linear" }}
-                  className="w-10 h-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"
-                >
-                  <Sparkles size={18} className="text-brand-gold" />
-                </motion.div>
-              </div>
-              
-              <div className="grid grid-cols-12 gap-3 flex-1 relative">
-                {/* Main Spread Simulation */}
-                <motion.div 
-                  key={`main-${layoutSeed}`}
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="col-span-7 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative shadow-2xl"
-                >
-                  <img src={`https://picsum.photos/seed/photo_album_design_${layoutSeed}/600/800`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  
-                  {/* Floating "Memory" particles */}
-                  {!isGenerating && [1, 2, 3].map((i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ 
-                        y: [0, -40, 0],
-                        opacity: [0, 1, 0]
-                      }}
-                      transition={{ duration: 3, delay: i * 1, repeat: Infinity }}
-                      className="absolute bottom-4 left-4"
-                    >
-                      <Sparkles className="text-brand-gold/40 w-4 h-4" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                <div className="col-span-5 flex flex-col gap-3">
-                  <motion.div 
-                    key={`side1-${layoutSeed}`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
-                  >
-                    <img src={`https://picsum.photos/seed/page_layout_${layoutSeed}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
-                  </motion.div>
-                  <motion.div 
-                    key={`side2-${layoutSeed}`}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="flex-1 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden relative"
-                  >
-                    <img src={`https://picsum.photos/seed/photo_editing_${layoutSeed}/400/400`} className="w-full h-full object-cover opacity-100" referrerPolicy="no-referrer" />
-                  </motion.div>
+            <div className="grid grid-cols-12 gap-3.5 flex-1 relative z-10">
+              {/* Main hero spread */}
+              <motion.div 
+                key={`main-${layoutSeed}`}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="col-span-7 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-2xl group/card"
+              >
+                <img 
+                  src={`https://picsum.photos/seed/photo_album_design_${layoutSeed}/800/600`} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" 
+                  referrerPolicy="no-referrer" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                  <span className="text-[9px] font-serif uppercase tracking-[0.18em] text-white/90">Lâmina Master · Retrato</span>
+                  <span className="text-[8px] uppercase tracking-widest px-2 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 font-semibold">Diagramado</span>
                 </div>
 
-                {/* "Flying" memories being sorted */}
-                <AnimatePresence>
-                  {isGenerating && [1, 2, 3, 4].map((i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0, x: -100, y: 100 }}
-                      animate={{ 
-                        opacity: [0, 1, 0],
-                        scale: [0.5, 1, 0.5],
-                        x: [Math.random() * 200, 0],
-                        y: [Math.random() * 200, 0]
-                      }}
-                      transition={{ 
-                        duration: 1.5, 
-                        delay: i * 0.2, 
-                        repeat: Infinity,
-                      }}
-                      className="absolute w-12 h-12 rounded-md bg-brand-gold/20 border border-brand-gold/40 backdrop-blur-sm z-30 flex items-center justify-center overflow-hidden"
-                    >
-                      <img src={`https://picsum.photos/seed/grad${layoutSeed + i + 10}/100/100`} className="w-full h-full object-cover opacity-40" referrerPolicy="no-referrer" />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-              
-              <div className="mt-8 flex items-center justify-between">
-                <button 
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className={`px-6 py-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 text-brand-gold text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-brand-gold hover:text-black active:scale-95 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                {!isGenerating && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.7, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute top-3 right-3"
+                  >
+                    <Sparkles className="text-brand-gold w-4 h-4" />
+                  </motion.div>
+                )}
+              </motion.div>
+
+              {/* Side preview spreads */}
+              <div className="col-span-5 flex flex-col gap-3">
+                <motion.div 
+                  key={`side1-${layoutSeed}`}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                  className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
                 >
-                  {isGenerating ? 'Gerando Layout...' : 'Gerar Novo Layout'}
-                </button>
-                <div className="flex -space-x-2">
+                  <img 
+                    src={`https://picsum.photos/seed/page_layout_${layoutSeed}/500/350`} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
+                    referrerPolicy="no-referrer" 
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover/side:bg-transparent transition-colors" />
+                  <span className="absolute bottom-2 left-2.5 text-[8px] tracking-wider text-white/80 font-mono">Pág. 08 · Colação</span>
+                </motion.div>
+
+                <motion.div 
+                  key={`side2-${layoutSeed}`}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                  className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
+                >
+                  <img 
+                    src={`https://picsum.photos/seed/photo_editing_${layoutSeed}/500/350`} 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
+                    referrerPolicy="no-referrer" 
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover/side:bg-transparent transition-colors" />
+                  <span className="absolute bottom-2 left-2.5 text-[8px] tracking-wider text-white/80 font-mono">Pág. 09 · Baile Gala</span>
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Canvas bottom controls */}
+            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+              <button 
+                onClick={handleGenerate}
+                disabled={isGenerating}
+                className={`px-5 py-2 rounded-full border border-brand-gold/50 bg-brand-gold/10 text-brand-gold text-[9px] font-bold uppercase tracking-[0.2em] transition-all hover:bg-brand-gold hover:text-black active:scale-95 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isGenerating ? 'Gerando Layout...' : 'Gerar Novo Layout'}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] uppercase tracking-wider text-white/40">Formandos:</span>
+                <div className="flex -space-x-1.5">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-zinc-800 overflow-hidden">
+                    <div key={i} className="w-5 h-5 rounded-full border border-zinc-900 bg-zinc-800 overflow-hidden">
                       <img src={`https://picsum.photos/seed/person${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                   ))}
-                  <div className="w-6 h-6 rounded-full border-2 border-zinc-900 bg-brand-gold flex items-center justify-center text-[8px] font-bold text-black">
+                  <div className="w-5 h-5 rounded-full border border-zinc-900 bg-brand-gold flex items-center justify-center text-[7px] font-bold text-black">
                     +12
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <button 
+              onClick={() => onStepChange(2)}
+              className="px-8 py-3 rounded-full bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-brand-gold transition-all duration-300 active:scale-95 shadow-lg"
+            >
+              Próximo Passo
+            </button>
           </div>
         </div>
       )
@@ -367,72 +385,82 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       title: "Visualização 3D",
       icon: BookOpen,
       content: (
-        <div className="flex flex-col items-center justify-center h-full p-12">
-          <div className="relative w-full max-w-2xl aspect-[1.8/1] flex perspective-2000 mb-12">
-            <motion.div 
-              initial={{ rotateY: -25, rotateX: 10 }}
-              animate={{ 
-                rotateY: [-25, -5, -25],
-                rotateX: [10, 5, 10],
-              }}
-              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-              className="relative w-full h-full flex preserve-3d"
-            >
-              {/* Left Page (Full Photo) */}
-              <div className="flex-1 bg-[#1a1a1a] rounded-l-sm border-y border-l border-white/5 relative overflow-hidden shadow-[inset_-10px_0_20px_rgba(0,0,0,0.5)] origin-right">
-                <img 
-                  src={`https://picsum.photos/seed/3d_album_spread_preview_${layoutSeed}/800/1200`} 
-                  className="w-full h-full object-cover opacity-100"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
-                <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black/60 to-transparent" />
-              </div>
-
-              {/* Spine / Gutter */}
-              <div className="w-1 bg-[#111] relative z-10 shadow-[0_0_10px_rgba(0,0,0,0.8)]">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-transparent to-white/5" />
-              </div>
-
-              {/* Right Page (2 Photos) */}
-              <div className="flex-1 bg-[#1a1a1a] rounded-r-sm border-y border-r border-white/5 relative overflow-hidden shadow-[inset_10px_0_20px_rgba(0,0,0,0.5)] p-6 flex flex-col gap-6">
-                <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
-                  <img 
-                    src={`https://picsum.photos/seed/premium_album_detail_view_${layoutSeed}/800/600`} 
-                    className="w-full h-full object-cover opacity-100"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-                </div>
-                <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
-                  <img 
-                    src={`https://picsum.photos/seed/graduation_celebration_memory_${layoutSeed}/800/600`} 
-                    className="w-full h-full object-cover opacity-100"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
-                </div>
-                <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/60 to-transparent" />
-              </div>
-
-              {/* Cover Depth Effect */}
-              <div className="absolute -inset-1 -z-10 bg-brand-gold/20 rounded-lg blur-xl opacity-50" />
-              
-              {/* Decorative "3D Rendering" badge */}
-              <div className="absolute -top-4 -right-4 flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 border border-white/10 backdrop-blur-md z-20">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[8px] uppercase tracking-widest text-white/60">Renderizando 3D</span>
-              </div>
-            </motion.div>
+        <div className="flex flex-col justify-between h-full p-8 min-h-[580px]">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-brand-gold font-bold flex items-center gap-2">
+                <BookOpen size={13} className="text-brand-gold" />
+                Visualização 3D Realista
+              </span>
+              <span className="text-[9px] text-white/50 tracking-wider mt-1">
+                Abertura panorâmica 180° e acabamento com laminação premium
+              </span>
+            </div>
           </div>
-          
-          <button 
-            onClick={() => navigate('/login')}
-            className="group relative px-10 py-4 rounded-full bg-brand-gold text-black text-xs font-black uppercase tracking-[0.2em] overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(212,175,55,0.3)]"
-          >
-            <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500" />
-            <span className="relative z-10 group-hover:text-black">Criar meu Álbum Agora</span>
-          </button>
+
+          <div className="flex-1 flex items-center justify-center relative w-full my-auto py-2">
+            <div className="relative w-full max-w-xl aspect-[1.8/1] flex perspective-2000">
+              <motion.div 
+                initial={{ rotateY: -22, rotateX: 8 }}
+                animate={{ 
+                  rotateY: [-22, -6, -22],
+                  rotateX: [8, 4, 8],
+                }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                className="relative w-full h-full flex preserve-3d"
+              >
+                {/* Left Page (Full Photo) */}
+                <div className="flex-1 bg-[#1a1a1a] rounded-l-md border-y border-l border-white/10 relative overflow-hidden shadow-[inset_-12px_0_25px_rgba(0,0,0,0.6)] origin-right">
+                  <img 
+                    src={`https://picsum.photos/seed/3d_album_spread_preview_${layoutSeed}/800/1200`} 
+                    className="w-full h-full object-cover opacity-100"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+                  <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black/60 to-transparent" />
+                </div>
+
+                {/* Spine / Gutter */}
+                <div className="w-1.5 bg-[#111] relative z-10 shadow-[0_0_12px_rgba(0,0,0,0.9)]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10" />
+                </div>
+
+                {/* Right Page (2 Photos) */}
+                <div className="flex-1 bg-[#1a1a1a] rounded-r-md border-y border-r border-white/10 relative overflow-hidden shadow-[inset_12px_0_25px_rgba(0,0,0,0.6)] p-4 sm:p-5 flex flex-col gap-3.5">
+                  <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
+                    <img 
+                      src={`https://picsum.photos/seed/premium_album_detail_view_${layoutSeed}/800/600`} 
+                      className="w-full h-full object-cover opacity-100"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
+                  </div>
+                  <div className="flex-1 rounded-sm overflow-hidden relative shadow-lg">
+                    <img 
+                      src={`https://picsum.photos/seed/graduation_celebration_memory_${layoutSeed}/800/600`} 
+                      className="w-full h-full object-cover opacity-100"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-l from-black/40 via-transparent to-transparent" />
+                  </div>
+                  <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black/60 to-transparent" />
+                </div>
+
+                {/* Cover Depth Effect */}
+                <div className="absolute -inset-2 -z-10 bg-brand-gold/15 rounded-xl blur-xl opacity-60" />
+              </motion.div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <button 
+              onClick={() => navigate('/login')}
+              className="group relative px-8 py-3 rounded-full bg-brand-gold text-black text-[10px] font-black uppercase tracking-widest overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(212,175,55,0.35)]"
+            >
+              <div className="absolute inset-0 bg-white translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500" />
+              <span className="relative z-10 group-hover:text-black">Criar meu Álbum Agora</span>
+            </button>
+          </div>
         </div>
       )
     }
@@ -445,20 +473,20 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Left Side: Info */}
-      <div className="lg:w-[400px] p-12 border-b lg:border-b-0 lg:border-r border-white/5 bg-zinc-900/30">
-        <div className="space-y-8">
+      <div className="lg:w-[400px] p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-white/5 bg-zinc-900/30 flex flex-col justify-between">
+        <div className="space-y-6">
           {steps.map((s, i) => (
             <motion.div
               key={i}
-              className={`flex gap-6 cursor-pointer transition-all duration-500 ${currentStep === i ? 'opacity-100 translate-x-2' : 'opacity-30 hover:opacity-50'}`}
+              className={`flex gap-5 cursor-pointer p-3 rounded-2xl transition-all duration-500 ${currentStep === i ? 'bg-white/5 opacity-100 translate-x-1.5 border border-brand-gold/25' : 'opacity-35 hover:opacity-70 hover:bg-white/[0.02] border border-transparent'}`}
               onClick={() => onStepChange(i)}
             >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${currentStep === i ? 'bg-brand-gold text-black' : 'bg-white/5 text-white'}`}>
-                <s.icon size={24} />
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${currentStep === i ? 'bg-brand-gold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]' : 'bg-white/5 text-white'}`}>
+                <s.icon size={22} />
               </div>
               <div>
-                <h4 className="text-xl font-serif mb-2">{s.title}</h4>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <h4 className="text-lg font-serif mb-1 text-white">{s.title}</h4>
+                <p className="text-xs text-gray-400 leading-relaxed">
                   {i === 0 && "Selecione as fotos que marcaram sua trajetória de forma simples e intuitiva."}
                   {i === 1 && "Nossa tecnologia organiza suas memórias com o requinte que você merece."}
                   {i === 2 && "Visualize seu álbum digitalmente em um ambiente 3D antes mesmo de ser impresso."}
@@ -470,23 +498,24 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       </div>
 
       {/* Right Side: Interactive Area */}
-      <div className="flex-1 relative bg-black overflow-hidden">
+      <div className="flex-1 relative bg-black overflow-hidden flex flex-col min-h-[580px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="h-full"
+            initial={{ opacity: 0, y: 10, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.985 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="h-full flex flex-col justify-between"
           >
             {steps[currentStep].content}
           </motion.div>
         </AnimatePresence>
 
-        {/* Decorative elements */}
-        <div className="absolute top-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full bg-brand-gold/10 border border-brand-gold/20">
-          <div className="w-2 h-2 rounded-full bg-brand-gold animate-pulse" />
-          <span className="text-[10px] uppercase tracking-widest font-bold text-brand-gold">Preview Interativo</span>
+        {/* Decorative badge */}
+        <div className="absolute top-6 right-6 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-gold/10 border border-brand-gold/20 pointer-events-none backdrop-blur-sm z-20">
+          <div className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
+          <span className="text-[9px] uppercase tracking-widest font-bold text-brand-gold">Preview Interativo</span>
         </div>
       </div>
     </div>
@@ -528,7 +557,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050301] text-white selection:bg-brand-gold/30">
+    <div className="relative min-h-screen bg-[#080808] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/90 backdrop-blur-2xl border-b border-white/10 py-4 shadow-2xl' : 'bg-transparent py-8 border-b border-white/0'}`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -541,7 +570,7 @@ export default function Landing() {
             
             <div 
               onClick={scrollToAlbum}
-              className="px-4 py-2 rounded-full border border-brand-gold/50 bg-black/40 backdrop-blur-sm text-brand-gold text-[8px] font-bold uppercase tracking-[0.3em] shadow-[0_0_15px_rgba(212,175,55,0.1)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
+              className="px-4 py-2 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-sm text-brand-gold text-[8px] font-bold uppercase tracking-[0.3em] shadow-[0_2px_10px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
             >
               3D
             </div>
@@ -553,7 +582,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => navigate('/login')}
-              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_0_30px_rgba(212,175,55,0.3)] active:scale-95"
+              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_4px_16px_rgba(212,175,55,0.2)] active:scale-95"
             >
               Acessar Studio
             </button>
@@ -596,10 +625,9 @@ export default function Landing() {
       <section className="relative min-h-screen flex flex-col items-center justify-center py-32">
         <ParticleBackground />
         
-        {/* Background Sparkles Overlay */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-gold/20 blur-[150px] rounded-full" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-gold/10 blur-[150px] rounded-full" />
+        {/* Delicate Ambient Lighting (Soft, perfectly centered, no side yellow fog) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-brand-gold/[0.035] blur-[130px] rounded-full" />
         </div>
 
         {/* Content */}
@@ -612,7 +640,7 @@ export default function Landing() {
           >
             <div className="flex items-center gap-6 mb-12">
               <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
-              <div className="relative px-8 py-3 rounded-full border border-brand-gold/50 bg-black/40 backdrop-blur-sm shadow-[0_0_30px_rgba(212,175,55,0.15)] group overflow-hidden">
+              <div className="relative px-8 py-3 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.7)] group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 <div className="flex items-center gap-4">
                   <span className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em]">20 Anos de Excelência</span>
@@ -625,7 +653,7 @@ export default function Landing() {
             
             <div className="flex flex-col items-center mb-10">
               <div className="flex flex-col items-center mb-4">
-                <h1 className="font-serif text-4xl md:text-7xl text-white tracking-[0.02em] uppercase leading-none drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                <h1 className="font-serif text-4xl md:text-7xl text-white tracking-[0.02em] uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                   Top Line
                 </h1>
                 <span className="text-white/50 text-[8px] md:text-xs uppercase tracking-[1.2em] font-light mt-3 ml-[1.2em]">
@@ -637,7 +665,7 @@ export default function Landing() {
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/5 to-transparent border-y border-brand-gold/10 backdrop-blur-[1px]" />
                 <div className="relative z-10 flex items-center justify-center gap-8">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
-                  <span className="gold-gradient text-5xl md:text-7xl font-script drop-shadow-[0_0_20px_rgba(212,175,55,0.3)] py-4">
+                  <span className="gold-gradient text-5xl md:text-7xl font-script drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] py-4">
                     Edition
                   </span>
                   <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-brand-gold/30 to-transparent" />
@@ -651,8 +679,7 @@ export default function Landing() {
               transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
               className="mb-16 relative"
             >
-              <div className="absolute -inset-8 bg-brand-gold/5 blur-[40px] rounded-full" />
-              <span className="relative z-10 font-script text-6xl md:text-8xl text-brand-gold drop-shadow-[0_0_30px_rgba(212,175,55,0.5)] block hover:scale-105 transition-transform cursor-default">
+              <span className="relative z-10 font-script text-6xl md:text-8xl gold-gradient drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_12px_rgba(212,175,55,0.25)] block hover:scale-105 transition-transform cursor-default py-2">
                 Sonhe, acredite, realize!
               </span>
               <div className="mt-4 flex items-center justify-center gap-4">
@@ -662,7 +689,7 @@ export default function Landing() {
               </div>
             </motion.div>
             
-            <p className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
+            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
               A experiência definitiva em formaturas premium. 
               Transformamos sonhos em memórias eternas com exclusividade e sofisticação.
             </p>
@@ -670,7 +697,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-6 items-center">
               <button 
                 onClick={() => navigate('/login')}
-                className="bg-brand-gold text-black px-12 py-5 rounded-full text-lg font-black uppercase tracking-[0.1em] hover:bg-white transition-all hover:scale-105 shadow-[0_0_40px_rgba(212,175,55,0.4)] active:scale-95 group flex items-center gap-3"
+                className="bg-brand-gold text-black px-12 py-5 rounded-full text-lg font-black uppercase tracking-[0.1em] hover:bg-white transition-all hover:scale-105 shadow-[0_4px_25px_rgba(212,175,55,0.25)] active:scale-95 group flex items-center gap-3"
               >
                 Acessar Studio
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -678,7 +705,7 @@ export default function Landing() {
               
               <button 
                 onClick={scrollToAlbum}
-                className="px-12 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-xs font-bold tracking-[0.3em] uppercase text-white/80 backdrop-blur-sm hover:text-white flex items-center gap-3 group"
+                className="px-12 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-xs font-bold tracking-[0.3em] uppercase text-white/80 backdrop-blur-sm hover:text-white flex items-center gap-3 group shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
               >
                 Monte seu Álbum
                 <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
