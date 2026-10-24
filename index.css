@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Great+Vibes&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-script: "Great Vibes", cursive;
+  
+  --color-brand-gold: #D4AF37;
+  --color-brand-navy: #001F3F;
+  --color-brand-black: #0A0A0A;
+  --color-brand-white: #F8F9FA;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-black text-brand-white font-sans;
+  }
+}
+
+.glass {
+  @apply bg-white/10 backdrop-blur-md border border-white/20;
+}
+
+.gold-gradient {
+  @apply bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-transparent bg-clip-text;
+}
+
+.topline-edition {
+  @apply font-serif tracking-[0.8em] uppercase text-white;
+}
+
+.gold-button {
+  @apply inline-flex items-center justify-center text-center bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-brand-navy font-bold py-3 px-8 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:shadow-[0_0_40px_rgba(212,175,55,0.6)] leading-none;
+}
+
+@keyframes float-particle {
+  0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-100vh) translateX(20px) rotate(360deg); opacity: 0; }
+}
+
+.particle {
+  position: absolute;
+  background: radial-gradient(circle, #D4AF37 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: float-particle linear infinite;
+}
+
+.studio-bg {
+  background: radial-gradient(circle at 50% 40%, #252525 0%, #050505 100%);
+  position: relative;
+}
+
+.studio-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#ffffff05 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.album-page-depth {
+  box-shadow: 
+    0 20px 50px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(255,255,255,0.05),
+    -10px 10px 40px rgba(0,0,0,0.5);
+  transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
+}
