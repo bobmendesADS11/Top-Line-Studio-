@@ -84,7 +84,8 @@ const Admin: React.FC = () => {
       return students.filter(s => 
         s.displayName?.toLowerCase().includes(term) || 
         s.email?.toLowerCase().includes(term) ||
-        s.course?.toLowerCase().includes(term)
+        s.course?.toLowerCase().includes(term) ||
+        s.institution?.toLowerCase().includes(term)
       );
     }
     return [];
@@ -220,20 +221,31 @@ const Admin: React.FC = () => {
           <div className="w-8 h-8 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
             <GraduationCap className="text-brand-gold w-4 h-4" />
           </div>
-          <div className="flex items-center gap-1 relative group">
-            <div className="flex flex-col leading-none">
-              <span className="font-serif text-xs text-white uppercase tracking-[0.2em]">Top</span>
-              <span className="font-serif text-xs text-white uppercase tracking-[0.2em]">Line</span>
+          <div className="flex items-center gap-2 relative group">
+            {/* Brand: TOP LINE STUDIO */}
+            <div className="flex flex-col items-start leading-none">
+              <div className="flex items-baseline gap-1.5">
+                <div className="flex gap-1 font-serif text-xs text-white uppercase tracking-[0.2em]">
+                  <span>Top</span>
+                  <span>Line</span>
+                </div>
+                <span className="font-script text-base gold-gradient leading-none inline-block pr-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+                  Studio
+                </span>
+              </div>
+              <span className="text-[6px] text-white/40 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
             </div>
 
-            {/* 20 Anos Badge - Vertical Stack */}
-            <div className="flex flex-col items-center -mt-1 -ml-1">
-              <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-              <span className="font-script text-2xl gold-gradient leading-none">20</span>
-              <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
+            {/* 20 Anos Badge */}
+            <div className="flex flex-col items-center justify-center pl-2 border-l border-white/10 -mt-0.5">
+              <GraduationCap className="text-brand-gold w-2.5 h-2.5 mb-[-2px] drop-shadow-[0_0_6px_rgba(212,175,55,0.4)]" />
+              <span className="font-script text-sm gold-gradient leading-tight inline-block px-1 py-0.5">
+                20
+              </span>
+              <span className="font-script text-[7px] gold-gradient -mt-1.5 inline-block px-0.5">
+                anos
+              </span>
             </div>
-
-            <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-3">Studio</span>
           </div>
         </div>
         <p className="text-[8px] text-gray-500 uppercase tracking-widest ml-11">Admin Panel</p>
@@ -398,6 +410,7 @@ const Admin: React.FC = () => {
                   {activeTab === 'students' && (
                     <>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Pacote</th>
+                      <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Instituição</th>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Curso</th>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Semestre</th>
                     </>
@@ -556,6 +569,9 @@ const Admin: React.FC = () => {
                         <option value="link">Link Studio</option>
                         <option value="album">Album Studio</option>
                       </select>
+                    </td>
+                    <td className="p-4 md:p-6 text-xs md:text-sm font-semibold text-brand-gold/90">
+                      {student.institution || '-'}
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
                       {student.course || '-'}

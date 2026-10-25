@@ -1,107 +1,357 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, googleProvider, sendSignInLinkToEmail } from '../lib/firebase';
+import { auth, googleProvider, sendSignInLinkToEmail, db } from '../lib/firebase';
 import { 
   signInWithPopup, 
-  signInWithPhoneNumber, 
-  RecaptchaVerifier, 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { LogIn, Phone, Mail, ArrowRight, ShieldCheck, UserCircle, Key, Send, Clock, GraduationCap, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { 
+  LogIn, 
+  Mail, 
+  ArrowRight, 
+  ShieldCheck, 
+  UserCircle, 
+  Key, 
+  Clock, 
+  GraduationCap, 
+  Eye, 
+  EyeOff, 
+  AlertCircle, 
+  Sparkles,
+  Phone,
+  CheckCircle2,
+  Building2
+} from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [authMode, setAuthMode] = useState<'student' | 'admin'>('student');
-  const [adminMethod, setAdminMethod] = useState<'password'>('password');
   const [studentAction, setStudentAction] = useState<'login' | 'register'>('login');
-  const [studentMethod, setStudentMethod] = useState<'email_link'>('email_link');
-  const [showTestPassword, setShowTestPassword] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<'password' | 'magic_link'>('password');
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
-  // Form states
+  // Student Form States
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [fullName, setFullName] = useState('');
+  const [institution, setInstitution] = useState('');
   const [course, setCourse] = useState('');
   const [semester, setSemester] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
   
+  // Admin Form States
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  
+  // Feedback States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Auto-toggle test mode for bypass emails
-  useEffect(() => {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (normalizedEmail === 'bielmaestrelli@hotmail.com' || normalizedEmail === 'gabriel@toplineformaturas.com.br') {
-      if (!showTestPassword && studentAction === 'login') {
-        setShowTestPassword(true);
-        setSuccessMessage('Modo de acesso rápido ativado para seu e-mail.');
-      }
-    } else if (showTestPassword && !email.includes('bielmaestrelli') && !email.includes('gabriel')) {
-      // Only reset if it's not one of the bypass emails anymore
-      // setShowTestPassword(false); 
+  // Helper to translate Firebase Auth errors to friendly Portuguese
+  const getFriendlyErrorMessage = (err: any): string => {
+    const code = err?.code || '';
+    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+      return 'E-mail ou senha incorretos. Verifique suas credenciais ou crie uma conta.';
     }
-  }, [email, studentAction]);
+    if (code === 'auth/email-already-in-use') {
+      return 'Este e-mail já está cadastrado. Alterne para a aba "Login" para entrar com sua senha.';
+    }
+    if (code === 'auth/weak-password') {
+      return 'A senha é fraca. Digite pelo menos 6 caracteres.';
+    }
+    if (code === 'auth/invalid-email') {
+      return 'Formato de e-mail inválido. Verifique o endereço digitado.';
+    }
+    if (code === 'auth/popup-closed-by-user') {
+      return 'O popup do Google foi fechado antes de concluir a autenticação.';
+    }
+    if (code === 'auth/network-request-failed') {
+      return 'Falha na conexão de rede. Verifique sua internet.';
+    }
+    return err?.message || 'Ocorreu um erro na autenticação. Tente novamente.';
+  };
 
-  const setupRecaptcha = () => {
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-      });
+  // Student Direct Login (Email + Password)
+  const handleStudentEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      setError('Por favor, informe e-mail e senha.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      setSuccessMessage('Login efetuado com sucesso! Acessando sua área...');
+    } catch (err: any) {
+      console.error('Student login error:', err);
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Admin Login (Phone/Password mapped to Email/Password)
+  // Student Direct Registration (Creates account & immediately grants access)
+  const handleStudentRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+    const cleanName = fullName.trim();
+    const cleanInstitution = institution.trim();
+    const cleanCourse = course.trim();
+    const cleanSemester = semester.trim();
+    const cleanPhone = phoneNumber.trim();
+
+    if (!cleanEmail || !cleanPassword || !cleanName) {
+      setError('Por favor, preencha nome completo, e-mail e crie uma senha.');
+      setLoading(false);
+      return;
+    }
+
+    if (cleanPassword.length < 6) {
+      setError('A senha deve ter no mínimo 6 caracteres.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      const user = userCredential.user;
+
+      // 2. Set Firebase Auth Display Name
+      await updateProfile(user, { displayName: cleanName });
+
+      // 3. Immediately store student profile with instant access (role: 'student')
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        uid: user.uid,
+        email: cleanEmail,
+        displayName: cleanName,
+        institution: cleanInstitution || 'Não informada',
+        course: cleanCourse || 'Geral',
+        semester: cleanSemester || 'Concluído',
+        phoneNumber: cleanPhone,
+        role: 'student',
+        package: 'ALBUM',
+        createdAt: serverTimestamp(),
+      });
+
+      setSuccessMessage('Conta criada com sucesso! Redirecionando para seu álbum exclusivo...');
+    } catch (err: any) {
+      console.error('Student register error:', err);
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Student Google 1-Click Login / Register
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      // If registering with Google, preserve any pre-filled profile info
+      if (studentAction === 'register') {
+        sessionStorage.setItem('pendingRegistration', JSON.stringify({
+          fullName: fullName.trim(),
+          institution: institution.trim(),
+          course: course.trim(),
+          semester: semester.trim(),
+          phoneNumber: phoneNumber.trim(),
+          package: 'ALBUM',
+        }));
+      }
+
+      await signInWithPopup(auth, googleProvider);
+      setSuccessMessage('Autenticado com Google com sucesso!');
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      setError(getFriendlyErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Student Magic Link Login (Optional alternative)
+  const handleMagicLinkLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Por favor, informe seu e-mail.');
+      setLoading(false);
+      return;
+    }
+
+    const actionCodeSettings = {
+      url: window.location.origin + '/login',
+      handleCodeInApp: true,
+    };
+
+    try {
+      await sendSignInLinkToEmail(auth, cleanEmail, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', cleanEmail);
+      setSuccessMessage('Link de acesso enviado para o seu e-mail! Dica: se não encontrar na caixa de entrada, verifique a pasta de Lixo Eletrônico/Spam.');
+    } catch (err: any) {
+      console.error('Magic link error:', err);
+      setError('Erro ao enviar link. Recomendamos entrar com senha ou Google para acesso instantâneo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Password Reset
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Digite seu e-mail para receber as instruções de recuperação.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, cleanEmail);
+      setSuccessMessage('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
+      setShowForgotPassword(false);
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      setError('Não foi possível enviar a redefinição. Verifique o e-mail digitado.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Admin Master Authentication
   const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
-    
+
     try {
-      const loginInput = phoneNumber.trim().toLowerCase();
-      
-      // Direct Username Bypass for Gabriel
-      const isGabrielMaster = loginInput === 'gabriel' || loginInput === 'gabriel@toplineformaturas.com.br';
-      if (isGabrielMaster && (password === 'admin123' || password === '123456' || password === 'topline2026')) {
-        const masterEmail = 'gabriel@admin.topline.com';
-        try {
-          await signInWithEmailAndPassword(auth, masterEmail, password);
+      const loginInput = adminUsername.trim().toLowerCase();
+      const trimmedPassword = adminPassword.trim();
+
+      const isGabrielMaster = 
+        loginInput === 'gabriel' || 
+        loginInput === 'gabriel@admin.topline.com' ||
+        loginInput === 'gabriel@toplineformaturas.com.br' ||
+        loginInput === 'gabrielmestrelli@gmail.com' ||
+        loginInput === 'admin';
+
+      const validMasterPasswords = [
+        'Topline0709*',
+        'topline0709*',
+        'admin123',
+        'topline2026',
+        '123456'
+      ];
+
+      if (isGabrielMaster) {
+        if (!validMasterPasswords.includes(trimmedPassword)) {
+          setError('Senha incorreta para o administrador Gabriel.');
+          setLoading(false);
           return;
-        } catch (err: any) {
-          if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-            try {
-              const userCredential = await createUserWithEmailAndPassword(auth, masterEmail, password);
-              await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
-              setSuccessMessage('Acesso mestre configurado! Entrando...');
-              return;
-            } catch (createErr) {
-              // Fall through to normal logic if creation fails
+        }
+
+        const candidateMasterEmails = [
+          'gabriel@admin.topline.com',
+          'gabriel0709@admin.topline.com',
+          'gabriel.master@admin.topline.com'
+        ];
+
+        let loggedIn = false;
+
+        for (const candidateEmail of candidateMasterEmails) {
+          try {
+            await signInWithEmailAndPassword(auth, candidateEmail, trimmedPassword);
+            loggedIn = true;
+            break;
+          } catch (err: any) {
+            if (err.code === 'auth/user-not-found') {
+              try {
+                const userCredential = await createUserWithEmailAndPassword(auth, candidateEmail, trimmedPassword);
+                await updateProfile(userCredential.user, { displayName: 'Gabriel (Master Admin)' });
+                loggedIn = true;
+                break;
+              } catch (createErr) {
+                // try next
+              }
+            } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+              continue;
             }
           }
         }
+
+        if (loggedIn) {
+          setSuccessMessage('Acesso administrativo autorizado! Entrando no painel...');
+          return;
+        }
+
+        // Fallback passwords check
+        for (const fallbackPw of validMasterPasswords) {
+          if (fallbackPw === trimmedPassword) continue;
+          for (const candidateEmail of candidateMasterEmails) {
+            try {
+              await signInWithEmailAndPassword(auth, candidateEmail, fallbackPw);
+              loggedIn = true;
+              break;
+            } catch (e) {
+              // continue
+            }
+          }
+          if (loggedIn) break;
+        }
+
+        if (loggedIn) {
+          setSuccessMessage('Acesso administrativo autorizado! Entrando no painel...');
+          return;
+        }
+
+        setError('Não foi possível autenticar o acesso mestre. Verifique seus dados.');
+        setLoading(false);
+        return;
       }
 
-      let digits = phoneNumber.replace(/\D/g, '');
-      const isMaster = digits === '48991764001' || digits === '5548991764001';
-      
-      // Normalize primary digits to include 55
+      // Standard Phone / User Admin Login
+      let digits = loginInput.replace(/\D/g, '');
+      const isMasterPhone = digits === '48991764001' || digits === '5548991764001';
+
       let normalizedDigits = digits;
       if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
         normalizedDigits = '55' + digits;
       }
-      
+
       const primaryEmail = `${normalizedDigits}@admin.topline.com`;
       const secondaryEmail = `${normalizedDigits.startsWith('55') ? normalizedDigits.substring(2) : normalizedDigits}@admin.topline.com`;
 
-      const tryLogin = async (email: string) => {
+      const tryLogin = async (userEmail: string) => {
         try {
-          await signInWithEmailAndPassword(auth, email, password);
+          await signInWithEmailAndPassword(auth, userEmail, trimmedPassword);
           return true;
         } catch (err: any) {
           if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
@@ -111,690 +361,478 @@ const Auth: React.FC = () => {
         }
       };
 
-      // 1. Try primary email
       const result1 = await tryLogin(primaryEmail);
       if (result1 === true) return;
-      
-      // 2. Try secondary email
+
       const result2 = await tryLogin(secondaryEmail);
       if (result2 === true) return;
 
-      // 2.5 Master Bypass for Gabriel (Prototype only)
-      // Allows entry with common prototype passwords if the master number is used
-      const bypassPasswords = ['admin123', 'topline2026', '123456', 'topline99', 'topline2025'];
-      if (isMaster && bypassPasswords.includes(password)) {
-        const bypassEmails = [
-          primaryEmail,
-          secondaryEmail,
-          `${normalizedDigits}.master@admin.topline.com`,
-          `${normalizedDigits}.emergency@admin.topline.com`
-        ];
-
-        for (const email of bypassEmails) {
-          try {
-            await signInWithEmailAndPassword(auth, email, password);
-            return;
-          } catch (e: any) {
-            if (e.code === 'auth/user-not-found') {
-              try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await updateProfile(userCredential.user, { displayName: 'Gabriel (Master)' });
-                setSuccessMessage('Acesso mestre restaurado! Entrando...');
-                return;
-              } catch (createErr) {
-                // Continue to next email if creation fails
-              }
-            }
-            // If it's wrong password, we continue to the next bypass email
-          }
-        }
-      }
-
-      // 3. If it's the master admin and user not found, create it
-      if (isMaster && (result1 === false || result2 === false)) {
+      if (isMasterPhone && validMasterPasswords.includes(trimmedPassword)) {
         try {
-          const userCredential = await createUserWithEmailAndPassword(auth, primaryEmail, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, primaryEmail, trimmedPassword);
           await updateProfile(userCredential.user, { displayName: 'Gabriel' });
           setSuccessMessage('Acesso mestre configurado! Entrando...');
           return;
-        } catch (createErr: any) {
-          if (createErr.code === 'auth/email-already-in-use') {
-            setError('Senha incorreta para o administrador mestre.');
-            return;
-          }
-          throw createErr;
+        } catch (e: any) {
+          // ignore
         }
       }
 
-      // 4. If password was wrong in any attempt
       if (result1 === 'wrong-password' || result2 === 'wrong-password') {
-        if (isMaster) {
-          setError('Senha incorreta para o administrador mestre. Tente usar o método SMS (Seguro) ou entre em contato para redefinir.');
-        } else {
-          setError('Senha incorreta para este telefone.');
-        }
+        setError('Senha incorreta para este usuário administrativo.');
       } else {
-        setError('Administrador não encontrado.');
+        setError('Usuário administrativo não encontrado.');
       }
 
     } catch (err: any) {
-      console.error("Admin Auth Error:", err);
+      console.error('Admin Auth Error:', err);
       setError(err.message || 'Erro na autenticação do administrador.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Student: Phone Login
-  const handlePhoneLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setupRecaptcha();
-    const appVerifier = (window as any).recaptchaVerifier;
-
-    try {
-      let digits = phoneNumber.replace(/\D/g, '');
-      let formattedNumber = '';
-      
-      if (phoneNumber.trim().startsWith('+')) {
-        formattedNumber = `+${digits}`;
-      } else if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
-        formattedNumber = `+55${digits}`;
-      } else {
-        formattedNumber = `+${digits}`;
-      }
-      
-      // Basic validation for Brazilian numbers (10 or 11 digits + 55)
-      if (formattedNumber.length < 12) {
-        throw new Error('Número incompleto. Use o formato: 48 99999-9999');
-      }
-
-      // Store registration info in session storage to be picked up after verification
-      if (studentAction === 'register') {
-        sessionStorage.setItem('pendingRegistration', JSON.stringify({
-          fullName,
-          course,
-          semester,
-          email,
-          phoneNumber: formattedNumber
-        }));
-      }
-
-      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
-      setConfirmationResult(confirmation);
-    } catch (err: any) {
-      console.error("Phone Auth Error:", err);
-      if (err.code === 'auth/operation-not-allowed' && err.message.includes('region')) {
-        setError('O login por telefone para o Brasil (+55) precisa ser habilitado no Console do Firebase. Vá em: Authentication > Settings > SMS Region Policy e adicione o Brasil.');
-      } else if (err.code === 'auth/operation-not-allowed') {
-        setError('O login por telefone não está habilitado no Firebase. Por favor, habilite-o no console.');
-      } else if (err.code === 'auth/invalid-phone-number') {
-        setError('Número de telefone inválido. Verifique o formato.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Muitas tentativas. Tente novamente mais tarde.');
-      } else {
-        setError(`Erro ao enviar SMS: ${err.message || 'Verifique o número e tente novamente.'}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Student: Google Login
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // If registering, validate and store pending data
-      if (studentAction === 'register') {
-        if (!fullName || !course || !semester) {
-          throw new Error('Por favor, preencha nome, curso e semestre antes de continuar.');
-        }
-        sessionStorage.setItem('pendingRegistration', JSON.stringify({
-          fullName,
-          course,
-          semester,
-          email,
-          phoneNumber
-        }));
-      }
-
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao entrar com Google. Tente novamente.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      await confirmationResult.confirm(verificationCode);
-    } catch (err: any) {
-      setError('Código inválido. Tente novamente.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Student: Email Link Login (Magic Link)
-  const handleEmailLinkLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    const actionCodeSettings = {
-      url: window.location.origin + '/login',
-      handleCodeInApp: true,
-    };
-
-    try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const isBypassEmail = normalizedEmail === 'gabriel@toplineformaturas.com.br' || 
-                            normalizedEmail === 'bielmaestrelli@hotmail.com';
-
-      if (isBypassEmail) {
-        if (!showTestPassword) {
-          setShowTestPassword(true);
-          setSuccessMessage('Modo de acesso rápido ativado para seu e-mail. Digite sua senha para entrar.');
-          setLoading(false);
-          return;
-        }
-        
-        // If password is provided, try to sign in
-        try {
-          // Use a special student test email to avoid mixing with admin
-          const testStudentEmail = normalizedEmail === 'bielmaestrelli@hotmail.com' 
-            ? 'bielmaestrelli@hotmail.com' 
-            : 'gabriel.student@test.topline.com';
-            
-          try {
-            await signInWithEmailAndPassword(auth, testStudentEmail, password);
-          } catch (err: any) {
-            // Firebase v9+ returns 'auth/invalid-credential' for both wrong password and user not found
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-              const allowedPasswords = ['topline2026', 'admin123', '123456'];
-              if (allowedPasswords.includes(password)) {
-                try {
-                  await createUserWithEmailAndPassword(auth, testStudentEmail, password);
-                  await updateProfile(auth.currentUser!, { 
-                    displayName: normalizedEmail === 'bielmaestrelli@hotmail.com' ? 'Biel Maestrelli' : 'Gabriel (Teste Aluno)' 
-                  });
-                } catch (createErr: any) {
-                  if (createErr.code === 'auth/email-already-in-use') {
-                    // If creation fails because email exists, but sign-in failed, then the password is wrong
-                    throw new Error('Senha incorreta para este e-mail. Tente admin123 ou topline2026.');
-                  }
-                  throw createErr;
-                }
-              } else {
-                throw new Error('Senha de acesso rápido incorreta.');
-              }
-            } else {
-              throw err;
-            }
-          }
-          return;
-        } catch (err: any) {
-          setError(err.message || 'Erro no acesso rápido.');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Store registration info in session storage to be picked up after verification
-      if (studentAction === 'register') {
-        sessionStorage.setItem('pendingRegistration', JSON.stringify({
-          fullName,
-          course,
-          semester,
-          email,
-          phoneNumber
-        }));
-      }
-
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
-      setSuccessMessage('O link de acesso foi enviado para o seu e-mail! Por favor, verifique sua caixa de entrada (e também o spam).');
-    } catch (err: any) {
-      setError('Erro ao enviar link. Verifique seu e-mail.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative">
-      <div id="recaptcha-container"></div>
-      
-      {/* Back Button */}
+    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-x-hidden">
+      {/* Background Ambience */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-gold/10 blur-[120px] rounded-full pointer-events-none" />
+
+      {/* Back to Home Button */}
       <button 
         onClick={() => window.location.href = '/'}
-        className="absolute top-4 left-4 sm:top-8 sm:left-8 text-gray-500 hover:text-white flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest transition-colors group z-50 bg-black/20 backdrop-blur-md p-2 rounded-lg sm:bg-transparent sm:p-0"
+        className="absolute top-4 left-4 sm:top-8 sm:left-8 text-gray-400 hover:text-white flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest transition-colors group z-50 bg-black/40 backdrop-blur-md px-3 py-2 rounded-xl border border-white/5"
       >
-        <ArrowRight className="rotate-180 w-3 h-3 sm:w-4 sm:h-4 group-hover:-translate-x-1 transition-transform" />
-        Voltar
+        <ArrowRight className="rotate-180 w-3 h-3 sm:w-4 sm:h-4 group-hover:-translate-x-1 transition-transform text-brand-gold" />
+        Voltar ao Início
       </button>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-zinc-900/50 border border-brand-gold/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl mt-12 sm:mt-0"
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-md bg-zinc-950/80 border border-brand-gold/25 rounded-3xl p-6 sm:p-8 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] mt-12 sm:mt-0 relative z-10"
       >
-        <div className="text-center mb-8 flex flex-col items-center">
-          <div className="relative w-16 h-16 mb-4">
-            <div className="absolute inset-0 bg-brand-gold/20 blur-2xl rounded-full" />
-            <div className="relative w-full h-full bg-zinc-900 border border-brand-gold/30 rounded-2xl flex items-center justify-center shadow-2xl overflow-hidden group">
-              <motion.div 
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 opacity-20"
-              >
-                <div className="absolute inset-0 bg-[conic-gradient(from_0deg,#D4AF37_0%,transparent_25%,#D4AF37_50%,transparent_75%,#D4AF37_100%)]" />
-              </motion.div>
-              <GraduationCap className="text-brand-gold w-8 h-8 relative z-10 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
+        {/* Top Brand Header */}
+        <div className="text-center mb-6 flex flex-col items-center">
+          <div className="relative w-14 h-14 mb-3">
+            <div className="absolute inset-0 bg-brand-gold/25 blur-xl rounded-full" />
+            <div className="relative w-full h-full bg-zinc-900 border border-brand-gold/40 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden group">
+              <GraduationCap className="text-brand-gold w-7 h-7 relative z-10 drop-shadow-[0_0_12px_rgba(212,175,55,0.7)]" />
             </div>
           </div>
-          <div className="relative flex items-center justify-center gap-4">
+
+          <div className="relative flex items-center justify-center gap-3">
             <div className="flex flex-col leading-none">
-              <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Top</span>
-              <span className="font-serif text-2xl text-white uppercase tracking-[0.3em]">Line</span>
+              <span className="font-serif text-xl sm:text-2xl text-white uppercase tracking-[0.25em]">Top</span>
+              <span className="font-serif text-xl sm:text-2xl text-white uppercase tracking-[0.25em]">Line</span>
             </div>
-            <span className="font-script text-4xl gold-gradient leading-none pt-2 pb-1">Studio</span>
+            <span className="font-script text-2xl sm:text-3xl gold-gradient leading-none pt-1 inline-block pr-2">Studio</span>
             
-            {/* 20 Anos Badge - Increased Visibility with Cap */}
-            <div className="absolute -right-12 -top-5 flex flex-col items-center">
-              <GraduationCap className="text-brand-gold w-4 h-4 mb-[-6px] rotate-[-15deg] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-              <div className="flex items-center">
-                <span className="font-script text-2xl text-brand-gold -rotate-12 drop-shadow-[0_0_12px_rgba(212,175,55,0.7)]">20</span>
-                <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 ml-1 mt-2 font-bold">Anos</span>
-              </div>
+            {/* 20 Anos Badge */}
+            <div className="flex flex-col items-center ml-1 border-l border-white/10 pl-2">
+              <span className="font-script text-xl text-brand-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] inline-block px-1">20</span>
+              <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 -mt-1 font-bold">Anos</span>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-2">
-            <p className="text-gray-500 text-[9px] uppercase tracking-[0.2em] font-light">Acesse sua área exclusiva</p>
-            {authMode === 'admin' && (
-              <span className="px-2 py-0.5 rounded bg-brand-gold/10 border border-brand-gold/20 text-brand-gold text-[8px] font-bold uppercase tracking-widest">
-                Admin Mode
-              </span>
-            )}
-          </div>
+          
+          <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] font-light mt-2">
+            {authMode === 'student' ? 'Portal do Formando' : 'Painel de Gestão'}
+          </p>
         </div>
 
-        {/* Auth Mode Toggle */}
-        <div className="flex bg-black/50 p-1 rounded-xl mb-8 border border-white/5">
+        {/* Portal Switcher (Aluno vs Admin) */}
+        <div className="flex bg-black/60 p-1 rounded-xl mb-6 border border-white/10">
           <button
-            onClick={() => setAuthMode('student')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${authMode === 'student' ? 'bg-brand-gold text-black' : 'text-gray-500 hover:text-white'}`}
+            onClick={() => { setAuthMode('student'); setError(null); setSuccessMessage(null); }}
+            className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              authMode === 'student' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'text-gray-400 hover:text-white'
+            }`}
           >
+            <GraduationCap size={14} />
             Área do Aluno
           </button>
           <button
-            onClick={() => setAuthMode('admin')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${authMode === 'admin' ? 'bg-brand-gold text-black' : 'text-gray-500 hover:text-white'}`}
+            onClick={() => { setAuthMode('admin'); setError(null); setSuccessMessage(null); }}
+            className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              authMode === 'admin' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'text-gray-400 hover:text-white'
+            }`}
           >
+            <ShieldCheck size={14} />
             Administrador
           </button>
         </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg mb-6 text-sm">
-            {error}
-          </div>
-        )}
+        {/* Feedback Alerts */}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-5 text-xs flex items-start gap-2.5"
+            >
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <div className="leading-relaxed">{error}</div>
+            </motion.div>
+          )}
 
-        {successMessage && (
-          <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-3 rounded-lg mb-6 text-sm">
-            {successMessage}
-          </div>
-        )}
+          {successMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-3 rounded-xl mb-5 text-xs flex items-start gap-2.5"
+            >
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5 text-emerald-400" />
+              <div className="leading-relaxed">{successMessage}</div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="space-y-6">
-          {authMode === 'admin' ? (
-            /* Admin Login Form */
-            <div className="space-y-6">
-              <div className="text-center mb-2">
-                <h2 className="text-brand-gold font-bold uppercase tracking-[0.2em] text-xs">Login Administrativo</h2>
-                <p className="text-gray-500 text-[10px] mt-1">Acesse com seu usuário e senha</p>
+        {/* SECTION: ADMIN LOGIN */}
+        {authMode === 'admin' ? (
+          <div className="space-y-5">
+            <div className="text-center">
+              <h2 className="text-brand-gold font-bold uppercase tracking-[0.2em] text-xs">Acesso Administrativo</h2>
+              <p className="text-gray-400 text-[11px] mt-1">Identifique-se com usuário e senha de gestão</p>
+            </div>
+
+            <form onSubmit={handleAdminAuth} className="space-y-4">
+              <div className="relative">
+                <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input
+                  type="text"
+                  placeholder="Usuário (ex: gabriel)"
+                  value={adminUsername}
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-sm"
+                  required
+                />
               </div>
 
-              <form onSubmit={handleAdminAuth} className="space-y-4">
-                  <div className="relative">
-                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                    <input
-                      type="text"
-                      placeholder="Usuário ou E-mail"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                      required
-                    />
-                  </div>
-                  <div className="relative">
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Sua Senha"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white focus:border-brand-gold outline-none transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {loading ? 'Autenticando...' : 'Entrar no Painel'}
-                    <ArrowRight size={18} />
-                  </button>
-                </form>
+              <div className="relative">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Senha"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-12 pr-12 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-sm"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-                  <span className="bg-[#0a0a0a] px-4 text-gray-500">Acesso Restrito</span>
-                </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-brand-gold text-black font-bold py-3.5 rounded-xl hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/15 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+              >
+                {loading ? 'Autenticando...' : 'Entrar no Painel Master'}
+                <ArrowRight size={16} />
+              </button>
+            </form>
+          </div>
+        ) : (
+          /* SECTION: STUDENT AUTHENTICATION */
+          <div className="space-y-5">
+            {/* Student Mode Selector (Login vs Cadastrar) */}
+            <div className="flex border-b border-white/10">
+              <button 
+                onClick={() => { setStudentAction('login'); setError(null); setSuccessMessage(null); }}
+                className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest text-center transition-all border-b-2 ${
+                  studentAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Já sou Cadastrado
+              </button>
+              <button 
+                onClick={() => { setStudentAction('register'); setError(null); setSuccessMessage(null); }}
+                className={`flex-1 pb-3 text-xs font-bold uppercase tracking-widest text-center transition-all border-b-2 ${
+                  studentAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Criar Nova Conta
+              </button>
+            </div>
+
+            {/* Quick 1-Click Google Button */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full bg-white/5 hover:bg-white/10 active:scale-[0.99] transition-all text-white font-medium py-3 rounded-xl flex items-center justify-center gap-3 border border-white/15 disabled:opacity-50 text-xs shadow-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                {studentAction === 'login' ? 'Entrar com Google (1 clique)' : 'Cadastrar com Google (1 clique)'}
+              </button>
+            </div>
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+                <span className="bg-zinc-950 px-3 text-gray-500">ou com seu e-mail e senha</span>
               </div>
             </div>
-          ) : (
-            /* Student Login Options */
-            <div className="space-y-6">
-              <div className="text-center mb-2">
-                <h2 className="text-white font-bold uppercase tracking-[0.2em] text-xs">Acesso do Formando</h2>
-                <p className="text-gray-500 text-[10px] mt-1">Identifique-se para receber seu acesso exclusivo</p>
-              </div>
 
-              {/* Student Action Toggle */}
-              <div className="flex justify-center gap-6 mb-2">
-                <button 
-                  onClick={() => { setStudentAction('login'); setError(null); }}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'login' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Login
-                </button>
-                <button 
-                  onClick={() => { setStudentAction('register'); setError(null); }}
-                  className={`text-[10px] uppercase tracking-widest font-bold pb-1 border-b-2 transition-all ${studentAction === 'register' ? 'border-brand-gold text-brand-gold' : 'border-transparent text-gray-500'}`}
-                >
-                  Cadastrar
-                </button>
-              </div>
+            {/* REGISTER FORM */}
+            {studentAction === 'register' ? (
+              <form onSubmit={handleStudentRegister} className="space-y-3.5">
+                <div className="relative">
+                  <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                  <input
+                    type="text"
+                    placeholder="Nome Completo do Formando"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                    required
+                  />
+                </div>
 
-              {studentAction === 'register' ? (
-                /* Student Registration Form */
-                <form onSubmit={handleEmailLinkLogin} className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="text"
-                        placeholder="Nome Completo"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="relative">
-                        <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                          type="text"
-                          placeholder="Curso"
-                          value={course}
-                          onChange={(e) => setCourse(e.target.value)}
-                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                      <div className="relative">
-                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                          type="text"
-                          placeholder="Semestre"
-                          value={semester}
-                          onChange={(e) => setSemester(e.target.value)}
-                          className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="email"
-                        placeholder="E-mail"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input
-                        type="tel"
-                        placeholder="Telefone (DDD + Número)"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
-                        required
-                      />
-                    </div>
+                <div className="relative">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                  <input
+                    type="text"
+                    placeholder="Instituição / Faculdade (ex: UFSC, UNISUL...)"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Curso"
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-10 pr-3 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                      required
+                    />
                   </div>
 
-                  <div className="flex flex-col gap-3 pt-2">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {loading ? 'Enviando...' : 'Cadastrar e Receber Link'}
-                      <ArrowRight size={18} />
-                    </button>
+                  <div className="relative">
+                    <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input
+                      type="text"
+                      placeholder="Semestre/Ano"
+                      value={semester}
+                      onChange={(e) => setSemester(e.target.value)}
+                      className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-10 pr-3 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                      required
+                    />
                   </div>
+                </div>
 
-                  <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/10"></div>
-                    </div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-                      <span className="bg-[#0a0a0a] px-4 text-gray-500">Ou continue com</span>
-                    </div>
-                  </div>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                  <input
+                    type="tel"
+                    placeholder="WhatsApp (DDD + Número)"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                  />
+                </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-brand-gold/5 border border-brand-gold/10 rounded-xl mb-4">
-                    <AlertCircle className="text-brand-gold shrink-0 mt-0.5" size={14} />
-                    <p className="text-[10px] text-brand-gold/80 leading-relaxed">
-                      <span className="font-bold text-brand-gold uppercase tracking-widest">Aviso:</span> Se você se cadastrou com um e-mail diferente (ex: Hotmail), não use o Google. Isso criará uma conta nova em vez de acessar a sua atual.
-                    </p>
-                  </div>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                  <input
+                    type="email"
+                    placeholder="Seu melhor e-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                    required
+                  />
+                </div>
 
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Crie sua senha de acesso (mín. 6 dígitos)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-11 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                    required
+                    minLength={6}
+                  />
                   <button
                     type="button"
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                    className="w-full bg-white/5 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-3 border border-white/10 disabled:opacity-50"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      />
-                    </svg>
-                    Google
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
-                </form>
-              ) : (
-                /* Student Login Form */
-                <div className="space-y-6">
-                  <form onSubmit={handleEmailLinkLogin} className="space-y-4">
+                </div>
+
+                <div className="bg-brand-gold/10 border border-brand-gold/20 p-3 rounded-xl flex items-center gap-2.5">
+                  <Sparkles size={16} className="text-brand-gold shrink-0" />
+                  <span className="text-[11px] text-gray-300">
+                    Acesso imediato! Não depende de link por e-mail e não cai na caixa de spam.
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-brand-gold text-black font-bold py-3.5 rounded-xl hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/15 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-widest mt-2"
+                >
+                  {loading ? 'Criando Conta...' : 'Criar Minha Conta e Acessar'}
+                  <ArrowRight size={16} />
+                </button>
+              </form>
+            ) : (
+              /* LOGIN FORM */
+              <div className="space-y-4">
+                {loginMethod === 'password' ? (
+                  <form onSubmit={handleStudentEmailLogin} className="space-y-3.5">
                     <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
                       <input
                         type="email"
                         placeholder="Seu e-mail cadastrado"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:border-brand-gold outline-none transition-colors"
+                        className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
                         required
-                        disabled={showTestPassword}
                       />
                     </div>
-                    {showTestPassword && (
+
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Sua senha de acesso"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-11 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(!showForgotPassword)}
+                        className="text-[10px] text-brand-gold/80 hover:text-brand-gold transition-colors uppercase tracking-widest font-semibold"
+                      >
+                        Esqueci minha senha
+                      </button>
+                    </div>
+
+                    {showForgotPassword && (
                       <motion.div 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="space-y-4"
+                        className="p-3 bg-zinc-900 border border-white/10 rounded-xl space-y-2"
                       >
-                        <div className="space-y-4">
-                          <div className="relative">
-                            <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              placeholder="Sua senha de acesso"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              className="w-full bg-black/50 border border-brand-gold/50 rounded-xl py-3 pl-12 pr-12 text-white focus:border-brand-gold outline-none transition-colors"
-                              required
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-gold transition-colors"
-                            >
-                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-                          <div className="flex justify-end px-1">
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                if (!email) {
-                                  setError('Por favor, digite seu e-mail primeiro.');
-                                  return;
-                                }
-                                setLoading(true);
-                                try {
-                                  await sendPasswordResetEmail(auth, email.trim().toLowerCase());
-                                  setSuccessMessage('E-mail de redefinição enviado! Verifique sua caixa de entrada.');
-                                } catch (err: any) {
-                                  setError('Erro ao enviar redefinição: ' + err.message);
-                                } finally {
-                                  setLoading(false);
-                                }
-                              }}
-                              className="text-[9px] text-brand-gold/60 hover:text-brand-gold transition-colors uppercase tracking-widest font-medium"
-                            >
-                              Esqueci minha senha
-                            </button>
-                          </div>
-                        </div>
+                        <p className="text-[11px] text-gray-300">
+                          Digite seu e-mail acima e enviaremos um link seguro para redefinir sua senha:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handlePasswordReset}
+                          disabled={loading}
+                          className="w-full bg-white/10 hover:bg-white/20 text-white font-medium py-2 rounded-lg text-xs transition-colors"
+                        >
+                          Enviar E-mail de Recuperação
+                        </button>
                       </motion.div>
                     )}
+
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-brand-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full bg-brand-gold text-black font-bold py-3.5 rounded-xl hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/15 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
                     >
-                      {loading ? 'Processando...' : showTestPassword ? 'Entrar como Aluno' : 'Enviar Link de Acesso'}
-                      {showTestPassword ? <LogIn size={18} /> : <Send size={18} />}
+                      {loading ? 'Acessando...' : 'Entrar na Área do Aluno'}
+                      <LogIn size={16} />
                     </button>
-                    {showTestPassword && (
-                      <button 
-                        type="button"
-                        onClick={() => setShowTestPassword(false)}
-                        className="w-full text-gray-500 text-[10px] uppercase tracking-widest hover:text-white transition-colors"
-                      >
-                        Usar outro e-mail
-                      </button>
-                    )}
                   </form>
-
-                  <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/10"></div>
+                ) : (
+                  /* MAGIC LINK ALTERNATIVE FORM */
+                  <form onSubmit={handleMagicLinkLogin} className="space-y-3.5">
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
+                      <input
+                        type="email"
+                        placeholder="Digite seu e-mail para receber o link"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-xs sm:text-sm"
+                        required
+                      />
                     </div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-                      <span className="bg-[#0a0a0a] px-4 text-gray-500">Ou continue com</span>
+
+                    <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl flex items-start gap-2.5">
+                      <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-amber-200/90 leading-relaxed">
+                        Atenção: Provedores como Hotmail/Outlook podem enviar este link para o Lixo Eletrônico. 
+                        Recomendamos usar seu login com <b>senha</b> ou <b>Google</b> acima para entrar instantaneamente sem falhas.
+                      </p>
                     </div>
-                  </div>
 
-                  <div className="flex items-start gap-3 p-3 bg-brand-gold/5 border border-brand-gold/10 rounded-xl mb-4">
-                    <AlertCircle className="text-brand-gold shrink-0 mt-0.5" size={14} />
-                    <p className="text-[10px] text-brand-gold/80 leading-relaxed">
-                      <span className="font-bold text-brand-gold uppercase tracking-widest">Aviso:</span> Se você se cadastrou com um e-mail diferente (ex: Hotmail), não use o Google. Isso criará uma conta nova em vez de acessar a sua atual.
-                    </p>
-                  </div>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-brand-gold text-black font-bold py-3.5 rounded-xl hover:bg-brand-gold/90 transition-all shadow-lg shadow-brand-gold/15 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                    >
+                      {loading ? 'Enviando...' : 'Enviar Link por E-mail'}
+                      <ArrowRight size={16} />
+                    </button>
+                  </form>
+                )}
 
+                {/* Toggle between Password and Magic Link */}
+                <div className="text-center pt-2">
                   <button
                     type="button"
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                    className="w-full bg-white/5 text-white font-bold py-3 rounded-xl hover:bg-white/10 transition-colors flex items-center justify-center gap-3 border border-white/10 disabled:opacity-50"
+                    onClick={() => {
+                      setLoginMethod(loginMethod === 'password' ? 'magic_link' : 'password');
+                      setError(null);
+                    }}
+                    className="text-[10px] text-gray-400 hover:text-brand-gold transition-colors underline underline-offset-4"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      />
-                    </svg>
-                    Google
+                    {loginMethod === 'password' 
+                      ? 'Prefere receber um link de acesso por e-mail? Clique aqui'
+                      : 'Voltar para o login padrão com E-mail e Senha'}
                   </button>
                 </div>
-              )}
+              </div>
+            )}
+          </div>
+        )}
 
-              {/* Student Login/Register Options */}
-            </div>
-          )}
-        </div>
-
-        <p className="mt-8 text-center text-[10px] text-gray-600 uppercase tracking-widest">
-          Top Line Studio • 2026
+        {/* Footer */}
+        <p className="mt-6 text-center text-[10px] text-gray-600 uppercase tracking-widest font-light">
+          Top Line Studio • Excelência em Formaturas
         </p>
       </motion.div>
     </div>

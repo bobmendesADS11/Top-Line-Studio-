@@ -122,16 +122,16 @@ const App: React.FC = () => {
               // Upgrade to admin if needed
               await setDoc(userRef, { ...currentData, role: 'admin' }, { merge: true });
               setRole('admin');
-            } else if (isImmediateStudent && currentData.role === 'pending') {
-              // Upgrade to student if needed
-              await setDoc(userRef, { ...currentData, role: 'student' }, { merge: true });
+            } else if (currentData.role === 'pending' || isImmediateStudent) {
+              // Automatically activate pending accounts to full student access
+              await setDoc(userRef, { ...currentData, role: 'student', package: currentData.package || 'ALBUM' }, { merge: true });
               setRole('student');
             } else {
               setRole(currentData.role);
             }
           } else {
-            // Create new profile
-            const newRole = shouldBeAdmin ? 'admin' : (isImmediateStudent ? 'student' : 'pending');
+            // Create new profile with instant student access
+            const newRole = shouldBeAdmin ? 'admin' : 'student';
             
             // Pick up pending registration data if available
             const pendingDataStr = sessionStorage.getItem('pendingRegistration');
@@ -154,9 +154,11 @@ const App: React.FC = () => {
               displayName: extractedName,
               photoURL: currentUser.photoURL || '',
               phoneNumber: extractedPhone,
+              institution: pendingData.institution || '',
               course: pendingData.course || '',
               semester: pendingData.semester || '',
               role: newRole,
+              package: pendingData.package || 'ALBUM',
               createdAt: serverTimestamp(),
             });
             setRole(newRole);

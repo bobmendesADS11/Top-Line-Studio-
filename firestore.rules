@@ -67,6 +67,11 @@ service cloud.firestore {
         allow update: if isAdmin() && isValidPhoto(request.resource.data);
         allow delete: if isOwner(userId) || isAdmin();
       }
+
+      // Drafts Sub-collection (Album Editor auto-save & versioning)
+      match /drafts/{draftId} {
+        allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      }
     }
 
     function isValidPhoto(data) {
@@ -89,23 +94,9 @@ service cloud.firestore {
     // Order Rules
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.studentUid || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.studentUid && isValidOrder(request.resource.data);
-      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == resource.data.studentUid && request.resource.data.status == resource.data.status && isValidOrder(request.resource.data)));
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.studentUid;
+      allow update: if isAuthenticated() && (isAdmin() || request.auth.uid == resource.data.studentUid);
       allow delete: if isAdmin();
-    }
-
-    function isValidOrder(data) {
-      let requiredFields = ['studentUid', 'package', 'photoIds', 'status', 'createdAt'];
-      let allowedFields = ['studentUid', 'package', 'photoIds', 'status', 'createdAt', 'studentEmail', 'studentName'];
-      return data.keys().hasAll(requiredFields) &&
-             data.keys().hasOnly(allowedFields) &&
-             data.studentUid is string &&
-             data.package in ['link', 'black', 'album'] &&
-             data.photoIds is list && data.photoIds.size() < 1000 &&
-             data.status in ['pending', 'processing', 'completed', 'cancelled'] &&
-             data.createdAt is timestamp &&
-             (!('studentEmail' in data) || isValidEmail(data.studentEmail)) &&
-             (!('studentName' in data) || (data.studentName is string && data.studentName.size() < 100));
     }
   }
 }

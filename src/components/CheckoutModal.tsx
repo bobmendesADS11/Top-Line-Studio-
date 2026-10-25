@@ -87,6 +87,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         course: course || 'Formando 2026',
         deliveryAddress: purchaseType === 'FULL' ? deliveryAddress : 'Digital (Link Vitalício)',
         productType: purchaseType === 'LINK' ? 'link_studio' : 'album_studio_full',
+        type: purchaseType === 'LINK' ? 'link' : 'album',
+        package: purchaseType === 'LINK' ? 'link' : 'album',
         productName: purchaseType === 'LINK' ? 'Top Line Link Studio (Digital)' : 'Top Line Studio (Álbum Físico + Link)',
         albumSpecs: purchaseType === 'FULL' ? {
           size: albumSize,

@@ -110,16 +110,14 @@ interface AlbumSnapshot {
 }
 
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
-  const [activePhotos, setActivePhotos] = useState<Photo[]>([]);
+  const [activePhotos, setActivePhotos] = useState<Photo[]>(() => photos.length > 0 ? photos : DEMO_PHOTOS);
   
-  // Initialize activePhotos from props
+  // Keep activePhotos in sync with incoming photos prop
   useEffect(() => {
-    if (activePhotos.length === 0 && photos.length > 0) {
+    if (photos.length > 0) {
       setActivePhotos(photos);
-    } else if (photos.length === 0) {
-      setActivePhotos(DEMO_PHOTOS);
     }
-  }, [photos, activePhotos.length]);
+  }, [photos]);
 
   const [globalLayout, setGlobalLayout] = useState<LayoutType>('minimalist');
   const [pageEffects, setPageEffects] = useState<EffectType[]>([]);
@@ -882,6 +880,31 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       });
     }
 
+    // If page has no photos assigned, render an exquisite luxury fine-art layout placeholder
+    if (loadedImages.length === 0) {
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.28)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(width * 0.08, height * 0.08, width * 0.84, height * 0.84);
+      
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.12)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(width * 0.1, height * 0.1, width * 0.8, height * 0.8);
+
+      // Gold graduation crest / monogram
+      ctx.fillStyle = '#D4AF37';
+      ctx.font = 'bold 30px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('TOP LINE STUDIO', width / 2, height / 2 - 30);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('LÂMINA DISPONÍVEL', width / 2, height / 2 + 12);
+
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.45)';
+      ctx.font = 'italic 13px serif';
+      ctx.fillText('Selecione fotos na galeria para personalizar esta lâmina', width / 2, height / 2 + 38);
+    }
+
     applyEffect(ctx, width, height, pageEffect);
     
     const result = canvas.toDataURL('image/jpeg', 0.88);
@@ -1594,7 +1617,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               exit={{ opacity: 0 }}
               className="flex-1 min-h-0 relative"
             >
-              <div className="absolute inset-0 pb-20">
+              <div className="absolute inset-0">
                 <Album3D 
                   pages={pages} 
                   currentPage={currentPage} 
@@ -1604,39 +1627,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   materialType={materialType}
                   albumSize={albumSize}
                   coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
+                  purchaseType={purchaseType}
                   onPageChange={(p) => setCurrentPage(p)}
+                  onCheckout={() => setIsCheckoutOpen(true)}
                 />
-              </div>
-              
-              {/* 3D Controls Overlay */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-black/85 backdrop-blur-2xl border border-white/10 p-2 rounded-2xl z-20 shadow-2xl scale-90 sm:scale-100">
-                <button 
-                  onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                  className="p-3 hover:bg-white/10 rounded-xl transition-colors text-brand-gold"
-                  title="Lâmina Anterior"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="px-4 text-[10px] uppercase tracking-[0.2em] font-bold text-white/80">
-                  Lâmina {currentPage + 1} ({currentPage * 2 + 1} & {currentPage * 2 + 2}) / {Math.max(1, Math.ceil(pages.length / 2))}
-                </div>
-                <button 
-                  onClick={() => setCurrentPage(Math.min(Math.floor(pages.length / 2), currentPage + 1))}
-                  className="p-3 hover:bg-white/10 rounded-xl transition-colors text-brand-gold"
-                  title="Próxima Lâmina"
-                >
-                  <ArrowRight size={20} />
-                </button>
-                
-                <div className="w-[1px] h-8 bg-white/10 mx-2" />
-                
-                <button 
-                  onClick={() => setIsCheckoutOpen(true)}
-                  className="bg-brand-gold text-black px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2"
-                >
-                  <MessageCircle size={16} />
-                  {purchaseType === 'LINK' ? 'Contratar Link Studio' : 'Comprar Álbum Físico'}
-                </button>
               </div>
             </motion.div>
           ) : (

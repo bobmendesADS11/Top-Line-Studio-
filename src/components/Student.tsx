@@ -26,38 +26,50 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
       <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-brand-gold/10 blur-[80px] rounded-full" />
 
       <div className="relative z-10">
-        <div className="flex items-center gap-6 mb-10">
-          <div className="flex flex-col items-center leading-none">
-            <div className="flex gap-2">
-              <h1 className="font-serif text-4xl md:text-6xl text-white uppercase tracking-[0.2em] leading-none">Top</h1>
-              <h1 className="font-serif text-4xl md:text-6xl text-white uppercase tracking-[0.2em] leading-none">Line</h1>
+        {/* Brand Logo & 20 Anos Seal */}
+        <div className="flex items-center justify-center gap-4 sm:gap-6 mb-8">
+          {/* Main Brand: TOP LINE STUDIO FORMATURAS */}
+          <div className="flex flex-col items-center sm:items-start leading-none">
+            <div className="flex items-baseline gap-2">
+              <div className="flex gap-1.5 font-serif text-2xl sm:text-3xl md:text-4xl text-white uppercase tracking-[0.2em] leading-none">
+                <span>Top</span>
+                <span>Line</span>
+              </div>
+              <span className="font-script text-3xl sm:text-4xl md:text-5xl gold-gradient leading-none inline-block pr-3">
+                Studio
+              </span>
             </div>
-            <span className="text-white/40 text-xs md:text-sm uppercase tracking-[0.8em] font-light mt-4">Formaturas</span>
+            <span className="text-white/40 text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.7em] font-light mt-2 pl-0.5">
+              Formaturas
+            </span>
           </div>
 
-          <div className="flex flex-col items-center -mt-2">
-            <GraduationCap className="text-brand-gold w-8 h-8 md:w-12 md:h-12 mb-[-10px] drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]" />
-            <span className="font-script text-6xl md:text-8xl gold-gradient leading-none">20</span>
-            <span className="font-script text-xl md:text-2xl gold-gradient -mt-4">anos</span>
+          {/* 20 Anos Seal (with generous padding to prevent '0' clipping) */}
+          <div className="flex flex-col items-center justify-center pl-3 border-l border-white/10 shrink-0">
+            <GraduationCap className="text-brand-gold w-5 h-5 sm:w-6 sm:h-6 mb-[-4px] drop-shadow-[0_0_12px_rgba(212,175,55,0.6)]" />
+            <span className="font-script text-4xl sm:text-5xl md:text-6xl gold-gradient leading-tight inline-block px-3 py-0.5 drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]">
+              20
+            </span>
+            <span className="font-script text-sm sm:text-base md:text-lg gold-gradient -mt-2 inline-block px-2">
+              anos
+            </span>
           </div>
-          
-          <span className="font-script text-6xl md:text-8xl gold-gradient leading-none pt-4">Studio</span>
         </div>
 
-        <h2 className="text-2xl font-bold text-white mb-4 leading-tight">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 leading-tight">
           {userTier === 'ALBUM' 
             ? 'Sua Jornada Premium Começa Agora' 
             : userTier === 'LINK'
               ? 'Suas Recordações em Alta Definição'
-              : 'Bem-vindo à Experiência Top Line'}
+              : <>Bem-vindo à Experiência <span className="whitespace-nowrap text-brand-gold">Top Line Studio</span></>}
         </h2>
         
-        <p className="text-gray-400 text-sm mb-10 leading-relaxed max-w-sm mx-auto">
+        <p className="text-gray-300 text-xs sm:text-sm mb-8 leading-relaxed max-w-md mx-auto text-balance">
           {userTier === 'ALBUM'
-            ? 'Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte em sua casa.'
+            ? <>Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte exclusiva em sua casa com a <span className="whitespace-nowrap font-medium text-white">Top Line Studio</span>.</>
             : userTier === 'LINK'
-              ? 'Acesse sua galeria exclusiva, baixe suas fotos e experimente como elas ficariam no nosso álbum físico de luxo.'
-              : 'Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra o poder do Top Line Studio.'}
+              ? <>Acesse sua galeria exclusiva, baixe suas fotos em alta resolução e experimente como elas ficariam no nosso álbum físico de luxo da <span className="whitespace-nowrap font-medium text-white">Top Line Studio</span>.</>
+              : <>Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra todo o poder da <span className="whitespace-nowrap font-semibold text-white">Top Line Studio</span>.</>}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -115,8 +127,8 @@ const Dashboard: React.FC<{
               <span className="text-brand-gold text-[10px] uppercase tracking-[0.4em] font-bold">Top Line Studio • 2026</span>
             </div>
             
-            <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-none tracking-tight">
-              Olá, <span className="font-script gold-gradient">{studentData?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Formando'}</span>
+            <h2 className="text-4xl md:text-6xl font-serif text-white mb-6 leading-tight tracking-tight">
+              Olá, <span className="font-script gold-gradient inline-block pr-6 pl-1 py-1 leading-normal overflow-visible drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">{studentData?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Formando'}</span>
             </h2>
             
             <p className="text-gray-400 text-lg md:text-xl mb-4 max-w-xl leading-relaxed font-light">
@@ -291,7 +303,7 @@ const Dashboard: React.FC<{
       <motion.div 
         whileHover={{ y: -5 }}
         className="md:col-span-8 bg-zinc-950 border border-white/10 rounded-[40px] p-8 relative overflow-hidden group cursor-pointer"
-        onClick={() => navigate('editor')}
+        onClick={() => navigate('album')}
       >
         <div className="absolute right-0 top-0 w-2/3 h-full opacity-30 group-hover:opacity-50 transition-opacity duration-1000">
           <img src="https://picsum.photos/seed/album_3d_render_preview/1200/800" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -307,8 +319,25 @@ const Dashboard: React.FC<{
             <p className="text-gray-400 text-sm max-w-xs font-light leading-relaxed">Visualize seu legado em tempo real com nossa tecnologia de renderização 3D exclusiva.</p>
           </div>
           
-          <div className="mt-12 flex items-center gap-3 text-brand-gold font-bold text-xs uppercase tracking-[0.2em] group-hover:gap-5 transition-all">
-            Abrir Estúdio Digital <ArrowRight size={16} />
+          <div className="mt-12 flex flex-wrap items-center gap-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('album');
+              }}
+              className="px-6 py-3 rounded-xl bg-brand-gold text-black font-bold text-xs uppercase tracking-[0.2em] hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center gap-2"
+            >
+              <Book size={16} /> Folhear em 3D
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('editor');
+              }}
+              className="px-6 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-[0.2em] hover:bg-white/20 transition-all flex items-center gap-2"
+            >
+              Personalizar Lâminas <ArrowRight size={14} />
+            </button>
           </div>
         </div>
       </motion.div>
@@ -472,13 +501,13 @@ const Student: React.FC = () => {
     navigate('/');
   };
 
-  const hasPurchasedAlbum = studentData?.package === 'black' || myOrders.some(order => 
-    (order.type === 'album' || order.type === 'premium' || order.type === 'black_edition' || order.type === 'black_studio') && 
+  const hasPurchasedAlbum = studentData?.package === 'black' || studentData?.package === 'album' || myOrders.some(order => 
+    (order.productType === 'album_studio_full' || order.type === 'album' || order.package === 'album' || order.type === 'premium' || order.type === 'black_edition' || order.type === 'black_studio') && 
     (order.status === 'pago' || order.status === 'concluido')
   );
 
-  const hasPurchasedLink = studentData?.package === 'link' || studentData?.package === 'black' || myOrders.some(order => 
-    (order.type === 'link' || order.type === 'album') && 
+  const hasPurchasedLink = studentData?.package === 'link' || studentData?.package === 'black' || studentData?.package === 'album' || myOrders.some(order => 
+    (order.productType === 'link_studio' || order.productType === 'album_studio_full' || order.type === 'link' || order.package === 'link' || order.type === 'album') && 
     (order.status === 'pago' || order.status === 'concluido')
   );
 
@@ -509,22 +538,32 @@ const Student: React.FC = () => {
                 <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
               </div>
               <div className="flex items-center gap-3 relative group">
-                <div className="flex flex-col items-center leading-none">
-                  <div className="flex gap-1">
-                    <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Top</span>
-                    <span className="font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">Line</span>
+                {/* Brand: TOP LINE STUDIO & FORMATURAS */}
+                <div className="flex flex-col items-start leading-none">
+                  <div className="flex items-baseline gap-1.5">
+                    <div className="flex gap-1 font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">
+                      <span>Top</span>
+                      <span>Line</span>
+                    </div>
+                    <span className="font-script text-base md:text-xl gold-gradient leading-none inline-block pr-1.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+                      Studio
+                    </span>
                   </div>
-                  <span className="text-[6px] md:text-[8px] text-white/40 uppercase tracking-[0.4em] mt-1.5">Formaturas</span>
+                  <span className="text-[6px] md:text-[8px] text-white/40 uppercase tracking-[0.4em] mt-1.5 pl-0.5">
+                    Formaturas
+                  </span>
                 </div>
 
-                {/* 20 Anos Badge - Vertical Stack */}
-                <div className="flex flex-col items-center -mt-1">
-                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-                  <span className="font-script text-2xl md:text-3xl gold-gradient leading-none">20</span>
-                  <span className="font-script text-[10px] md:text-xs gold-gradient -mt-1.5">anos</span>
+                {/* 20 Anos Seal (with zero clipping on the 0) */}
+                <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
+                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-3px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+                  <span className="font-script text-base md:text-lg gold-gradient leading-tight inline-block px-1.5 py-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+                    20
+                  </span>
+                  <span className="font-script text-[8px] md:text-[9px] gold-gradient -mt-1.5 inline-block px-1">
+                    anos
+                  </span>
                 </div>
-
-                <span className="font-script text-3xl md:text-5xl gold-gradient leading-none pt-2 pb-1 ml-1">Studio</span>
               </div>
             </Link>
             <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />
@@ -543,7 +582,12 @@ const Student: React.FC = () => {
             <div className="flex items-center gap-2 md:gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-xs md:text-sm font-medium">{user?.displayName || 'Aluno'}</p>
-                <p className="text-[8px] md:text-[10px] text-gray-500 uppercase tracking-widest">Formando 2026</p>
+                <p className="text-[8px] md:text-[10px] text-gray-400 uppercase tracking-widest">
+                  {studentData?.institution ? `${studentData.institution}` : ''}
+                  {studentData?.institution && studentData?.course ? ' • ' : ''}
+                  {studentData?.course || 'Formando 2026'}
+                  {studentData?.semester ? ` (${studentData.semester})` : ''}
+                </p>
               </div>
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center overflow-hidden">
                 {user?.photoURL ? (
@@ -597,20 +641,43 @@ const Student: React.FC = () => {
           </div>
         } />
         <Route path="album" element={
-          <div className="relative h-[calc(100vh-80px)]">
-            <button 
-              onClick={() => navigate('/area-do-aluno')}
-              className="absolute top-4 left-4 z-50 bg-brand-gold text-black p-2 rounded-full shadow-xl hover:scale-110 transition-transform"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div className="h-full pt-12">
+          <div className="relative h-[calc(100vh-80px)] flex flex-col bg-black">
+            {/* Top Bar Navigation */}
+            <div className="p-3 md:p-4 px-6 flex items-center justify-between border-b border-white/10 bg-zinc-950/80 backdrop-blur-md z-40">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => navigate('/area-do-aluno')}
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:text-brand-gold hover:border-brand-gold transition-all"
+                  title="Voltar à Área do Aluno"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <div>
+                  <h3 className="font-serif text-base md:text-lg text-white">Visualizador Top Line Studio 3D</h3>
+                  <p className="text-[9px] md:text-[10px] text-gray-500 uppercase tracking-widest hidden sm:block">Abertura Panorâmica 180° • Acabamento Artesanal</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/area-do-aluno/editor')}
+                  className="px-4 py-2 rounded-xl bg-brand-gold text-black text-xs font-bold uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 shadow-lg"
+                >
+                  <Sparkles size={14} />
+                  <span>Editor de Lâminas</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full h-full relative overflow-hidden">
               <Album3D 
                 pages={selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages} 
                 currentPage={viewerPage} 
                 onPageChange={setViewerPage}
                 zoom={1} 
                 isOpen={true} 
+                purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}
+                onCheckout={() => handleOpenChat("Olá! Gostaria de conversar sobre as opções do meu álbum de formatura Top Line Studio.")}
               />
             </div>
           </div>

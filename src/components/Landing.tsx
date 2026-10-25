@@ -135,22 +135,30 @@ function Logo() {
         </div>
       </div>
       <div className="flex items-center gap-3 relative group">
-        <div className="flex flex-col items-center leading-none">
-          <div className="flex gap-1">
-            <span className="font-serif text-[11px] text-white uppercase tracking-[0.2em]">Top</span>
-            <span className="font-serif text-[11px] text-white uppercase tracking-[0.2em]">Line</span>
+        {/* Brand: TOP LINE STUDIO & FORMATURAS */}
+        <div className="flex flex-col items-start leading-none">
+          <div className="flex items-baseline gap-1.5">
+            <div className="flex gap-1 font-serif text-[11px] text-white uppercase tracking-[0.2em]">
+              <span>Top</span>
+              <span>Line</span>
+            </div>
+            <span className="font-script text-base gold-gradient leading-none inline-block pr-1.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+              Studio
+            </span>
           </div>
-          <span className="text-[6px] text-white/50 uppercase tracking-[0.4em] mt-1.5">Formaturas</span>
+          <span className="text-[6px] text-white/50 uppercase tracking-[0.4em] mt-1.5 pl-0.5">Formaturas</span>
         </div>
 
         {/* 20 Anos Badge - Vertical Stack */}
-        <div className="flex flex-col items-center -mt-1">
-          <GraduationCap className="text-brand-gold w-3 h-3 mb-[-4px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-          <span className="font-script text-2xl gold-gradient leading-none">20</span>
-          <span className="font-script text-[10px] gold-gradient -mt-1.5">anos</span>
+        <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
+          <GraduationCap className="text-brand-gold w-3 h-3 mb-[-3px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+          <span className="font-script text-base gold-gradient leading-tight inline-block px-1.5 py-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+            20
+          </span>
+          <span className="font-script text-[8px] gold-gradient -mt-1.5 inline-block px-1">
+            anos
+          </span>
         </div>
-
-        <span className="font-script text-3xl gold-gradient leading-none pt-2 pb-1 ml-1">Studio</span>
       </div>
     </div>
   );

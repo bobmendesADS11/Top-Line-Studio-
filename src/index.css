@@ -26,6 +26,13 @@
   @apply bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-transparent bg-clip-text;
 }
 
+.font-script.gold-gradient {
+  padding-right: 0.2em;
+  padding-left: 0.05em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 .topline-edition {
   @apply font-serif tracking-[0.8em] uppercase text-white;
 }
