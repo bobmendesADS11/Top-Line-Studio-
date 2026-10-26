@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send, Sparkles, User, Bot, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 interface Message {
   role: 'user' | 'model';
@@ -59,40 +58,15 @@ const ConciergeChat: React.FC<ConciergeChatProps> = ({ onClose, studentName, ini
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-      
-      const chatHistory = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.text }]
-      }));
+      const chatHistory = messages.map(m => ({ role: m.role, text: m.text }));
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          ...chatHistory,
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-        config: {
-          systemInstruction: `Você é o Especialista Concierge da Top Line Studio, uma empresa de luxo focada em formaturas premium. 
-          Seu tom de voz é extremamente sofisticado, atencioso, profissional e inspirador. 
-          Você é um expert em:
-          1. Design de Álbuns: Layouts, curadoria de fotos e narrativa visual.
-          2. Materiais Nobres e Modelos Studio: 
-             - Link Studio: Galeria digital premium com acesso vitalício e compartilhamento instantâneo.
-             - Leather Studio: Couro legítimo trabalhado artesanalmente, um clássico atemporal.
-             - Acrylic Studio: Capa em acrílico cristalino de alta espessura, que traz profundidade e brilho às fotos.
-             - Velvet Studio: Toque aveludado e sofisticado com detalhes em hot-stamping.
-             - Video Studio: Um álbum físico de luxo com uma tela de alta definição embutida na capa, que reproduz seus vídeos de formatura automaticamente ao ser aberto.
-          3. Experiência do Formando: Como eternizar o legado da conquista.
-          
-          Regras:
-          - Nunca mencione que você é uma IA, a menos que seja estritamente necessário. Aja como um concierge humano de alto nível.
-          - Use termos como "Legado", "Excelência", "Extraordinário", "Eternizar".
-          - Se o aluno perguntar sobre preços, pacotes ou como adquirir seu álbum, oriente-o a explorar o **Catálogo Studio** ao final da sua página principal ou acessar o **Estúdio Digital 3D**. Nessas seções, ele poderá visualizar cada modelo em detalhes, escolher seu modelo Studio favorito e conferir as condições exclusivas para eternizar seu momento.
-          - Seja breve mas impactante.`,
-          temperature: 0.7,
-        }
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history: chatHistory, message: userMessage }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const response: { text?: string } = await res.json();
 
       const modelText = response.text || "Desculpe, tive um pequeno contratempo técnico. Como posso ajudar?";
       setMessages(prev => [...prev, { role: 'model', text: modelText }]);
