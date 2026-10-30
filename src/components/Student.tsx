@@ -5,7 +5,7 @@ import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
-import Album3D from './Album3D';
+import Album3D from './LazyAlbum3D';
 import AlbumEditor from './AlbumEditor';
 import { openWhatsApp } from '../lib/contact';
 
@@ -39,7 +39,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
                 Studio
               </span>
             </div>
-            <span className="text-white/40 text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.7em] font-light mt-2 pl-0.5">
+            <span className="text-white/40 text-[9px] sm:text-[9px] md:text-[10px] uppercase tracking-[0.7em] font-light mt-2 pl-0.5">
               Formaturas
             </span>
           </div>
@@ -401,7 +401,7 @@ const Dashboard: React.FC<{
                 />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                 <div className="absolute top-6 right-6">
-                  <span className="bg-brand-gold text-black text-[8px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
+                  <span className="bg-brand-gold text-black text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
                     {item.tag}
                   </span>
                 </div>
@@ -505,6 +505,20 @@ const Student: React.FC = () => {
   const userTier = hasPurchasedAlbum ? 'ALBUM' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
 
   const [viewerPage, setViewerPage] = useState(0);
+  // Mostra no visualizador o álbum como o aluno configurou no editor (tamanho, capa, lâminas)
+  const savedAlbumConfig = (() => {
+    try {
+      const raw = localStorage.getItem(`topline_album_draft_${user?.uid || 'guest'}`);
+      const d = raw ? JSON.parse(raw) : {};
+      return {
+        albumSize: typeof d.albumSize === 'string' ? d.albumSize : '30x30',
+        materialType: typeof d.materialType === 'string' ? d.materialType : 'standard',
+        sheetCount: typeof d.requestedPageCount === 'number' ? d.requestedPageCount : undefined,
+      };
+    } catch {
+      return { albumSize: '30x30', materialType: 'standard', sheetCount: undefined };
+    }
+  })();
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -540,7 +554,7 @@ const Student: React.FC = () => {
                       Studio
                     </span>
                   </div>
-                  <span className="text-[6px] md:text-[8px] text-white/40 uppercase tracking-[0.4em] mt-1.5 pl-0.5">
+                  <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.4em] mt-1.5 pl-0.5">
                     Formaturas
                   </span>
                 </div>
@@ -551,7 +565,7 @@ const Student: React.FC = () => {
                   <span className="font-script text-base md:text-lg gold-gradient leading-tight inline-block px-1.5 py-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
                     20
                   </span>
-                  <span className="font-script text-[8px] md:text-[9px] gold-gradient -mt-1.5 inline-block px-1">
+                  <span className="font-script text-[9px] md:text-[9px] gold-gradient -mt-1.5 inline-block px-1">
                     anos
                   </span>
                 </div>
@@ -573,7 +587,7 @@ const Student: React.FC = () => {
             <div className="flex items-center gap-2 md:gap-3">
               <div className="text-right hidden sm:block">
                 <p className="text-xs md:text-sm font-medium">{user?.displayName || 'Aluno'}</p>
-                <p className="text-[8px] md:text-[10px] text-gray-400 uppercase tracking-widest">
+                <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest">
                   {studentData?.institution ? `${studentData.institution}` : ''}
                   {studentData?.institution && studentData?.course ? ' • ' : ''}
                   {studentData?.course || 'Formando 2026'}
@@ -665,6 +679,10 @@ const Student: React.FC = () => {
                 pages={selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages} 
                 currentPage={viewerPage} 
                 onPageChange={setViewerPage}
+                albumSize={savedAlbumConfig.albumSize}
+                materialType={savedAlbumConfig.materialType}
+                sheetCount={savedAlbumConfig.sheetCount}
+                coverTextureUrl={selectedPhotos[0]?.url}
                 zoom={1} 
                 isOpen={true} 
                 purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}

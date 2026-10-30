@@ -28,7 +28,7 @@ import {
   BookmarkCheck
 } from 'lucide-react';
 import Cropper, { Area } from 'react-easy-crop';
-import Album3D from './Album3D';
+import Album3D from './LazyAlbum3D';
 import CheckoutModal from './CheckoutModal';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -59,7 +59,7 @@ type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 
 
 const PRICES = {
   edition: {
-    link: 1200.00,       // Noir Link Studio (Digital)
+    link: 1200.00,       // Link Studio (Digital)
     album: 1850.00,     // Full Experience (Physical + Link)
   },
   photo: 45.00,         // Unit price per photo curated
@@ -154,6 +154,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  // No celular a tela não comporta painel + prévia lado a lado: alterna entre os dois
+  const [mobilePanel, setMobilePanel] = useState<'options' | 'preview'>('options');
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
   const [requestedPageCount, setRequestedPageCount] = useState<number>(20);
@@ -1111,6 +1113,27 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   return (
     <div className="flex flex-col lg:flex-row h-full bg-black overflow-hidden">
+      {/* Abas do celular: Opções / Prévia */}
+      <div className="lg:hidden shrink-0 grid grid-cols-3 gap-1 p-2 bg-zinc-950 border-b border-white/10 z-20">
+        <button
+          onClick={() => setMobilePanel('options')}
+          className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${mobilePanel === 'options' ? 'bg-brand-gold text-black' : 'bg-white/5 text-gray-300'}`}
+        >
+          Opções
+        </button>
+        <button
+          onClick={() => { setShowPreview(false); setMobilePanel('preview'); }}
+          className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${mobilePanel === 'preview' && !showPreview ? 'bg-brand-gold text-black' : 'bg-white/5 text-gray-300'}`}
+        >
+          Páginas
+        </button>
+        <button
+          onClick={() => { setShowPreview(true); setMobilePanel('preview'); }}
+          className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${mobilePanel === 'preview' && showPreview ? 'bg-brand-gold text-black' : 'bg-white/5 text-gray-300'}`}
+        >
+          Ver em 3D
+        </button>
+      </div>
       {/* Crop Modal */}
       <AnimatePresence>
         {croppingPhoto && (
@@ -1190,7 +1213,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                         className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer accent-brand-gold hover:accent-white transition-all overflow-hidden"
                       />
                     </div>
-                    <div className="flex justify-between text-[8px] text-gray-600 font-bold uppercase tracking-tighter">
+                    <div className="flex justify-between text-[9px] text-gray-600 font-bold uppercase tracking-tighter">
                       <span>100% (Cheio)</span>
                       <span>300%</span>
                       <span>500% (Máx)</span>
@@ -1238,7 +1261,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       </AnimatePresence>
 
       {/* Sidebar Controls */}
-      <div className="w-full lg:w-96 bg-zinc-900 border-r border-white/5 p-6 flex flex-col gap-6 overflow-y-auto shrink-0 relative z-10 shadow-2xl">
+      <div className={`w-full lg:w-96 bg-zinc-900 border-r border-white/5 p-6 ${mobilePanel === 'preview' ? 'hidden lg:flex' : 'flex'} flex-col gap-6 overflow-y-auto flex-1 min-h-0 lg:flex-none lg:shrink-0 relative z-10 shadow-2xl`}>
         <div className="flex items-center justify-between mb-2">
           <button 
             onClick={onBack}
@@ -1247,7 +1270,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             <ChevronLeft size={14} /> Voltar
           </button>
           
-          <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest border ${
+          <div className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest border ${
             userTier === 'ALBUM' 
               ? 'bg-brand-gold/10 border-brand-gold/30 text-brand-gold' 
               : userTier === 'LINK'
@@ -1277,7 +1300,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </p>
           <div className="flex gap-2">
             {[
-              { id: 'LINK', label: 'Noir Link', icon: Sparkles },
+              { id: 'LINK', label: 'Link Studio', icon: Sparkles },
               { id: 'FULL', label: 'Álbum + Link', icon: Box }
             ].map((item) => (
               <button
@@ -1290,11 +1313,11 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 }`}
               >
                 <item.icon size={16} />
-                <span className="text-[8px] uppercase font-bold tracking-widest">{item.label}</span>
+                <span className="text-[9px] uppercase font-bold tracking-widest">{item.label}</span>
               </button>
             ))}
           </div>
-          <p className="text-[7px] text-gray-500 mt-2 uppercase tracking-tight text-center leading-tight">
+          <p className="text-[9px] text-gray-500 mt-2 uppercase tracking-tight text-center leading-tight">
             {purchaseType === 'LINK' 
               ? 'Interatividade e realidade aumentada digital.'
               : 'O luxo do físico unido à tecnologia do digital.'}
@@ -1328,22 +1351,22 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
             {getPhotosTotalCapacity() < activePhotos.length ? (
               <div className="space-y-3">
-                <p className="text-[8px] text-brand-gold uppercase tracking-widest leading-relaxed">
+                <p className="text-[9px] text-brand-gold uppercase tracking-widest leading-relaxed">
                   Faltam <strong className="text-white">{activePhotos.length - getPhotosTotalCapacity()} fotos</strong> para diagramar.
                 </p>
                 <button 
                   onClick={optimizeLayouts}
-                  className="w-full py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold text-[8px] font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-brand-gold hover:text-black transition-all"
+                  className="w-full py-2 bg-brand-gold/10 border border-brand-gold/30 text-brand-gold text-[9px] font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-brand-gold hover:text-black transition-all"
                 >
                   Otimizar Lâminas Automaticamente
                 </button>
               </div>
             ) : (
-              <p className="text-[8px] text-green-500 uppercase tracking-widest flex items-center gap-2 mb-2">
+              <p className="text-[9px] text-green-500 uppercase tracking-widest flex items-center gap-2 mb-2">
                 <Check size={10} /> Todas as fotos estão no álbum
               </p>
             )}
-            <p className="text-[8px] text-gray-400 uppercase tracking-widest leading-relaxed italic border-t border-white/5 pt-2">
+            <p className="text-[9px] text-gray-400 uppercase tracking-widest leading-relaxed italic border-t border-white/5 pt-2">
               Dica: Mude o layout de cada página em "VER DIAGRAMAÇÃO".
             </p>
           </div>
@@ -1355,7 +1378,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               <Layers size={14} /> 2. Pacote de Páginas
             </h3>
             {purchaseType === 'LINK' && (
-              <span className="text-[6px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">Preview</span>
+              <span className="text-[8px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">Preview</span>
             )}
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -1379,14 +1402,14 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   }`}
                 >
                   <span className="text-[12px] font-bold">{count}</span>
-                  <span className="text-[6px] uppercase tracking-tighter opacity-70">Lâminas</span>
+                  <span className="text-[8px] uppercase tracking-tighter opacity-70">Lâminas</span>
                   {isRecommended && (
-                    <div className="absolute -top-1.5 -right-1 bg-white text-black text-[5px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md border border-brand-gold/50 z-10">
+                    <div className="absolute -top-1.5 -right-1 bg-white text-black text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md border border-brand-gold/50 z-10">
                       Ideal
                     </div>
                   )}
                   {getPhotosTotalCapacity() < activePhotos.length && count === requestedPageCount && (
-                    <div className="absolute -bottom-1 -right-1 bg-brand-gold text-black text-[5px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md z-10 animate-bounce">
+                    <div className="absolute -bottom-1 -right-1 bg-brand-gold text-black text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tight shadow-md z-10 animate-bounce">
                       Cheio
                     </div>
                   )}
@@ -1395,10 +1418,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             })}
           </div>
           <div className="mt-3 p-3 bg-white/5 rounded-xl border border-white/5">
-            <p className="text-[7px] text-gray-400 leading-relaxed uppercase tracking-widest flex items-start gap-2">
+            <p className="text-[9px] text-gray-400 leading-relaxed uppercase tracking-widest flex items-start gap-2">
               <Sparkles size={10} className="text-brand-gold flex-shrink-0 mt-0.5" />
               <span>
-                <strong className="text-brand-gold">Dica Noir:</strong> Para {requestedPageCount} páginas, recomendamos até <strong className="text-white">{requestedPageCount === 20 ? 30 : requestedPageCount === 40 ? 60 : requestedPageCount === 60 ? 90 : 120} fotos</strong> para uma diagramação limpa.
+                <strong className="text-brand-gold">Dica:</strong> Para {requestedPageCount} lâminas, recomendamos até <strong className="text-white">{requestedPageCount === 20 ? 30 : requestedPageCount === 40 ? 60 : requestedPageCount === 60 ? 90 : 120} fotos</strong> para uma diagramação limpa.
               </span>
             </p>
           </div>
@@ -1412,7 +1435,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </div>
           <div className="space-y-4">
             <div>
-              <p className="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Tamanho do Álbum</p>
+              <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Tamanho do Álbum</p>
               <div className="grid grid-cols-3 gap-2">
                 {(['20x30', '30x30', '30x40'] as AlbumSize[]).map((size) => (
                   <button
@@ -1431,13 +1454,13 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             </div>
 
             <div>
-              <p className="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Acabamento da Capa</p>
+              <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Acabamento da Capa</p>
               <div className="grid grid-cols-2 gap-2">
                 {(['standard', 'premium', 'leather', 'acrylic', 'velvet', 'photo'] as MaterialType[]).map((type) => (
                   <button
                     key={type}
                     onClick={() => setMaterialType(type)}
-                    className={`py-2 rounded-lg text-[8px] font-bold uppercase border transition-all ${
+                    className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-all ${
                       materialType === type ? 'bg-brand-gold border-brand-gold text-black' : 'bg-white/5 border-white/10 text-gray-400'
                     }`}
                   >
@@ -1465,7 +1488,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               onChange={(e) => setVideoUrl(e.target.value)}
               className="w-full bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-[10px] text-white outline-none focus:border-brand-gold transition-all"
             />
-            <p className="text-[8px] text-gray-500 mt-2 uppercase tracking-widest">Adicione um vídeo para a primeira página do seu álbum premium.</p>
+            <p className="text-[9px] text-gray-500 mt-2 uppercase tracking-widest">Adicione um vídeo para a primeira página do seu álbum premium.</p>
           </div>
         )}
 
@@ -1489,7 +1512,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
             {purchaseType === 'FULL' && (
               <div className="space-y-1.5 py-2 border-t border-white/5 mt-2">
-                <p className="text-[8px] text-brand-gold uppercase tracking-[0.2em] font-bold mb-1">Personalização do Álbum</p>
+                <p className="text-[9px] text-brand-gold uppercase tracking-[0.2em] font-bold mb-1">Personalização do Álbum</p>
                 
                 {PRICES.size[albumSize] > 0 && (
                   <div className="flex justify-between text-[10px] text-gray-500">
@@ -1514,17 +1537,17 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
             {purchaseType === 'LINK' && (
               <div className="mt-2 p-3 bg-brand-gold/10 border border-brand-gold/30 rounded-xl space-y-2">
-                <p className="text-[8px] text-gray-300 leading-relaxed">
+                <p className="text-[9px] text-gray-300 leading-relaxed">
                   ✨ <strong>Apenas Link Studio:</strong> Nossa equipe incluirá todas as suas fotos em alta resolução no seu login para download. Você pode montar o álbum à vontade para experimentar!
                 </p>
-                <div className="flex justify-between items-center text-[8px] uppercase tracking-widest font-bold text-brand-gold/80 pt-1 border-t border-brand-gold/20">
+                <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold text-brand-gold/80 pt-1 border-t border-brand-gold/20">
                   <span>Adicionar Álbum Físico</span>
                   <span>+ R$ {(totalPriceFull - totalPrice).toFixed(2)}</span>
                 </div>
                 <button 
                   type="button"
                   onClick={() => setPurchaseType('FULL')}
-                  className="w-full py-2 bg-brand-gold text-black text-[8px] font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all shadow-md"
+                  className="w-full py-2 bg-brand-gold text-black text-[9px] font-bold uppercase tracking-widest rounded-lg hover:bg-white transition-all shadow-md"
                 >
                   + Incluir Álbum Físico de Luxo
                 </button>
@@ -1540,7 +1563,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             
             {purchaseType === 'FULL' && !hasPurchasedAlbum && (
               <div className="mt-2 p-3 bg-brand-gold/5 border border-brand-gold/20 rounded-xl">
-                <p className="text-[8px] text-gray-400 leading-relaxed">
+                <p className="text-[9px] text-gray-400 leading-relaxed">
                   👑 O álbum físico inclui encadernação artesanal, lâminas panorâmicas de abertura 180° e o Link Studio vitalício integrado.
                 </p>
               </div>
@@ -1563,7 +1586,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   }`}
                 >
                   <div className="absolute top-1 right-1 bg-black/60 backdrop-blur-md rounded px-1.5 py-0.5 border border-white/10 z-10">
-                    <span className="text-[7px] font-bold text-white uppercase tracking-tighter">#{index + 1}</span>
+                    <span className="text-[9px] font-bold text-white uppercase tracking-tighter">#{index + 1}</span>
                   </div>
                   <img src={photo.url} alt="Cover option" className="w-full h-full object-cover" />
                 </button>
@@ -1578,10 +1601,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <div className="flex flex-col">
-                <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-400">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400">
                   Salvo Automaticamente
                 </span>
-                <span className="text-[7px] text-gray-400 font-mono">
+                <span className="text-[9px] text-gray-400 font-mono">
                   {lastSavedTime ? `Última sincronização às ${lastSavedTime}` : 'Sincronizado na nuvem'}
                 </span>
               </div>
@@ -1589,7 +1612,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             <button
               type="button"
               onClick={() => setShowVersionsModal(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-brand-gold/20 text-brand-gold text-[8px] uppercase font-bold tracking-widest flex items-center gap-1.5 transition-colors border border-brand-gold/30"
+              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-brand-gold/20 text-brand-gold text-[9px] uppercase font-bold tracking-widest flex items-center gap-1.5 transition-colors border border-brand-gold/30"
               title="Ver e restaurar versões salvas"
             >
               <History size={11} />
@@ -1599,7 +1622,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
           <div className="px-3 py-2 bg-white/5 border border-white/5 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[8px] uppercase tracking-widest font-bold text-gray-500">Simetria Auto</span>
+              <span className="text-[9px] uppercase tracking-widest font-bold text-gray-500">Simetria Auto</span>
               <button 
                 onClick={() => setIsAutoSyncEnabled(!isAutoSyncEnabled)}
                 className={`w-8 h-4 rounded-full relative transition-all ${isAutoSyncEnabled ? 'bg-brand-gold' : 'bg-white/10'}`}
@@ -1607,7 +1630,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isAutoSyncEnabled ? 'left-4.5' : 'left-0.5'}`} />
               </button>
             </div>
-            <p className="text-[7px] text-gray-600 uppercase tracking-tighter leading-tight italic">Remove páginas vazias automaticamente quando os layouts mudam.</p>
+            <p className="text-[9px] text-gray-600 uppercase tracking-tighter leading-tight italic">Remove páginas vazias automaticamente quando os layouts mudam.</p>
           </div>
 
           <button
@@ -1619,7 +1642,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           </button>
 
           <button
-            onClick={() => setShowPreview(!showPreview)}
+            onClick={() => { setShowPreview(!showPreview); setMobilePanel('preview'); }}
             className="w-full bg-white/5 text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all border border-white/10"
           >
             {showPreview ? <ImageIcon size={16} /> : <Layers size={16} />}
@@ -1642,7 +1665,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       </div>
 
       {/* Main Preview Area */}
-      <div className="flex-1 relative bg-[#030303] overflow-hidden flex flex-col">
+      <div className={`flex-1 min-h-0 relative bg-[#030303] overflow-hidden ${mobilePanel === 'options' ? 'hidden lg:flex' : 'flex'} flex-col`}>
         <AnimatePresence mode="wait">
           {showPreview ? (
             <motion.div
@@ -1661,6 +1684,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   videoUrl={videoUrl || undefined}
                   materialType={materialType}
                   albumSize={albumSize}
+                  sheetCount={requestedPageCount}
                   coverTextureUrl={activePhotos.find(p => p.id === coverPhotoId)?.url || activePhotos[0]?.url}
                   purchaseType={purchaseType}
                   onPageChange={(p) => setCurrentPage(p)}
@@ -1707,7 +1731,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                       <div key={photo.id} className="group">
                         <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-white/5 group-hover:border-brand-gold/50 transition-all shadow-xl bg-black">
                           <img src={photo.thumbnail || photo.url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          <div className="absolute top-1.5 left-1.5 bg-brand-gold text-black text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg z-10">
+                          <div className="absolute top-1.5 left-1.5 bg-brand-gold text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg z-10">
                             #{index + 1}
                           </div>
                           
@@ -1799,10 +1823,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm z-10 p-6 text-center">
                                   <AlertTriangle size={32} className="text-zinc-700 mb-2" />
                                   <span className="text-[9px] uppercase tracking-widest font-bold text-zinc-500">Página Excedente</span>
-                                  <p className="text-[8px] text-zinc-600 mt-1 max-w-[150px]">Nenhuma foto restante para esta página. Remova ou mude layouts anteriores.</p>
+                                  <p className="text-[9px] text-zinc-600 mt-1 max-w-[150px]">Nenhuma foto restante para esta página. Remova ou mude layouts anteriores.</p>
                                   <button 
                                     onClick={() => removePage(i)}
-                                    className="mt-4 px-4 py-2 rounded-lg bg-zinc-800 text-[8px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-400 transition-colors"
+                                    className="mt-4 px-4 py-2 rounded-lg bg-zinc-800 text-[9px] font-bold uppercase tracking-widest text-zinc-400 hover:text-red-400 transition-colors"
                                   >
                                     Excluir Página
                                   </button>
@@ -1831,7 +1855,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                   Esta página está integrada ao spread panorâmico anterior.
                                 </p>
                                 <div className="pt-4 border-t border-white/5">
-                                  <p className="text-[8px] text-gray-500 uppercase tracking-widest font-bold">Status: INTEGRADO</p>
+                                  <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Status: INTEGRADO</p>
                                 </div>
                               </div>
                             ) : (
@@ -1906,13 +1930,13 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                                           <div className="flex items-center gap-3">
                                             <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/10 bg-black">
                                               <img src={photo.thumbnail || photo.url} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
-                                              <div className="absolute top-0 right-0 bg-brand-gold text-black text-[6px] font-bold px-1 rounded-bl">
+                                              <div className="absolute top-0 right-0 bg-brand-gold text-black text-[8px] font-bold px-1 rounded-bl">
                                                 #{globalIndex + 1}
                                               </div>
                                             </div>
                                             <div className="flex flex-col items-start">
                                               <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400 group-hover:text-white">Posição {pIdx + 1}</span>
-                                              <span className="text-[7px] text-brand-gold/60 uppercase tracking-tighter">Na ordem global: #{globalIndex + 1}</span>
+                                              <span className="text-[9px] text-brand-gold/60 uppercase tracking-tighter">Na ordem global: #{globalIndex + 1}</span>
                                             </div>
                                           </div>
                                           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/5 group-hover:bg-brand-gold/10 transition-colors">
@@ -2057,7 +2081,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white">{ver.label}</span>
-                          <span className="text-[8px] bg-white/5 text-gray-400 px-1.5 py-0.5 rounded uppercase font-mono">
+                          <span className="text-[9px] bg-white/5 text-gray-400 px-1.5 py-0.5 rounded uppercase font-mono">
                             {ver.purchaseType === 'LINK' ? 'Link Studio' : 'Álbum Físico'}
                           </span>
                         </div>

@@ -121,7 +121,7 @@ function Logo() {
           className="absolute inset-0 flex flex-col gap-1 p-1"
         >
             {[1, 2, 3, 4, 5, 6].map((i) => (
-            <img 
+            <img loading="lazy" decoding="async" 
               key={i}
               src={`https://picsum.photos/seed/grad_logo_${i}/100/100`} 
               className="w-full aspect-square object-cover rounded-md opacity-30 group-hover:opacity-60 transition-opacity"
@@ -179,7 +179,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       category: "Rito Tradicional",
       pageLeft: "Pág. 12",
       pageRight: "Pág. 13",
-      leftImg: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
+      leftImg: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80",
       rightImg1: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
       rightImg2: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
       rightTag1: "Discurso & Juramento",
@@ -268,7 +268,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 onClick={() => togglePhoto(i)}
                 className={`aspect-square rounded-xl border overflow-hidden relative group cursor-pointer transition-all duration-300 ${selectedPhotos.includes(i) ? 'border-brand-gold ring-2 ring-brand-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
               >
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={`https://picsum.photos/seed/graduation_cap_${i}/400/400`} 
                   alt="Graduation" 
                   className={`w-full h-full object-cover transition-all duration-500 ${selectedPhotos.includes(i) ? 'scale-105 opacity-100' : 'opacity-50 group-hover:opacity-100'}`}
@@ -339,7 +339,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 transition={{ duration: 0.4 }}
                 className="col-span-7 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-2xl group/card"
               >
-                <img 
+                <img loading="lazy" decoding="async" 
                   src={`https://picsum.photos/seed/photo_album_design_${layoutSeed}/800/600`} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" 
                   referrerPolicy="no-referrer" 
@@ -371,7 +371,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   transition={{ delay: 0.1, duration: 0.4 }}
                   className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
                 >
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={`https://picsum.photos/seed/page_layout_${layoutSeed}/500/350`} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
                     referrerPolicy="no-referrer" 
@@ -387,7 +387,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   transition={{ delay: 0.2, duration: 0.4 }}
                   className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
                 >
-                  <img 
+                  <img loading="lazy" decoding="async" 
                     src={`https://picsum.photos/seed/photo_editing_${layoutSeed}/500/350`} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
                     referrerPolicy="no-referrer" 
@@ -413,7 +413,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 <div className="flex -space-x-1.5">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-5 h-5 rounded-full border border-zinc-900 bg-zinc-800 overflow-hidden">
-                      <img src={`https://picsum.photos/seed/person${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img loading="lazy" decoding="async" src={`https://picsum.photos/seed/person${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                   ))}
                   <div className="w-5 h-5 rounded-full border border-zinc-900 bg-brand-gold flex items-center justify-center text-[7px] font-bold text-black">
@@ -504,7 +504,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
 
                   {/* Left Page (Full Panoramic / Bleed Masterpiece) */}
                   <div className="flex-1 bg-[#141414] rounded-l-md relative overflow-hidden shadow-[inset_-20px_0_35px_rgba(0,0,0,0.7)] origin-right border-y border-l border-white/10 group/page">
-                    <img 
+                    <img loading="lazy" decoding="async" 
                       src={albumSpreads[albumSpread].leftImg} 
                       alt="Lâmina Panorâmica"
                       className="w-full h-full object-cover transition-transform duration-700 group-hover/page:scale-105"
@@ -534,7 +534,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   <div className="flex-1 bg-[#141414] rounded-r-md relative overflow-hidden shadow-[inset_20px_0_35px_rgba(0,0,0,0.7)] p-2.5 sm:p-3.5 flex flex-col gap-2.5 border-y border-r border-white/10 group/page">
                     {/* Top photo */}
                     <div className="flex-1 rounded-sm overflow-hidden relative shadow-md group/sub">
-                      <img 
+                      <img loading="lazy" decoding="async" 
                         src={albumSpreads[albumSpread].rightImg1} 
                         alt="Momento 1"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover/sub:scale-105"
@@ -548,7 +548,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
 
                     {/* Bottom photo */}
                     <div className="flex-1 rounded-sm overflow-hidden relative shadow-md group/sub">
-                      <img 
+                      <img loading="lazy" decoding="async" 
                         src={albumSpreads[albumSpread].rightImg2} 
                         alt="Momento 2"
                         className="w-full h-full object-cover transition-transform duration-700 group-hover/sub:scale-105"
@@ -875,7 +875,7 @@ export default function Landing() {
       </section>
 
       {/* A Empresa Section */}
-      <section ref={aboutRef} className="py-32 px-6 relative overflow-hidden bg-zinc-950">
+      <section ref={aboutRef} className="py-20 md:py-32 px-6 relative overflow-hidden bg-zinc-950">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -884,8 +884,8 @@ export default function Landing() {
             className="relative"
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-brand-gold/10 border border-white/10">
-              <img 
-                src="https://picsum.photos/seed/graduate_holding_diploma/1200/800" 
+              <img loading="lazy" decoding="async" 
+                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=75" 
                 alt="Formatura Top Line" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -919,7 +919,7 @@ export default function Landing() {
         </div>
 
         {/* Stats Grid */}
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mt-32">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mt-16 md:mt-32">
           {[
             { icon: Award, value: "20", label: "Anos de Experiência" },
             { icon: Calendar, value: "2.500", label: "Eventos Realizados" },
@@ -943,9 +943,9 @@ export default function Landing() {
       </section>
 
       {/* Como Funciona Section */}
-      <section ref={albumRef} className="py-32 px-6 bg-black relative">
+      <section ref={albumRef} className="py-20 md:py-32 px-6 bg-black relative">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-12 md:mb-20">
             <h2 className="text-4xl md:text-6xl font-serif mb-6">Como Funciona</h2>
             <p className="text-gray-400 text-xl max-w-2xl mx-auto font-light">
               Sua jornada do clique à memória eterna em apenas 3 passos simples.
@@ -1000,7 +1000,7 @@ export default function Landing() {
       </section>
 
       {/* Nossos Serviços Section */}
-      <section ref={servicesRef} className="py-32 px-6 bg-zinc-950">
+      <section ref={servicesRef} className="py-20 md:py-32 px-6 bg-zinc-950">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
             <div>
@@ -1046,21 +1046,21 @@ export default function Landing() {
       </section>
 
       {/* Instituições Parceiras Section */}
-      <section className="py-32 px-6 bg-black">
+      <section className="py-20 md:py-32 px-6 bg-black">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-12 md:mb-20">
             <h2 className="text-4xl md:text-5xl font-serif mb-6">Instituições Parceiras</h2>
             <p className="text-gray-400 font-light">Confiança das maiores universidades do país.</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 items-center opacity-50 grayscale hover:grayscale-0 transition-all">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12 items-center">
             {/* Placeholder logos with university names */}
             {[
               "UFSC", "UNIVALI", "Positivo", "Uniguaçu", "UniBrasil", "Univille",
               "UniSociesc", "UFPR", "UTP", "PUCPR", "Unicuritiba", "Unisul"
             ].map((uni, i) => (
               <div key={i} className="flex items-center justify-center p-4">
-                <span className="text-2xl font-serif font-bold text-white/40 hover:text-brand-gold transition-colors">{uni}</span>
+                <span className="text-lg md:text-2xl font-serif font-bold text-white/60 hover:text-brand-gold transition-colors">{uni}</span>
               </div>
             ))}
           </div>
@@ -1068,24 +1068,34 @@ export default function Landing() {
       </section>
 
       {/* Galeria de Fotos Section */}
-      <section className="py-32 px-6 bg-zinc-950">
+      <section className="py-20 md:py-32 px-6 bg-zinc-950">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
+          <div className="text-center mb-12 md:mb-20">
             <h2 className="text-4xl md:text-6xl font-serif mb-6">Galeria de Fotos</h2>
             <p className="text-gray-400 text-xl font-light">Momentos inesquecíveis capturados pela nossa equipe.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          {/* TODO: trocar por fotos reais de formaturas da Top Line */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+            {[
+              'photo-1541339907198-e08756dedf3f',
+              'photo-1525921429624-479b6a26d84d',
+              'photo-1511795409834-ef04bbd61622',
+              'photo-1517486808906-6ca8b3f04846',
+              'photo-1523580494863-6f3031224c94',
+              'photo-1532619675605-1ede6c2ed2b0',
+            ].map((photoId, i) => (
               <motion.div
-                key={i}
+                key={photoId}
                 whileHover={{ scale: 1.02 }}
-                className="aspect-square rounded-2xl overflow-hidden border border-white/10"
+                className="aspect-square rounded-2xl overflow-hidden border border-white/10 bg-zinc-900"
               >
                 <img 
-                  src={`https://picsum.photos/seed/gallery${i}/800/800`} 
-                  alt={`Gallery ${i}`} 
-                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                  src={`https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=75&w=700`} 
+                  alt={`Momento de formatura ${i + 1}`} 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover text-transparent hover:scale-110 transition-transform duration-700"
                   referrerPolicy="no-referrer"
                 />
               </motion.div>

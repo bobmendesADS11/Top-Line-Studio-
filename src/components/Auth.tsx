@@ -340,7 +340,7 @@ const Auth: React.FC = () => {
             {/* 20 Anos Badge */}
             <div className="flex flex-col items-center ml-1 border-l border-white/10 pl-2">
               <span className="font-script text-xl text-brand-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.6)] inline-block px-1">20</span>
-              <span className="text-[7px] uppercase tracking-widest text-brand-gold/80 -mt-1 font-bold">Anos</span>
+              <span className="text-[9px] uppercase tracking-widest text-brand-gold/80 -mt-1 font-bold">Anos</span>
             </div>
           </div>
           

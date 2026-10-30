@@ -292,7 +292,7 @@ Olá! Finalizei a diagramação do meu álbum pelo Top Line Studio e gostaria de
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-brand-gold text-black">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-brand-gold text-black">
                         {purchaseType === 'LINK' ? 'Digital Studio' : 'Físico + Digital Studio'}
                       </span>
                       <span className="text-xs text-gray-400 font-mono">
