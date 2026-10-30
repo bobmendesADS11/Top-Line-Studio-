@@ -673,6 +673,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
@@ -874,6 +875,34 @@ export default function Landing() {
         </motion.div>
       </section>
 
+      {/* Trailer do Studio */}
+      <section className="relative py-16 md:py-24 px-4 md:px-6 bg-black">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8 md:mb-12">
+            <p className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] mb-3">Conheça o Studio</p>
+            <h2 className="text-3xl md:text-5xl font-serif text-white">Seu álbum, do jeito que você sonhou</h2>
+          </div>
+          <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-brand-gold/30 shadow-[0_30px_80px_rgba(0,0,0,0.8),0_0_60px_rgba(212,175,55,0.12)] bg-zinc-950">
+            <video
+              src="/trailer.mp4"
+              poster="/trailer-poster.jpg"
+              className="w-full aspect-video object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+            />
+          </div>
+          <div className="flex justify-center mt-8 md:mt-10">
+            <button onClick={() => navigate('/login')} className="gold-button px-8 py-4 !text-[11px] !font-bold uppercase tracking-widest">
+              Montar meu álbum agora
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* A Empresa Section */}
       <section ref={aboutRef} className="py-20 md:py-32 px-6 relative overflow-hidden bg-zinc-950">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
@@ -1067,41 +1096,72 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Galeria de Fotos Section */}
-      <section className="py-20 md:py-32 px-6 bg-zinc-950">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 md:mb-20">
-            <h2 className="text-4xl md:text-6xl font-serif mb-6">Galeria de Fotos</h2>
-            <p className="text-gray-400 text-xl font-light">Momentos inesquecíveis capturados pela nossa equipe.</p>
-          </div>
+      {/* Galeria de Fotos Section — fotos reais de eventos Top Line */}
+      <section className="relative py-16 md:py-24 px-4 md:px-6 bg-[#0d0c08] overflow-hidden">
+        {/* faixa dourada no topo */}
+        <div className="absolute top-0 left-0 right-0 h-2 md:h-3 bg-gradient-to-r from-[#9c7a1e] via-brand-gold to-[#9c7a1e] -skew-y-[0.6deg] origin-left shadow-[0_4px_20px_rgba(212,175,55,0.35)]" />
+        <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_20%_20%,rgba(212,175,55,0.18),transparent_45%),radial-gradient(circle_at_80%_70%,rgba(212,175,55,0.12),transparent_50%)]" />
+        <div className="relative max-w-6xl mx-auto">
+          <h2 className="text-center text-2xl md:text-4xl font-bold uppercase tracking-wide text-white mb-10 md:mb-14 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            Galeria de Fotos
+          </h2>
 
-          {/* TODO: trocar por fotos reais de formaturas da Top Line */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {[
-              'photo-1541339907198-e08756dedf3f',
-              'photo-1525921429624-479b6a26d84d',
-              'photo-1511795409834-ef04bbd61622',
-              'photo-1517486808906-6ca8b3f04846',
-              'photo-1523580494863-6f3031224c94',
-              'photo-1532619675605-1ede6c2ed2b0',
-            ].map((photoId, i) => (
-              <motion.div
-                key={photoId}
-                whileHover={{ scale: 1.02 }}
-                className="aspect-square rounded-2xl overflow-hidden border border-white/10 bg-zinc-900"
+              'Decoração de formatura de Medicina',
+              'Palco da colação de Medicina',
+              'Show de luzes da formatura de Medicina',
+              'Formandos de Medicina na colação',
+              'Show no baile de formatura',
+              'Decoração do salão com lustres',
+              'Formandos comemorando no baile',
+              'Mesas decoradas do jantar de formatura',
+              'Animação no baile de formatura',
+              'Brasão e bandeiras da colação de Direito',
+              'Palco da formatura de Direito',
+              'Altar decorado da cerimônia',
+            ].map((alt, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setGalleryIndex(i)}
+                className="group aspect-[3/2] rounded-lg overflow-hidden border-2 border-white bg-black shadow-[0_10px_25px_rgba(0,0,0,0.7)] focus:outline-none focus:ring-2 focus:ring-brand-gold"
+                aria-label={`Ampliar foto: ${alt}`}
               >
-                <img 
-                  src={`https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=75&w=700`} 
-                  alt={`Momento de formatura ${i + 1}`} 
+                <img
+                  src={`/galeria/foto-${String(i + 1).padStart(2, '0')}.jpg`}
+                  alt={alt}
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover text-transparent hover:scale-110 transition-transform duration-700"
-                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover text-transparent group-hover:scale-105 transition-transform duration-500"
                 />
-              </motion.div>
+              </button>
             ))}
           </div>
         </div>
+
+        {/* Foto ampliada */}
+        <AnimatePresence>
+          {galleryIndex !== null && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+              onClick={() => setGalleryIndex(null)}
+            >
+              <img
+                src={`/galeria/foto-${String(galleryIndex + 1).padStart(2, '0')}.jpg`}
+                alt=""
+                className="w-[min(92vw,960px)] max-h-[85vh] object-contain rounded-xl border-2 border-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button className="absolute top-5 right-5 text-white/80 hover:text-white text-sm uppercase tracking-widest" onClick={() => setGalleryIndex(null)}>Fechar ✕</button>
+              <button className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white text-2xl" onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 11) % 12); }} aria-label="Foto anterior">‹</button>
+              <button className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white text-2xl" onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 1) % 12); }} aria-label="Próxima foto">›</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       {/* Footer / Contact */}
