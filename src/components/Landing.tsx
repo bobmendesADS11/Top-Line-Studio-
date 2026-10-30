@@ -674,6 +674,14 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
 export default function Landing() {
   const navigate = useNavigate();
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
+  // vídeo aberto na moldura: formatura (vídeo institucional) ou studio (trailer)
+  const [watchVideo, setWatchVideo] = useState<null | 'formatura' | 'studio'>(null);
+  useEffect(() => {
+    if (!watchVideo) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setWatchVideo(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [watchVideo]);
   const aboutRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
@@ -772,7 +780,19 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center py-32">
+      <section className="relative min-h-screen flex flex-col items-center justify-center py-32 overflow-hidden">
+        {/* Vídeo de fundo (eventos Top Line), em preto e branco e escurecido */}
+        <video
+          src="/video/entrada.mp4"
+          className="absolute inset-0 w-full h-full object-cover grayscale opacity-60 pointer-events-none"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.25)_0%,rgba(0,0,0,0.75)_80%)] pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black to-transparent pointer-events-none" />
         <ParticleBackground />
         
         {/* Delicate Ambient Lighting (Soft, perfectly centered, no side yellow fog) */}
@@ -839,11 +859,28 @@ export default function Landing() {
               </div>
             </motion.div>
             
-            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-16">
+            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-8">
               A experiência definitiva em formaturas premium. 
               Transformamos sonhos em memórias eternas com exclusividade e sofisticação.
             </p>
 
+            {/* Assistir: como no site da Top Line */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center mb-10">
+              <button
+                onClick={() => setWatchVideo('formatura')}
+                className="px-6 py-3 rounded-lg border border-brand-gold text-brand-gold bg-black/40 backdrop-blur-sm hover:bg-brand-gold hover:text-black transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                <Play className="w-4 h-4" fill="currentColor" />
+                Assista à formatura
+              </button>
+              <button
+                onClick={() => setWatchVideo('studio')}
+                className="px-6 py-3 rounded-lg border border-white/30 text-white bg-black/40 backdrop-blur-sm hover:border-brand-gold hover:text-brand-gold transition-all text-sm font-semibold flex items-center gap-2"
+              >
+                <Play className="w-4 h-4" fill="currentColor" />
+                Veja como funciona o Studio
+              </button>
+            </div>
             <div className="flex flex-col sm:flex-row gap-6 items-center">
               <button 
                 onClick={() => navigate('/login')}
@@ -861,6 +898,7 @@ export default function Landing() {
                 <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
               </button>
             </div>
+
           </motion.div>
         </div>
 
@@ -874,6 +912,46 @@ export default function Landing() {
           <ChevronDown className="w-6 h-6 text-brand-gold" />
         </motion.div>
       </section>
+
+      {/* Vídeo em moldura (abre pelos botões "Assista" / "Veja como funciona") */}
+      <AnimatePresence>
+        {watchVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10 bg-black"
+            onClick={() => setWatchVideo(null)}
+            role="dialog"
+            aria-label={watchVideo === 'formatura' ? 'Vídeo da formatura' : 'Como funciona o Studio'}
+          >
+            <video src="/video/entrada.mp4" className="absolute inset-0 w-full h-full object-cover grayscale opacity-30 blur-sm" autoPlay muted loop playsInline aria-hidden="true" />
+            <div className="absolute inset-0 bg-black/60" />
+            <motion.div
+              initial={{ scale: 0.96, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              className="relative w-full max-w-5xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <video
+                key={watchVideo}
+                src={watchVideo === 'formatura' ? '/video/formatura-medicina-unisul.mp4' : '/trailer.mp4'}
+                poster={watchVideo === 'studio' ? '/trailer-poster.jpg' : undefined}
+                className="w-full aspect-video bg-black border-2 border-white shadow-[0_30px_80px_rgba(0,0,0,0.9)]"
+                autoPlay
+                controls
+                playsInline
+              />
+              <div className="flex items-center justify-between mt-3 text-sm">
+                <span className="text-white/70">
+                  {watchVideo === 'formatura' ? 'Formatura de Medicina Unisul — Top Line Formaturas' : 'Top Line Studio — monte seu álbum de formatura'}
+                </span>
+                <button onClick={() => setWatchVideo(null)} className="text-white/80 hover:text-white uppercase tracking-widest text-xs font-bold">Fechar ✕</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Trailer do Studio */}
       <section className="relative py-16 md:py-24 px-4 md:px-6 bg-black">
@@ -1151,7 +1229,7 @@ export default function Landing() {
               onClick={() => setGalleryIndex(null)}
             >
               <img
-                src={`/galeria/foto-${String(galleryIndex + 1).padStart(2, '0')}.jpg`}
+                src={`/galeria/foto-${String(galleryIndex + 1).padStart(2, '0')}-g.jpg`}
                 alt=""
                 className="w-[min(92vw,960px)] max-h-[85vh] object-contain rounded-xl border-2 border-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
