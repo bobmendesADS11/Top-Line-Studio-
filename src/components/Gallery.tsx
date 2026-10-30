@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2, Download, Plus, GraduationCap } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
+import { fileToCompressedDataUrl } from '../lib/image';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 
 interface Photo {
@@ -100,17 +101,12 @@ export default function Gallery({ onSelect }: GalleryProps) {
     
     try {
       for (const file of files) {
-        // Convert file to Base64 for demo persistence in Firestore (1MB limit)
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-
-        // Check if dataUrl is too large for Firestore (approx 1MB limit)
-        if (dataUrl.length > 900000) {
-          console.warn(`A imagem ${file.name} é muito grande.`);
+        // Comprime/redimensiona para caber no Firestore (antes fotos grandes eram ignoradas)
+        let dataUrl: string;
+        try {
+          dataUrl = await fileToCompressedDataUrl(file);
+        } catch (err) {
+          console.warn(err);
           continue;
         }
 

@@ -1,13 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
 import Landing from './components/Landing';
-import Auth from './components/Auth';
-import Admin from './components/Admin';
-import Student from './components/Student';
+
+// Telas pesadas (3D, editor, painel admin) só são baixadas quando a pessoa entra nelas.
+// Assim a página inicial abre bem mais rápido.
+const Auth = lazy(() => import('./components/Auth'));
+const Admin = lazy(() => import('./components/Admin'));
+const Student = lazy(() => import('./components/Student'));
+
+const ScreenLoader: React.FC = () => (
+  <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 interface RouteWrapperProps {
   currentLocation: ReturnType<typeof useLocation>;
@@ -24,6 +33,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
       className="w-full min-h-screen bg-black"
     >
+      <Suspense fallback={<ScreenLoader />}>
       <Routes location={currentLocation}>
         <Route path="/" element={<Landing />} />
         <Route 
@@ -45,6 +55,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </motion.div>
   );
 });
@@ -105,8 +116,10 @@ const App: React.FC = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
-          const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
-                             currentUser.email?.toLowerCase().endsWith('@admin.topline.com');
+          // Contas "mestre" que podem se promover a admin sozinhas (as regras do Firestore
+          // aceitam só estas: e-mail do Gabriel verificado ou o telefone dele verificado por SMS).
+          // Qualquer outro admin precisa ter role = 'admin' definido por um admin no banco.
+          const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' && currentUser.emailVerified;
           const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
           const isImmediateStudent = currentUser.email?.toLowerCase() === 'bielmaestrelli@hotmail.com';
           const shouldBeAdmin = isAdminEmail || isAdminPhone;
@@ -139,7 +152,7 @@ const App: React.FC = () => {
             sessionStorage.removeItem('pendingRegistration');
 
             let extractedPhone = currentUser.phoneNumber || pendingData.phoneNumber || '';
-            if (isAdminEmail && !extractedPhone && currentUser.email?.endsWith('@admin.topline.com')) {
+            if (!extractedPhone && currentUser.email?.endsWith('@admin.topline.com')) {
               extractedPhone = '+' + currentUser.email.split('@')[0];
             }
 
@@ -167,16 +180,9 @@ const App: React.FC = () => {
         } catch (error) {
           console.error("Error fetching user role:", error);
           
-          // Critical: If it's a master account, force admin role even if Firestore fails
-          const isAdminEmail = currentUser.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
-                             currentUser.email?.toLowerCase().endsWith('@admin.topline.com');
-          const isAdminPhone = currentUser.phoneNumber === '+5548991764001';
-          
-          if (isAdminEmail || isAdminPhone) {
-            setRole('admin');
-          } else {
-            setRole('student'); // Fallback for others
-          }
+          // Sem acesso ao banco não dá para saber o papel: entra como aluno.
+          // (Nunca liberar o painel admin pelo lado do navegador — quem decide são as regras.)
+          setRole('student');
           setUser(currentUser);
         }
         setLoading(false);

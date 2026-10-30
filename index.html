@@ -1,18 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Top Line Formaturas | Studio</title>
+    <meta name="description" content="Plataforma da Top Line Formaturas para criar e visualizar seu álbum de formatura em 3D. Sonhe, acredite, realize." />
+    <meta name="theme-color" content="#000000" />
+    <meta property="og:title" content="Top Line Formaturas | Studio" />
+    <meta property="og:description" content="Crie e visualize seu álbum de formatura em 3D com a Top Line Formaturas." />
+    <meta property="og:type" content="website" />
   </head>
-  <body>
+  <body style="background:#000">
     <div id="root">
-      <div style="background: #000; color: #fbbf24; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center;">
-        <h1>Carregando...</h1>
-        <p style="color: #666;">Se a tela continuar preta, verifique o console do navegador.</p>
+      <div style="background: #000; height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div style="width:48px;height:48px;border:4px solid #d4af37;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
       </div>
     </div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

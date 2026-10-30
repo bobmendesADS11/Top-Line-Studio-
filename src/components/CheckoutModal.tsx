@@ -19,6 +19,7 @@ import {
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { COMPANY_WHATSAPP } from '../lib/contact';
 
 export interface CheckoutModalProps {
   isOpen: boolean;
@@ -72,7 +73,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const formattedMaterial = materialNames[materialType] || materialType;
 
   // WhatsApp company contact
-  const COMPANY_WHATSAPP = '5548991764001';
 
   const handleSendWhatsAppOrder = async (e: React.FormEvent) => {
     e.preventDefault();
