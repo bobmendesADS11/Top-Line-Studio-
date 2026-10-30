@@ -124,13 +124,13 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
         <p>Temos duas opções:</p>
         <div className="rounded-xl border border-white/10 bg-white/5 p-3">
           <p className="font-bold text-white">Link Studio (digital) — {formatBRL(PRICES.edition.link)}</p>
-          <p className="text-gray-400">Galeria digital premium com acesso vitalício, download em alta definição e compartilhamento instantâneo.</p>
+          <p className="text-gray-400">Todas as fotos oficiais da formatura, na íntegra: galeria digital com acesso vitalício, download em alta definição e compartilhamento.</p>
         </div>
         <div className="rounded-xl border border-brand-gold/30 bg-brand-gold/5 p-3">
           <p className="font-bold text-brand-gold">Álbum + Link — a partir de {formatBRL(PRICES.edition.album)}</p>
           <p className="text-gray-400">Álbum físico que abre 180° (lâminas panorâmicas), com o Link Studio incluso.</p>
         </div>
-        <p className="text-gray-400">Nos dois casos soma {formatBRL(PRICES.photo)} por foto escolhida para o álbum/galeria.</p>
+        <p className="text-gray-400">No Link Studio você recebe <b>todas as fotos oficiais da formatura, na íntegra</b>. No álbum, soma {formatBRL(PRICES.photo)} por foto impressa.</p>
       </div>,
       backOptions([{ label: '🛒 Montar meu pedido', onSelect: choose('Quero montar meu pedido', startOrder), primary: true }]),
     );
@@ -262,13 +262,13 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
     draftRef.current = { ...DEFAULT_DRAFT };
     if (preset) {
       draftRef.current.type = preset;
-      return preset === 'LINK' ? askPhotos() : askSize();
+      return preset === 'LINK' ? showSummary() : askSize();
     }
     botSay(
       <p>Vamos montar seu pedido em poucos passos. <b>Qual produto você quer?</b></p>,
       [
         { label: `📖 Álbum + Link · desde ${formatBRL(PRICES.edition.album)}`, onSelect: choose('Álbum + Link', () => { draftRef.current.type = 'FULL'; askSize(); }), primary: true },
-        { label: `💎 Só o Link Studio · ${formatBRL(PRICES.edition.link)}`, onSelect: choose('Só o Link Studio', () => { draftRef.current.type = 'LINK'; askPhotos(); }) },
+        { label: `💎 Só o Link Studio · ${formatBRL(PRICES.edition.link)}`, onSelect: choose('Só o Link Studio', () => { draftRef.current.type = 'LINK'; showSummary(); }) },
         { label: '❓ Qual a diferença?', onSelect: choose('Qual a diferença?', showProducts) },
       ],
     );
@@ -334,8 +334,8 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       : [20, 40, 60, 100];
     botSay(
       <div className="space-y-1">
-        <p><b>{step}</b> Quantas fotos você quer {d.type === 'FULL' ? 'no álbum' : 'no Link Studio'}? ({formatBRL(PRICES.photo)} cada)</p>
-        <p className="text-gray-400 text-[11px]">Você escolhe <b>quais</b> fotos depois, quando receber as fotos oficiais da formatura.</p>
+        <p><b>{step}</b> Quantas fotos você quer <b>impressas no álbum</b>? ({formatBRL(PRICES.photo)} cada)</p>
+        <p className="text-gray-400 text-[11px]">Você recebe <b>todas as fotos</b> da formatura, na íntegra, no Link Studio incluso. Aqui é só quantas vão para as páginas do álbum.</p>
       </div>,
       [
         ...opts.map(n => ({
@@ -363,11 +363,13 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
           {d.type === 'FULL' && row(`Tamanho ${sizeLabel(d.size)}`, plus(t.size))}
           {d.type === 'FULL' && row(`Capa ${MATERIAL_INFO[d.material].label}`, plus(t.material))}
           {d.type === 'FULL' && row(`${d.pages} lâminas`, plus(t.pages))}
-          {d.photos === null
-            ? row('Fotos', `a definir (${formatBRL(PRICES.photo)} cada)`)
-            : row(`${d.photos} ${d.photos === 1 ? 'foto' : 'fotos'}`, plus(t.photos))}
+          {d.type === 'LINK'
+            ? row('Fotos', 'todas, na íntegra')
+            : d.photos === null
+              ? row('Fotos no álbum', `a definir (${formatBRL(PRICES.photo)} cada)`)
+              : row(`${d.photos} ${d.photos === 1 ? 'foto' : 'fotos'} no álbum`, plus(t.photos))}
           <div className="border-t border-white/10 pt-2 mt-1 flex justify-between font-bold">
-            <span className="text-white">{d.photos === null ? 'Total (a partir de)' : 'Total'}</span><span className="text-brand-gold">{formatBRL(t.total)}</span>
+            <span className="text-white">{d.type === 'FULL' && d.photos === null ? 'Total (a partir de)' : 'Total'}</span><span className="text-brand-gold">{formatBRL(t.total)}</span>
           </div>
         </div>
         <p className="text-gray-400 text-[11px]">Na próxima tela você confirma seus dados{d.type === 'FULL' ? ' e o endereço de entrega' : ''}, e o pedido vai direto para a equipe no WhatsApp.</p>

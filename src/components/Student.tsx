@@ -143,13 +143,13 @@ const Dashboard: React.FC<{
               Sonhe, acredite, realize!
             </p>
 
-            <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap xl:flex-nowrap gap-3 w-full sm:w-auto">
               {userTier === 'PROSPECT' ? (
-                <Link to="editor" className="gold-button px-8 py-4 text-sm">
+                <Link to="editor" className="gold-button px-5 lg:px-6 py-4 !text-[11px] !font-bold uppercase tracking-widest whitespace-nowrap text-center">
                   Montar Álbum de Demonstração
                 </Link>
               ) : (
-                <Link to="galeria" className="gold-button px-8 py-4 text-sm">
+                <Link to="galeria" className="gold-button px-5 lg:px-6 py-4 !text-[11px] !font-bold uppercase tracking-widest whitespace-nowrap text-center">
                   Acessar Galeria Studio
                 </Link>
               )}
@@ -158,13 +158,13 @@ const Dashboard: React.FC<{
                 <>
                   <button 
                     onClick={() => onOpenChat('order_full')}
-                    className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                    className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Álbum Studio
                   </button>
                   <button 
                     onClick={() => onOpenChat('order_link')}
-                    className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                    className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Link Studio
                   </button>
@@ -174,7 +174,7 @@ const Dashboard: React.FC<{
               {userTier === 'LINK' && (
                 <button 
                   onClick={() => onOpenChat('order_full')}
-                  className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
+                  className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
                 >
                   Upgrade para Álbum
                 </button>
@@ -186,7 +186,7 @@ const Dashboard: React.FC<{
             <div className="absolute inset-0 border border-brand-gold/20 rounded-3xl translate-x-4 translate-y-4 group-hover/img:translate-x-6 group-hover/img:translate-y-6 transition-transform duration-500" />
             <div className="relative h-full w-full rounded-3xl overflow-hidden border border-white/10">
               <img 
-                src="https://picsum.photos/seed/graduation_ceremony_luxury/600/800" 
+                src={DEMO_PHOTOS[1].url} 
                 alt="Premium Experience" 
                 className="w-full h-full object-cover grayscale group-hover/img:grayscale-0 transition-all duration-1000"
                 referrerPolicy="no-referrer"
@@ -551,36 +551,24 @@ const Student: React.FC = () => {
       <header className="border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 md:gap-6">
-            <Link to="/area-do-aluno" className="flex items-center gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-zinc-900 border border-brand-gold/30 rounded-lg flex items-center justify-center">
-                <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5" />
+            <Link to="/area-do-aluno" className="flex items-center gap-3 md:gap-4" aria-label="Top Line Studio — início da área do aluno">
+              <div className="w-9 h-9 md:w-11 md:h-11 bg-gradient-to-br from-zinc-800 to-black border border-brand-gold/40 rounded-xl flex items-center justify-center shadow-[0_0_18px_rgba(212,175,55,0.15)]">
+                <GraduationCap className="text-brand-gold w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <div className="flex items-center gap-3 relative group">
-                {/* Brand: TOP LINE STUDIO & FORMATURAS */}
-                <div className="flex flex-col items-start leading-none">
-                  <div className="flex items-baseline gap-1.5">
-                    <div className="flex gap-1 font-serif text-xs md:text-sm text-white uppercase tracking-[0.2em]">
-                      <span>Top</span>
-                      <span>Line</span>
-                    </div>
-                    <span className="font-script text-base md:text-xl gold-gradient leading-none inline-block pr-1.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
-                      Studio
-                    </span>
-                  </div>
-                  <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.4em] mt-1.5 pl-0.5">
-                    Formaturas
-                  </span>
+              {/* Marca: TOP LINE · Studio / FORMATURAS */}
+              <div className="flex flex-col items-start leading-none">
+                <div className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap">
+                  <span className="font-serif text-[13px] md:text-lg text-white uppercase tracking-[0.15em] md:tracking-[0.25em]">Top Line</span>
+                  <span className="font-script text-xl md:text-3xl gold-gradient leading-none inline-block pr-2 translate-y-[2px] drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]">Studio</span>
                 </div>
-
-                {/* 20 Anos Seal (with zero clipping on the 0) */}
-                <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
-                  <GraduationCap className="text-brand-gold w-3 h-3 mb-[-3px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-                  <span className="font-script text-base md:text-lg gold-gradient leading-tight inline-block px-1.5 py-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
-                    20
-                  </span>
-                  <span className="font-script text-[9px] md:text-[9px] gold-gradient -mt-1.5 inline-block px-1">
-                    anos
-                  </span>
+                <span className="text-[8px] md:text-[10px] text-white/50 uppercase tracking-[0.35em] md:tracking-[0.5em] mt-0.5 pl-0.5">Formaturas</span>
+              </div>
+              {/* Selo 20 anos */}
+              <div className="hidden min-[400px]:flex items-center gap-1.5 pl-3 md:pl-4 border-l border-white/10">
+                <span className="font-script text-3xl md:text-5xl gold-gradient leading-none inline-block px-1 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">20</span>
+                <div className="hidden sm:flex flex-col leading-none">
+                  <span className="text-[9px] md:text-[10px] text-brand-gold font-bold uppercase tracking-[0.25em]">anos</span>
+                  <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.2em] mt-0.5">de história</span>
                 </div>
               </div>
             </Link>
