@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2, Download, Plus, GraduationCap } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { fileToCompressedDataUrl } from '../lib/image';
+import { DEMO_PHOTOS } from '../lib/demoPhotos';
+import { PRICES, formatBRL } from '../lib/pricing';
+import type { ConciergeIntent } from './ConciergeBot';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 
 interface Photo {
@@ -20,9 +23,13 @@ interface UserProfile {
 
 interface GalleryProps {
   onSelect: (photos: Photo[]) => void;
+  /** PROSPECT = ainda não comprou: vê fotos de demonstração e não sobe fotos */
+  userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
+  onOpenAssistant?: (intent: ConciergeIntent) => void;
 }
 
-export default function Gallery({ onSelect }: GalleryProps) {
+export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssistant }: GalleryProps) {
+  const isProspect = userTier === 'PROSPECT';
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -38,6 +45,12 @@ export default function Gallery({ onSelect }: GalleryProps) {
   const PHOTOS_PER_PAGE = 100;
 
   useEffect(() => {
+    // Antes da compra: só fotos de demonstração (as oficiais chegam depois da compra)
+    if (isProspect) {
+      setPhotos(DEMO_PHOTOS.map(p => ({ id: p.id, url: p.url, thumbnail: p.thumbnail, name: 'Demonstração', source: 'admin' })) as any);
+      setLoading(false);
+      return;
+    }
     if (!auth.currentUser) return;
 
     // Fetch User Profile for Package Status
@@ -70,7 +83,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
       unsubscribe();
       unsubUser();
     };
-  }, [page]);
+  }, [page, isProspect]);
 
   const togglePhoto = (id: string) => {
     const newSelected = new Set(selectedIds);
@@ -94,7 +107,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !auth.currentUser) return;
+    if (isProspect || !e.target.files || !auth.currentUser) return;
     
     setIsUploading(true);
     const files = Array.from(e.target.files);
@@ -244,13 +257,15 @@ export default function Gallery({ onSelect }: GalleryProps) {
             <div className="flex flex-col gap-1">
               <span className="font-script text-3xl text-white/60">Sonhe, acredite, realize!</span>
               <p className="text-gray-500 text-xs max-w-md leading-relaxed">
-                Selecione as fotos que farão parte do seu álbum exclusivo. O número em cada foto indica a ordem em que aparecerão na sua diagramação.
+                {isProspect
+                  ? 'Estas são fotos de demonstração. Suas fotos oficiais da formatura serão liberadas aqui depois da compra — e aí você também poderá subir as suas.'
+                  : 'Selecione as fotos que farão parte do seu álbum exclusivo. O número em cada foto indica a ordem em que aparecerão na sua diagramação.'}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-4 flex-wrap">
-            {(userProfile?.package === 'link' || userProfile?.package === 'album') && (
+            {!isProspect && (
               <button 
                 onClick={downloadAll}
                 className="bg-white text-black px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-brand-gold transition-all flex items-center gap-2"
@@ -267,14 +282,14 @@ export default function Gallery({ onSelect }: GalleryProps) {
               {selectedIds.size === photos.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
             </button>
 
-            <button 
+            {!isProspect && <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="bg-brand-gold text-black px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
             >
               <Upload size={16} />
               {isUploading ? 'Enviando...' : 'Subir Fotos'}
-            </button>
+            </button>}
             <input 
               type="file" 
               multiple 
@@ -298,13 +313,32 @@ export default function Gallery({ onSelect }: GalleryProps) {
           </div>
         </div>
 
+        {isProspect && (
+          <div className="mb-8 p-5 md:p-6 rounded-3xl border border-brand-gold/30 bg-brand-gold/5 flex flex-col md:flex-row md:items-center gap-4 justify-between">
+            <div>
+              <p className="text-brand-gold text-xs font-bold uppercase tracking-widest mb-1">Modo demonstração</p>
+              <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
+                Monte e veja seu álbum em 3D com estas fotos de exemplo. Depois da compra, suas fotos oficiais entram no lugar delas.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              <button onClick={() => onSelect(photos)} className="px-5 py-3 rounded-xl bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all">
+                Montar álbum de demonstração
+              </button>
+              <button onClick={() => onOpenAssistant?.('menu')} className="px-5 py-3 rounded-xl border border-brand-gold/40 text-brand-gold text-[10px] font-bold uppercase tracking-widest hover:bg-brand-gold/10 transition-all">
+                Como comprar
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex items-center gap-4 mb-8 border-b border-white/5 pb-4 overflow-x-auto scrollbar-hide">
           {[
             { id: 'all', label: 'Fotos do Evento', icon: ImageIcon },
             { id: 'selected', label: `Minha Seleção (${selectedIds.size})`, icon: Check },
             { id: 'student', label: 'Minhas Fotos', icon: Upload },
-          ].map((tab) => (
+          ].filter(tab => !(isProspect && tab.id === 'student')).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
@@ -449,7 +483,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
             />
             <div className="mt-8 flex items-center gap-4">
-              {(userProfile?.package === 'link' || userProfile?.package === 'album') && (
+              {!isProspect && (
                 <button 
                   onClick={() => downloadPhoto(previewPhoto.url, previewPhoto.name || 'foto.jpg')}
                   className="bg-white/10 text-white px-8 py-3 rounded-full font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-2"
@@ -490,15 +524,15 @@ export default function Gallery({ onSelect }: GalleryProps) {
             </div>
 
             <p className="text-gray-400 mb-8">
-              {userProfile?.package === 'prospect' 
-                ? 'Você está no modo demonstração. Selecione as fotos que deseja e escolha um pacote abaixo para liberar o acesso completo.'
+              {isProspect 
+                ? 'Você está no modo demonstração. Escolha um pacote: o assistente te guia no pedido e, depois da compra, suas fotos oficiais são liberadas.'
                 : `Você selecionou ${selectedIds.size} fotos para o seu álbum.`}
             </p>
 
-            {userProfile?.package === 'prospect' ? (
+            {isProspect ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <button 
-                  onClick={() => handleFinalize('link')}
+                  onClick={() => { setShowFinalizeModal(false); onOpenAssistant?.('order_link'); }}
                   className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left group"
                 >
                   <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform">
@@ -508,12 +542,12 @@ export default function Gallery({ onSelect }: GalleryProps) {
                   <p className="text-xs text-gray-500 mb-4">Receba o link com todas as suas fotos em alta resolução.</p>
                   <div className="flex items-center justify-between">
                     <p className="text-xl font-bold text-blue-400">Link Studio</p>
-                    <p className="text-lg font-bold text-white">R$ 197,00</p>
+                    <p className="text-lg font-bold text-white">{formatBRL(PRICES.edition.link)}</p>
                   </div>
                 </button>
 
                 <button 
-                  onClick={() => handleFinalize('album')}
+                  onClick={() => { setShowFinalizeModal(false); onOpenAssistant?.('order_full'); }}
                   className="p-8 bg-white/5 border border-white/10 rounded-3xl hover:border-brand-gold/50 hover:bg-brand-gold/5 transition-all text-left group"
                 >
                   <div className="w-12 h-12 bg-brand-gold/10 rounded-2xl flex items-center justify-center text-brand-gold mb-6 group-hover:scale-110 transition-transform">
@@ -523,7 +557,7 @@ export default function Gallery({ onSelect }: GalleryProps) {
                   <p className="text-xs text-gray-500 mb-4">Receba seu álbum físico premium e o link com as fotos.</p>
                   <div className="flex items-center justify-between">
                     <p className="text-xl font-bold text-brand-gold">Album Studio</p>
-                    <p className="text-lg font-bold text-white">R$ 897,00</p>
+                    <p className="text-lg font-bold text-white">desde {formatBRL(PRICES.edition.album)}</p>
                   </div>
                 </button>
               </div>
@@ -531,27 +565,27 @@ export default function Gallery({ onSelect }: GalleryProps) {
               <div className="space-y-4">
                 <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile?.package === 'album' ? 'bg-brand-gold/20 text-brand-gold' : 'bg-blue-500/20 text-blue-500'}`}>
-                      {userProfile?.package === 'album' ? <Check size={20} /> : <ImageIcon size={20} />}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userTier === 'ALBUM' ? 'bg-brand-gold/20 text-brand-gold' : 'bg-blue-500/20 text-blue-500'}`}>
+                      {userTier === 'ALBUM' ? <Check size={20} /> : <ImageIcon size={20} />}
                     </div>
                     <div>
-                      <p className="font-bold">{userProfile?.package === 'album' ? 'Album Studio Ativo' : 'Link Studio Ativo'}</p>
+                      <p className="font-bold">{userTier === 'ALBUM' ? 'Álbum Studio ativo' : 'Link Studio ativo'}</p>
                       <p className="text-xs text-gray-500">Seu pacote já permite o acesso completo às fotos.</p>
                     </div>
                   </div>
                   
-                  {userProfile?.package === 'link' && (
+                  {userTier === 'LINK' && (
                     <button 
-                      onClick={() => handleFinalize('album')}
+                      onClick={() => { setShowFinalizeModal(false); onOpenAssistant?.('order_full'); }}
                       className="w-full mb-4 bg-brand-gold/10 text-brand-gold border border-brand-gold/30 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={18} />
-                      Upgrade para Album Studio (R$ 700,00)
+                      Quero o álbum físico — ver passo a passo
                     </button>
                   )}
 
                   <button 
-                    onClick={() => handleFinalize(userProfile?.package as any)}
+                    onClick={() => handleFinalize(userTier === 'ALBUM' ? 'album' : 'link')}
                     className="w-full bg-brand-gold text-black py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-white transition-all"
                   >
                     Confirmar Seleção do Álbum

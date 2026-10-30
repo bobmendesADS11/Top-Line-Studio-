@@ -46,6 +46,8 @@ const SHEET_THICKNESS_CM = 0.02; // ~0,2 mm por lâmina
 const MAX_BLOCK_CM = 1.6; // espessura máxima do miolo
 const BOARD_CM = 0.12; // capa fina ~1,2 mm
 const OVERHANG_CM = 0.1; // capa praticamente rente às páginas
+// Leve dobra em V quando aberto (cada metade sobe ~5° a partir da lombada), como revista
+const FOLD_ANGLE = 0.09;
 const SPINE_GAP = 0.004; // dobra de revista: praticamente sem folga no centro
 
 export function parseAlbumSize(size?: string) {
@@ -223,11 +225,21 @@ function gutterShadowTexture() {
     const g = ctx.createLinearGradient(0, 0, 256, 0);
     g.addColorStop(0, 'rgba(0,0,0,0)');
     g.addColorStop(0.4, 'rgba(0,0,0,0.05)');
-    g.addColorStop(0.5, 'rgba(0,0,0,0.16)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.22)');
     g.addColorStop(0.6, 'rgba(0,0,0,0.05)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 256, 4);
+  });
+}
+
+function coverShadeTexture() {
+  return makeCanvasTexture('cover-shade', 4, 256, (ctx) => {
+    const g = ctx.createLinearGradient(0, 0, 0, 256);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 4, 256);
   });
 }
 
@@ -293,6 +305,7 @@ function TurningLeaf({
   zStart,
   zEnd,
   flipRef,
+  foldRef,
 }: {
   frontTexture: THREE.Texture;
   backTexture: THREE.Texture;
@@ -301,6 +314,7 @@ function TurningLeaf({
   zStart: number;
   zEnd: number;
   flipRef: React.MutableRefObject<FlipState>;
+  foldRef: React.MutableRefObject<number>;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const geometries = useMemo(() => {
@@ -336,7 +350,8 @@ function TurningLeaf({
       pos.needsUpdate = true;
       geom.computeVertexNormals();
     }
-    g.rotation.y = -p * Math.PI;
+    const fold = foldRef.current;
+    g.rotation.y = -(fold + p * (Math.PI - 2 * fold));
     g.position.z = THREE.MathUtils.lerp(zStart, zEnd, p) + Math.sin(p * Math.PI) * 0.04;
   });
 
@@ -403,6 +418,10 @@ function PhotobookModel({
   const hingeRef = useRef<THREE.Group>(null);
   const bookRef = useRef<THREE.Group>(null);
   const openContentRef = useRef<THREE.Group>(null);
+  const rightFoldRef = useRef<THREE.Group>(null);
+  const leftFoldRef = useRef<THREE.Group>(null);
+  const rightPageRef = useRef<THREE.Mesh>(null);
+  const foldRef = useRef(isOpen ? FOLD_ANGLE : 0);
   useEffect(() => invalidate(), [isOpen, invalidate]);
 
   // Espessura de cada lado depende de onde estamos no álbum
@@ -442,6 +461,11 @@ function PhotobookModel({
     if (hingeRef.current) hingeRef.current.rotation.y = c * Math.PI;
     if (bookRef.current) bookRef.current.position.x = -(width / 2) * c;
     if (openContentRef.current) openContentRef.current.visible = c < 0.98;
+    if (rightPageRef.current) rightPageRef.current.visible = c < 0.98;
+    // dobra some quando o álbum fecha
+    foldRef.current = FOLD_ANGLE * (1 - c);
+    if (rightFoldRef.current) rightFoldRef.current.rotation.y = -foldRef.current;
+    if (leftFoldRef.current) leftFoldRef.current.rotation.y = foldRef.current;
     if (animating) invalidate();
   });
 
@@ -460,8 +484,9 @@ function PhotobookModel({
 
   const coverW = width + over;
   const coverH = height + over * 2;
-  const isPhotoCover = materialType === 'photo' || materialType === 'acrylic';
-  const coverPhotoAspect = isPhotoCover ? coverW / coverH : 0.72 * width / (0.62 * height);
+  // A foto cobre a capa inteira em todos os acabamentos; o material aparece nas bordas,
+  // na lombada e no verso (acrílico ganha brilho de vidro, os demais acabamento acetinado)
+  const coverPhotoAspect = coverW / coverH;
   const coverPhotoTex = usePageTexture(coverTextureUrl, 1, coverPhotoAspect);
 
   const coverMaterial = useCoverMaterial(materialType);
@@ -480,18 +505,20 @@ function PhotobookModel({
     <group rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
       <group ref={bookRef}>
         {/* ---------- METADE DIREITA (fixa) ---------- */}
-        <mesh position={[coverW / 2 + SPINE_GAP / 2, 0, board / 2]} material={coverMaterial} castShadow receiveShadow>
-          <boxGeometry args={[coverW, coverH, board]} />
-        </mesh>
-        <mesh position={[width / 2 + SPINE_GAP / 2, 0, board + stackR / 2]} material={pageEdgeMaterial}>
-          <boxGeometry args={[width, height, stackR]} />
-        </mesh>
-
-        <group ref={openContentRef}>
-          <mesh position={[width / 2 + SPINE_GAP / 2, 0, HR + 0.001]} onClick={handlePageClick('next')}>
+        <group ref={rightFoldRef}>
+          <mesh position={[coverW / 2 + SPINE_GAP / 2, 0, board / 2]} material={coverMaterial} castShadow receiveShadow>
+            <boxGeometry args={[coverW, coverH, board]} />
+          </mesh>
+          <mesh position={[width / 2 + SPINE_GAP / 2, 0, board + stackR / 2]} material={pageEdgeMaterial}>
+            <boxGeometry args={[width, height, stackR]} />
+          </mesh>
+          <mesh ref={rightPageRef} position={[width / 2 + SPINE_GAP / 2, 0, HR + 0.001]} onClick={handlePageClick('next')}>
             <planeGeometry args={[width, height]} />
             <meshStandardMaterial map={rightTex} roughness={0.5} />
           </mesh>
+        </group>
+
+        <group ref={openContentRef}>
           {/* sombra suave da dobra central */}
           <mesh position={[0, 0, Math.max(HL, HR) + 0.003]} renderOrder={2}>
             <planeGeometry args={[width * 0.06, height]} />
@@ -506,6 +533,7 @@ function PhotobookModel({
               zStart={HR + 0.004}
               zEnd={HL + 0.004}
               flipRef={flipRef}
+              foldRef={foldRef}
             />
           )}
         </group>
@@ -519,6 +547,7 @@ function PhotobookModel({
         <group position={[0, 0, pivotZ]}>
           <group ref={hingeRef}>
             <group position={[0, 0, -pivotZ]}>
+             <group ref={leftFoldRef}>
               <mesh position={[-coverW / 2 - SPINE_GAP / 2, 0, board / 2]} material={coverMaterial} castShadow receiveShadow>
                 <boxGeometry args={[coverW, coverH, board]} />
               </mesh>
@@ -532,33 +561,26 @@ function PhotobookModel({
 
               {/* Arte da capa (face de baixo da metade esquerda = frente quando fechado) */}
               <group position={[-coverW / 2 - SPINE_GAP / 2, 0, -0.004]} rotation={[0, Math.PI, 0]}>
-                {isPhotoCover ? (
-                  <mesh>
-                    <planeGeometry args={[coverW, coverH]} />
-                    <meshPhysicalMaterial
-                      map={coverPhotoTex}
-                      roughness={materialType === 'acrylic' ? 0.05 : 0.35}
-                      clearcoat={materialType === 'acrylic' ? 1 : 0.3}
-                      clearcoatRoughness={0.05}
-                    />
-                  </mesh>
-                ) : (
-                  <>
-                    <mesh position={[0, coverH * 0.1, 0.006]}>
-                      <planeGeometry args={[width * 0.72, height * 0.62]} />
-                      <meshStandardMaterial map={coverPhotoTex} roughness={0.4} polygonOffset polygonOffsetFactor={-2} />
-                    </mesh>
-                    <mesh position={[0, coverH * 0.1, 0]}>
-                      <planeGeometry args={[width * 0.72 + 0.05, height * 0.62 + 0.05]} />
-                      <meshStandardMaterial {...GOLD} />
-                    </mesh>
-                  </>
-                )}
-                <mesh position={[0, isPhotoCover ? -coverH * 0.36 : -coverH * 0.34, 0.006]}>
+                <mesh>
+                  <planeGeometry args={[coverW, coverH]} />
+                  <meshPhysicalMaterial
+                    map={coverPhotoTex}
+                    roughness={materialType === 'acrylic' ? 0.05 : materialType === 'photo' ? 0.3 : 0.45}
+                    clearcoat={materialType === 'acrylic' ? 1 : materialType === 'photo' ? 0.4 : 0.1}
+                    clearcoatRoughness={0.05}
+                  />
+                </mesh>
+                {/* faixa escura suave embaixo para o selo dourado ficar legível sobre a foto */}
+                <mesh position={[0, -coverH * 0.34, 0.003]}>
+                  <planeGeometry args={[coverW, coverH * 0.32]} />
+                  <meshBasicMaterial map={coverShadeTexture()} transparent depthWrite={false} />
+                </mesh>
+                <mesh position={[0, -coverH * 0.37, 0.006]}>
                   <planeGeometry args={[width * 0.6, width * 0.15]} />
                   <meshStandardMaterial color="#e2bf55" metalness={0.7} roughness={0.3} emissive="#6b5214" emissiveIntensity={0.6} alphaMap={stampTex} transparent depthWrite={false} />
                 </mesh>
               </group>
+             </group>
             </group>
           </group>
         </group>
