@@ -40,9 +40,12 @@ export interface Album3DProps {
 // escala, então um 20x30 aparece menor que um 30x30, como na vida real.
 // ----------------------------------------------------------------------
 const CM = 0.15;
-const SHEET_THICKNESS_CM = 0.16; // lâmina layflat ~1,6 mm
-const BOARD_CM = 0.3; // capa dura ~3 mm
-const OVERHANG_CM = 0.3; // capa sobra 3 mm em volta das páginas
+// Perfil "revista": páginas finas e capa fina. Espessura cresce com o pacote de lâminas,
+// mas fica sempre baixa (20 lâminas ≈ 0,4 cm; 80 lâminas ≈ 1,6 cm).
+const SHEET_THICKNESS_CM = 0.02; // ~0,2 mm por lâmina
+const MAX_BLOCK_CM = 1.6; // espessura máxima do miolo
+const BOARD_CM = 0.12; // capa fina ~1,2 mm
+const OVERHANG_CM = 0.1; // capa praticamente rente às páginas
 const SPINE_GAP = 0.06; // folga visual no centro (lombada)
 
 export function parseAlbumSize(size?: string) {
@@ -380,7 +383,7 @@ function PhotobookModel({
   const aspect = width / height;
   const board = BOARD_CM * CM;
   const over = OVERHANG_CM * CM;
-  const totalStack = Math.max(0.02, sheetCount * SHEET_THICKNESS_CM * CM);
+  const totalStack = Math.max(0.01, Math.min(MAX_BLOCK_CM, sheetCount * SHEET_THICKNESS_CM) * CM);
 
   // ---- Estado de folhear (refs para animar sem re-render a cada frame)
   const [displayed, setDisplayed] = useState(targetSpread);
