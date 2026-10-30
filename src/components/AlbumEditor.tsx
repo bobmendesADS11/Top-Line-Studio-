@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './LazyAlbum3D';
+import { PRICES } from '../lib/pricing';
 import CheckoutModal from './CheckoutModal';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -56,33 +57,6 @@ type LayoutType = 'minimalist' | 'grid' | 'vgrid' | 'panorama' | 'spread';
 type EffectType = 'none' | 'bw' | 'sepia' | 'vintage' | 'vibrant';
 type AlbumSize = '20x30' | '30x30' | '30x40';
 type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 'photo';
-
-const PRICES = {
-  edition: {
-    link: 1200.00,       // Link Studio (Digital)
-    album: 1850.00,     // Full Experience (Physical + Link)
-  },
-  photo: 45.00,         // Unit price per photo curated
-  size: {
-    '20x30': 0,
-    '30x30': 150,
-    '30x40': 300
-  },
-  material: {
-    'standard': 0,
-    'premium': 350,
-    'leather': 550,
-    'acrylic': 950,
-    'velvet': 750,
-    'photo': 500
-  },
-  pagePackage: {
-    20: 0,
-    40: 400,
-    60: 750,
-    80: 1100
-  }
-};
 
 const DEMO_PHOTOS: Photo[] = [
   { id: 'demo1', url: 'https://picsum.photos/seed/grad1/800/1200' },

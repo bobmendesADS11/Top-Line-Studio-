@@ -7,9 +7,9 @@ import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
 import Album3D from './LazyAlbum3D';
 import AlbumEditor from './AlbumEditor';
-import { openWhatsApp } from '../lib/contact';
+import ConciergeBot, { ConciergeIntent } from './ConciergeBot';
 
-const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (message?: string) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
+const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (intent?: ConciergeIntent) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
   <motion.div 
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -83,7 +83,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
           <button 
             onClick={() => {
               setShowWelcome(false);
-              onOpenChat("Olá! Acabei de entrar na minha área do aluno e gostaria de saber mais sobre como eternizar minha formatura com a Top Line Studio.");
+              onOpenChat();
             }}
             className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-2"
           >
@@ -104,7 +104,7 @@ const Dashboard: React.FC<{
   selectedPhotos: any[];
   hasPurchasedAlbum: boolean;
   navigate: (path: string) => void;
-  onOpenChat: (message?: string) => void;
+  onOpenChat: (intent?: ConciergeIntent) => void;
 }> = ({ userTier, studentData, user, myOrders, selectedPhotos, hasPurchasedAlbum, navigate, onOpenChat }) => {
   return (
     <main className="max-w-7xl mx-auto px-6 py-12">
@@ -150,13 +150,13 @@ const Dashboard: React.FC<{
               {userTier === 'PROSPECT' && (
                 <>
                   <button 
-                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Álbum Studio (Físico) para minha formatura.')}
+                    onClick={() => onOpenChat('order_full')}
                     className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Álbum Studio
                   </button>
                   <button 
-                    onClick={() => onOpenChat('Gostaria de saber mais sobre como adquirir o Link Studio para minhas fotos.')}
+                    onClick={() => onOpenChat('order_link')}
                     className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Link Studio
@@ -166,7 +166,7 @@ const Dashboard: React.FC<{
 
               {userTier === 'LINK' && (
                 <button 
-                  onClick={() => onOpenChat('Gostaria de saber mais sobre como fazer o upgrade para o Álbum Físico Studio.')}
+                  onClick={() => onOpenChat('order_full')}
                   className="px-8 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-xs uppercase tracking-widest hover:bg-brand-gold/5 transition-all"
                 >
                   Upgrade para Álbum
@@ -239,7 +239,7 @@ const Dashboard: React.FC<{
       {/* Studio Concierge */}
       <motion.div 
         whileHover={{ y: -5 }}
-        onClick={() => onOpenChat("Olá! Gostaria de falar com um especialista sobre as edições exclusivas de álbuns da Top Line.")}
+        onClick={() => onOpenChat()}
         className="md:col-span-4 bg-zinc-950 border border-brand-gold/20 rounded-[40px] p-8 flex flex-col justify-between relative overflow-hidden group cursor-pointer"
       >
         {/* Decorative background effects */}
@@ -428,7 +428,9 @@ const Student: React.FC = () => {
   const navigate = useNavigate();
   const user = auth.currentUser;
 
-  const handleOpenChat = (message?: string) => openWhatsApp(message);
+  // Botões de concierge / "Falar com especialista" / "Adquirir" abrem o robô de ajuda
+  const [botIntent, setBotIntent] = useState<ConciergeIntent | null>(null);
+  const handleOpenChat = (intent: ConciergeIntent = 'menu') => setBotIntent(intent);
 
   const albumPages = [
     'https://picsum.photos/seed/grad1/800/1200',
@@ -577,9 +579,9 @@ const Student: React.FC = () => {
 
           <div className="flex items-center gap-3 md:gap-6">
             <button 
-              onClick={() => handleOpenChat("Olá! Gostaria de tirar algumas dúvidas sobre meu álbum e as opções da Top Line.")}
+              onClick={() => handleOpenChat()}
               className="p-2 hover:bg-brand-gold/10 text-gray-400 hover:text-brand-gold rounded-lg transition-colors group relative"
-              title="Falar com a equipe no WhatsApp"
+              title="Assistente Top Line"
             >
               <Sparkles size={18} className="md:w-5 md:h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-gold rounded-full animate-pulse" />
@@ -686,7 +688,7 @@ const Student: React.FC = () => {
                 zoom={1} 
                 isOpen={true} 
                 purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}
-                onCheckout={() => handleOpenChat("Olá! Gostaria de conversar sobre as opções do meu álbum de formatura Top Line Studio.")}
+                onCheckout={() => handleOpenChat('order_full')}
               />
             </div>
           </div>
@@ -704,6 +706,17 @@ const Student: React.FC = () => {
         } />
       </Routes>
 
+      <ConciergeBot
+        isOpen={botIntent !== null}
+        intent={botIntent || 'menu'}
+        onClose={() => setBotIntent(null)}
+        studentName={studentData?.displayName || user?.displayName || ''}
+        userId={user?.uid}
+        photos={selectedPhotos}
+        orders={myOrders}
+        onNavigate={(path) => navigate(path)}
+      />
+
       {/* Floating Chat Button */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
@@ -715,7 +728,7 @@ const Student: React.FC = () => {
       >
         <Sparkles size={28} className="group-hover:rotate-12 transition-transform" />
         <div className="absolute right-full mr-4 bg-zinc-900 border border-brand-gold/20 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest text-brand-gold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Fale conosco no WhatsApp
+          Assistente Top Line
         </div>
       </motion.button>
     </div>
