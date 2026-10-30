@@ -143,13 +143,13 @@ const Dashboard: React.FC<{
               Sonhe, acredite, realize!
             </p>
 
-            <div className="flex flex-col sm:flex-row sm:flex-wrap xl:flex-nowrap gap-3 w-full sm:w-auto">
+            <div className="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-fr gap-2.5 w-full max-w-2xl">
               {userTier === 'PROSPECT' ? (
-                <Link to="editor" className="gold-button px-5 lg:px-6 py-4 !text-[11px] !font-bold uppercase tracking-widest whitespace-nowrap text-center">
+                <Link to="editor" className="gold-button px-3 py-4 !text-[10px] lg:!text-[11px] !font-bold uppercase tracking-wider text-center leading-tight flex items-center justify-center">
                   Montar Álbum de Demonstração
                 </Link>
               ) : (
-                <Link to="galeria" className="gold-button px-5 lg:px-6 py-4 !text-[11px] !font-bold uppercase tracking-widest whitespace-nowrap text-center">
+                <Link to="galeria" className="gold-button px-3 py-4 !text-[10px] lg:!text-[11px] !font-bold uppercase tracking-wider text-center leading-tight flex items-center justify-center">
                   Acessar Galeria Studio
                 </Link>
               )}
@@ -158,13 +158,13 @@ const Dashboard: React.FC<{
                 <>
                   <button 
                     onClick={() => onOpenChat('order_full')}
-                    className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
+                    className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Álbum Studio
                   </button>
                   <button 
                     onClick={() => onOpenChat('order_link')}
-                    className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
+                    className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all"
                   >
                     Adquirir Link Studio
                   </button>
@@ -174,7 +174,7 @@ const Dashboard: React.FC<{
               {userTier === 'LINK' && (
                 <button 
                   onClick={() => onOpenChat('order_full')}
-                  className="px-5 lg:px-6 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-widest whitespace-nowrap hover:bg-brand-gold/5 transition-all"
+                  className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all"
                 >
                   Upgrade para Álbum
                 </button>
