@@ -270,7 +270,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [zoom, setZoom] = useState(1);
   const [completedCrop, setCompletedCrop] = useState<Area | null>(null);
   
-  const totalPriceLink = PRICES.edition.link + (activePhotos.length * PRICES.photo);
+  // Link Studio: preço fixo, com todas as fotos oficiais na íntegra
+  const totalPriceLink = PRICES.edition.link;
   const totalPriceFull = PRICES.edition.album + 
                         (activePhotos.length * PRICES.photo) + 
                         PRICES.size[albumSize] + 
@@ -1430,10 +1431,17 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
               <span className="text-brand-gold">R$ {PRICES.edition[purchaseType === 'LINK' ? 'link' : 'album'].toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
 
-            <div className="flex justify-between text-[10px] text-gray-400 leading-relaxed">
-              <span>{activePhotos.length} Fotos sob Curadoria</span>
-              <span>R$ {(activePhotos.length * PRICES.photo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-            </div>
+            {purchaseType === 'LINK' ? (
+              <div className="flex justify-between text-[10px] text-gray-400 leading-relaxed">
+                <span>Todas as fotos oficiais, na íntegra</span>
+                <span>incluso</span>
+              </div>
+            ) : (
+              <div className="flex justify-between text-[10px] text-gray-400 leading-relaxed">
+                <span>{activePhotos.length} fotos impressas no álbum</span>
+                <span>R$ {(activePhotos.length * PRICES.photo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            )}
 
             {purchaseType === 'FULL' && (
               <div className="space-y-1.5 py-2 border-t border-white/5 mt-2">

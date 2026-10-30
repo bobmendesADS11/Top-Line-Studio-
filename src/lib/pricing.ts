@@ -4,7 +4,7 @@ export const PRICES = {
     link: 1200.0, // Link Studio (Digital)
     album: 1850.0, // Álbum físico + Link
   },
-  photo: 45.0, // por foto sob curadoria
+  photo: 45.0, // por foto impressa no ÁLBUM (o Link Studio já inclui todas as fotos)
   size: {
     '20x30': 0,
     '30x30': 150,
@@ -44,10 +44,11 @@ export const RECOMMENDED_PHOTOS: Record<number, number> = { 20: 30, 40: 60, 60: 
 export const formatBRL = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function calcTotal(opts: { type: 'LINK' | 'FULL'; size: string; material: string; pages: number; photoCount: number }) {
-  const photos = opts.photoCount * PRICES.photo;
+  // Link Studio: preço fixo, o formando recebe TODAS as fotos oficiais na íntegra
   if (opts.type === 'LINK') {
-    return { base: PRICES.edition.link, photos, size: 0, material: 0, pages: 0, total: PRICES.edition.link + photos };
+    return { base: PRICES.edition.link, photos: 0, size: 0, material: 0, pages: 0, total: PRICES.edition.link };
   }
+  const photos = opts.photoCount * PRICES.photo;
   const size = PRICES.size[opts.size] || 0;
   const material = PRICES.material[opts.material] || 0;
   const pages = PRICES.pagePackage[opts.pages] || 0;

@@ -128,8 +128,7 @@ ${course ? `🏛 *Curso:* ${course}\n` : ''}
 ✨ *PRODUTO SELECIONADO:*
 💎 *Top Line Link Studio (Acesso Digital Vitalício)*
 • Acesso total à galeria exclusiva para visualização e download
-• Todas as fotos oficiais em alta definição
-• Fotos sob curadoria no pedido: ${photoCount} fotos
+• Todas as fotos oficiais da formatura, na íntegra, em alta definição
 
 💰 *Investimento Total:* R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 
@@ -148,7 +147,7 @@ ${course ? `🏛 *Curso:* ${course}\n` : ''}
 • Formato do Álbum: ${albumSize} cm
 • Acabamento da Capa: ${formattedMaterial}
 • Lâminas Panorâmicas: ${requestedPageCount} páginas
-• Fotos sob curadoria diagramadas: ${photoCount} fotos
+• Fotos impressas no álbum: ${photoCount > 0 ? `${photoCount} fotos` : 'a definir com a equipe'}
 ${videoUrl ? `• Vídeo na Capa: Sim (Integrado)\n` : ''}${deliveryAddress ? `📍 *Endereço de Entrega:* ${deliveryAddress}\n` : ''}
 💰 *Investimento Total:* R$ ${totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
 
@@ -296,7 +295,7 @@ Olá! Finalizei a diagramação do meu álbum pelo Top Line Studio e gostaria de
                         {purchaseType === 'LINK' ? 'Digital Studio' : 'Físico + Digital Studio'}
                       </span>
                       <span className="text-xs text-gray-400 font-mono">
-                        {photoCount} fotos sob curadoria
+                        {purchaseType === 'LINK' ? 'todas as fotos, na íntegra' : photoCount > 0 ? `${photoCount} fotos no álbum` : 'fotos a definir'}
                       </span>
                     </div>
                     <h3 className="text-lg font-serif text-white">
