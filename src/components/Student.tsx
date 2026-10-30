@@ -559,13 +559,16 @@ const Student: React.FC = () => {
               <div className="flex flex-col items-start leading-none">
                 <div className="flex items-center gap-1.5 md:gap-2 whitespace-nowrap">
                   <span className="font-serif text-[13px] md:text-lg text-white uppercase tracking-[0.15em] md:tracking-[0.25em]">Top Line</span>
-                  <span className="font-script text-xl md:text-3xl gold-gradient leading-none inline-block pr-2 translate-y-[2px] drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]">Studio</span>
+                  <span className="font-script text-xl md:text-3xl gold-gradient leading-normal inline-block pt-1.5 pb-0.5 pl-0.5 pr-2 -my-2 drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]">Studio</span>
                 </div>
                 <span className="text-[8px] md:text-[10px] text-white/50 uppercase tracking-[0.35em] md:tracking-[0.5em] mt-0.5 pl-0.5">Formaturas</span>
               </div>
               {/* Selo 20 anos */}
               <div className="hidden min-[400px]:flex items-center gap-1.5 pl-3 md:pl-4 border-l border-white/10">
-                <span className="font-script text-3xl md:text-5xl gold-gradient leading-none inline-block px-1 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">20</span>
+                <div className="flex flex-col items-center">
+                  <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5 -mb-2 md:-mb-3 relative z-10 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+                  <span className="font-script text-3xl md:text-5xl gold-gradient leading-normal inline-block px-1.5 pt-1 -my-2 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">20</span>
+                </div>
                 <div className="hidden sm:flex flex-col leading-none">
                   <span className="text-[9px] md:text-[10px] text-brand-gold font-bold uppercase tracking-[0.25em]">anos</span>
                   <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.2em] mt-0.5">de história</span>
