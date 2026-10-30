@@ -64,9 +64,9 @@ type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
 // Geometria das fotos em cada layout (mesma conta no desenho da página e no recorte).
-// Borda fina (3%) e espaço pequeno entre fotos (1,5%) para a foto ocupar quase toda a página.
-const PAGE_MARGIN = 0.03;
-const PHOTO_GAP = 0.015;
+// Fotos sempre até a borda da página (sem moldura). Entre fotos da mesma página, só um fio fino.
+const PAGE_MARGIN = 0;
+const PHOTO_GAP = 0.008;
 const getLayoutCells = (layout: string, width: number, height: number) => {
   const m = Math.min(width, height) * PAGE_MARGIN;
   const g = Math.min(width, height) * PHOTO_GAP;
