@@ -30,6 +30,7 @@ import {
 import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './LazyAlbum3D';
 import { PRICES } from '../lib/pricing';
+import { DEMO_PHOTOS } from '../lib/demoPhotos';
 import CheckoutModal from './CheckoutModal';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -58,14 +59,7 @@ type EffectType = 'none' | 'bw' | 'sepia' | 'vintage' | 'vibrant';
 type AlbumSize = '20x30' | '30x30' | '30x40';
 type MaterialType = 'standard' | 'premium' | 'acrylic' | 'leather' | 'velvet' | 'photo';
 
-const DEMO_PHOTOS: Photo[] = [
-  { id: 'demo1', url: 'https://picsum.photos/seed/grad1/800/1200' },
-  { id: 'demo2', url: 'https://picsum.photos/seed/grad2/800/1200' },
-  { id: 'demo3', url: 'https://picsum.photos/seed/grad3/800/1200' },
-  { id: 'demo4', url: 'https://picsum.photos/seed/grad4/800/1200' },
-  { id: 'demo5', url: 'https://picsum.photos/seed/grad5/800/1200' },
-  { id: 'demo6', url: 'https://picsum.photos/seed/grad6/800/1200' },
-];
+
 
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
@@ -1219,7 +1213,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             </p>
             <p className="text-[9px] text-gray-400 leading-relaxed">
               {userTier === 'PROSPECT' 
-                ? 'Estamos usando fotos de exemplo para você conhecer a qualidade. Adquira o Link Studio para usar suas próprias fotos!'
+                ? 'Estas são fotos de demonstração para você montar e testar seu álbum. Depois da compra, suas fotos oficiais da formatura entram aqui no lugar delas, e você também pode subir as suas.'
                 : 'Você está visualizando suas fotos no modelo físico. Adquira o Studio para finalizar e receber seu álbum em casa.'}
             </p>
           </div>

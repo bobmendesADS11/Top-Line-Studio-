@@ -27,6 +27,8 @@ interface Props {
   intent?: ConciergeIntent;
   studentName?: string;
   userId?: string;
+  /** PROSPECT = ainda não comprou (usa fotos de demonstração, não sobe fotos) */
+  userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
   photos: { id: string; url: string; thumbnail?: string }[];
   orders: any[];
   onNavigate: (path: string) => void;
@@ -34,7 +36,7 @@ interface Props {
 
 type Option = { label: string; onSelect: () => void; primary?: boolean };
 type Message = { id: number; from: 'bot' | 'user'; content: React.ReactNode; options?: Option[] };
-type Draft = { type: 'LINK' | 'FULL'; size: string; material: string; pages: number };
+type Draft = { type: 'LINK' | 'FULL'; size: string; material: string; pages: number; photos: number | null };
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Recebido — aguardando confirmação',
@@ -46,12 +48,12 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
-const DEFAULT_DRAFT: Draft = { type: 'FULL', size: '30x30', material: 'standard', pages: 20 };
+const DEFAULT_DRAFT: Draft = { type: 'FULL', size: '30x30', material: 'standard', pages: 20, photos: null };
 
 const sizeLabel = (s: string) => s.replace('x', ' × ') + ' cm';
 const plus = (v: number) => (v > 0 ? `+ ${formatBRL(v)}` : 'incluso');
 
-export default function ConciergeBot({ isOpen, onClose, intent = 'menu', studentName, userId, photos, orders, onNavigate }: Props) {
+export default function ConciergeBot({ isOpen, onClose, intent = 'menu', studentName, userId, userTier = 'PROSPECT', photos, orders, onNavigate }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState('');
@@ -60,7 +62,9 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
   const idRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const firstName = (studentName || '').split(' ')[0] || 'formando(a)';
-  const photoCount = photos.length;
+  const isBuyer = userTier !== 'PROSPECT';
+  // Antes da compra o formando não tem fotos próprias (recebe as oficiais depois)
+  const photoCount = isBuyer ? photos.length : 0;
 
   // ---------- helpers de conversa ----------
   const push = (from: Message['from'], content: React.ReactNode, options?: Option[]) =>
@@ -95,7 +99,10 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
     { label: '💎 Conhecer os produtos', onSelect: choose('Quero conhecer os produtos', showProducts) },
     { label: '📐 Tamanhos e capas', onSelect: choose('Tamanhos e capas', showSizes) },
     { label: '💳 Pagamento e prazos', onSelect: choose('Pagamento e prazos', showPayment) },
-    { label: '📸 Enviar minhas fotos', onSelect: choose('Como envio minhas fotos?', showUpload) },
+    isBuyer
+      ? { label: '📸 Enviar minhas fotos', onSelect: choose('Como envio minhas fotos?', showUpload) }
+      : { label: '📸 Quando recebo minhas fotos?', onSelect: choose('Quando recebo minhas fotos?', showUpload) },
+    ...(userTier !== 'ALBUM' ? [{ label: '📖 Como comprar o álbum depois', onSelect: choose('Como compro o álbum depois?', showAlbumLaterGuide) }] : []),
     { label: '🎨 Montar meu álbum', onSelect: choose('Como monto meu álbum?', showEditor) },
     { label: '📦 Acompanhar pedido', onSelect: choose('Quero acompanhar meu pedido', showOrders) },
     { label: '💬 Falar com uma pessoa', onSelect: choose('Quero falar com uma pessoa', showHuman) },
@@ -168,6 +175,20 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
   }
 
   function showUpload() {
+    if (!isBuyer) {
+      botSay(
+        <div className="space-y-2">
+          <p>Você não precisa enviar fotos agora. 😊</p>
+          <p><b>Depois da compra</b>, suas <b>fotos oficiais</b> da formatura são liberadas aqui na sua área. A partir daí você também pode <b>subir as suas próprias fotos</b>.</p>
+          <p className="text-gray-400">Enquanto isso, você pode montar e ver o álbum em 3D com <b>fotos de demonstração</b>.</p>
+        </div>,
+        backOptions([
+          { label: '🎨 Montar álbum de demonstração', onSelect: () => { onClose(); onNavigate('/area-do-aluno/editor'); }, primary: true },
+          { label: '🛒 Fazer meu pedido', onSelect: choose('Quero fazer meu pedido', startOrder) },
+        ]),
+      );
+      return;
+    }
     botSay(
       <div className="space-y-2">
         <p>É só abrir <b>Minhas fotos</b> na sua área e tocar em enviar. Pode mandar várias de uma vez.</p>
@@ -182,6 +203,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       <div className="space-y-2">
         <p>No <b>Editor de Lâminas</b> você escolhe tamanho, capa e número de lâminas, organiza a ordem das fotos e escolhe o layout de cada página.</p>
         <p>Depois é só tocar em <b>Ver em 3D</b> para folhear o álbum como ele vai ficar.</p>
+        {!isBuyer && <p className="text-gray-400">Antes da compra o editor usa <b>fotos de demonstração</b>; depois, suas fotos oficiais entram no lugar delas.</p>}
       </div>,
       backOptions([{ label: '🎨 Abrir o editor', onSelect: () => { onClose(); onNavigate('/area-do-aluno/editor'); }, primary: true }]),
     );
@@ -205,6 +227,28 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       </div>,
       backOptions([{ label: '💬 Falar sobre meu pedido', onSelect: choose('Quero falar sobre meu pedido', showHuman) }]),
     );
+  }
+
+  function albumLaterSteps() {
+    return (
+      <div className="space-y-2">
+        <p><b>Como comprar o álbum físico depois</b> 📖</p>
+        <ol className="list-decimal pl-5 space-y-1.5 text-[12px]">
+          <li>Depois da compra do Link Studio, suas <b>fotos oficiais</b> aparecem na sua área.</li>
+          <li>Abra o <b>Editor de Lâminas</b>: suas fotos já entram no álbum com uma diagramação sugerida.</li>
+          <li>Escolha <b>tamanho, capa e lâminas</b> e veja tudo em <b>3D</b>.</li>
+          <li>No painel, toque em <b>Upgrade para Álbum</b> — ou fale comigo e escolha <b>Fazer meu pedido → Álbum + Link</b>.</li>
+          <li>Confirme o pedido: a equipe te chama no WhatsApp para pagamento e produção.</li>
+        </ol>
+      </div>
+    );
+  }
+
+  function showAlbumLaterGuide() {
+    botSay(albumLaterSteps(), backOptions([
+      ...(isBuyer ? [{ label: '📖 Montar o pedido do álbum agora', onSelect: choose('Quero montar o pedido do álbum', () => startOrder('FULL')), primary: true }] : []),
+      { label: '🎨 Abrir o editor', onSelect: () => { onClose(); onNavigate('/area-do-aluno/editor'); } },
+    ]));
   }
 
   function showHuman() {
@@ -263,36 +307,50 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
   }
 
   function askPhotos() {
-    const step = draftRef.current.type === 'FULL' ? 'Passo 4 de 4 · Fotos.' : 'Fotos.';
-    if (photoCount === 0) {
+    const d = draftRef.current;
+    const step = d.type === 'FULL' ? 'Passo 4 de 4 · Fotos.' : 'Fotos.';
+    const rec = d.type === 'FULL' ? RECOMMENDED_PHOTOS[d.pages] : undefined;
+    const setPhotos = (n: number | null, label: string) => choose(label, () => { draftRef.current.photos = n; showSummary(); });
+
+    // Já comprou e tem fotos próprias
+    if (isBuyer && photoCount > 0) {
       botSay(
-        <p><b>{step}</b> Você ainda não enviou fotos. Envie suas fotos para a gente montar o álbum — ou siga e envie depois pela equipe.</p>,
+        <div className="space-y-1">
+          <p><b>{step}</b> Você tem <b>{photoCount}</b> {photoCount === 1 ? 'foto' : 'fotos'} na sua área ({formatBRL(PRICES.photo)} cada).</p>
+          {rec && photoCount > rec && <p className="text-amber-300 text-[11px]">Para {d.pages} lâminas recomendamos até {rec} fotos. Se quiser usar todas, escolha mais lâminas.</p>}
+        </div>,
         [
-          { label: '📸 Enviar minhas fotos agora', onSelect: () => { onClose(); onNavigate('/area-do-aluno/galeria'); }, primary: true },
-          { label: 'Continuar sem fotos', onSelect: choose('Continuar sem fotos', showSummary) },
+          { label: `Usar minhas ${photoCount} fotos`, onSelect: setPhotos(photoCount, `Usar minhas ${photoCount} fotos`), primary: true },
+          ...(rec && photoCount > rec ? [{ label: `Usar ${rec} fotos`, onSelect: setPhotos(rec, `Usar ${rec} fotos`) }] : []),
+          ...(rec && photoCount > rec ? [{ label: '⬆ Escolher mais lâminas', onSelect: choose('Escolher mais lâminas', askPages) }] : []),
         ],
       );
       return;
     }
-    const rec = draftRef.current.type === 'FULL' ? RECOMMENDED_PHOTOS[draftRef.current.pages] : undefined;
+
+    // Antes da compra: escolhe só a QUANTIDADE (as fotos oficiais chegam depois)
+    const opts = d.type === 'FULL'
+      ? Array.from(new Set([Math.round((rec || 30) * 0.66), rec || 30, Math.round((rec || 30) * 1.33)]))
+      : [20, 40, 60, 100];
     botSay(
       <div className="space-y-1">
-        <p><b>{step}</b> Você tem <b>{photoCount}</b> {photoCount === 1 ? 'foto enviada' : 'fotos enviadas'} ({formatBRL(PRICES.photo)} cada).</p>
-        {rec && photoCount > rec && (
-          <p className="text-amber-300 text-[11px]">Para {draftRef.current.pages} lâminas recomendamos até {rec} fotos. Se quiser usar todas, escolha mais lâminas.</p>
-        )}
+        <p><b>{step}</b> Quantas fotos você quer {d.type === 'FULL' ? 'no álbum' : 'no Link Studio'}? ({formatBRL(PRICES.photo)} cada)</p>
+        <p className="text-gray-400 text-[11px]">Você escolhe <b>quais</b> fotos depois, quando receber as fotos oficiais da formatura.</p>
       </div>,
       [
-        { label: 'Usar essas fotos', onSelect: choose('Usar essas fotos', showSummary), primary: true },
-        ...(rec && photoCount > rec ? [{ label: '⬆ Escolher mais lâminas', onSelect: choose('Escolher mais lâminas', askPages) }] : []),
-        { label: '📸 Enviar mais fotos', onSelect: () => { onClose(); onNavigate('/area-do-aluno/galeria'); } },
+        ...opts.map(n => ({
+          label: `${n} fotos · + ${formatBRL(n * PRICES.photo)}${n === rec ? ' · recomendado' : ''}`,
+          onSelect: setPhotos(n, `${n} fotos`),
+          primary: n === rec || (d.type === 'LINK' && n === 40),
+        })),
+        { label: 'Ainda não sei — definir com a equipe', onSelect: setPhotos(null, 'Ainda não sei quantas fotos') },
       ],
     );
   }
 
   function showSummary() {
     const d = draftRef.current;
-    const t = calcTotal({ ...d, photoCount });
+    const t = calcTotal({ ...d, photoCount: d.photos ?? 0 });
     const row = (label: string, value: string) => (
       <div className="flex justify-between gap-3"><span className="text-gray-400">{label}</span><span className="text-white text-right">{value}</span></div>
     );
@@ -305,16 +363,20 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
           {d.type === 'FULL' && row(`Tamanho ${sizeLabel(d.size)}`, plus(t.size))}
           {d.type === 'FULL' && row(`Capa ${MATERIAL_INFO[d.material].label}`, plus(t.material))}
           {d.type === 'FULL' && row(`${d.pages} lâminas`, plus(t.pages))}
-          {row(`${photoCount} ${photoCount === 1 ? 'foto' : 'fotos'}`, plus(t.photos))}
+          {d.photos === null
+            ? row('Fotos', `a definir (${formatBRL(PRICES.photo)} cada)`)
+            : row(`${d.photos} ${d.photos === 1 ? 'foto' : 'fotos'}`, plus(t.photos))}
           <div className="border-t border-white/10 pt-2 mt-1 flex justify-between font-bold">
-            <span className="text-white">Total</span><span className="text-brand-gold">{formatBRL(t.total)}</span>
+            <span className="text-white">{d.photos === null ? 'Total (a partir de)' : 'Total'}</span><span className="text-brand-gold">{formatBRL(t.total)}</span>
           </div>
         </div>
         <p className="text-gray-400 text-[11px]">Na próxima tela você confirma seus dados{d.type === 'FULL' ? ' e o endereço de entrega' : ''}, e o pedido vai direto para a equipe no WhatsApp.</p>
+        {!isBuyer && <p className="text-gray-400 text-[11px]">Depois da compra, suas fotos oficiais são liberadas na sua área.</p>}
       </div>,
       [
         { label: '✅ Confirmar e enviar pedido', onSelect: () => { userSay('Confirmar pedido'); setCheckout({ ...d }); }, primary: true },
         ...(d.type === 'FULL' ? [{ label: '🎨 Montar as páginas no editor antes', onSelect: () => openInEditor(d) }] : []),
+        ...(d.type === 'LINK' ? [{ label: '📖 Como comprar o álbum depois', onSelect: choose('Como compro o álbum depois?', showAlbumLaterGuide) }] : []),
         { label: '✏️ Mudar algo', onSelect: choose('Quero mudar algo', () => startOrder()) },
         { label: '💬 Falar com uma pessoa', onSelect: choose('Falar com uma pessoa', showHuman) },
       ],
@@ -342,7 +404,8 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       { words: ['pagamento', 'pagar', 'pix', 'cartão', 'cartao', 'parcel', 'prazo', 'entrega', 'demora', 'quando'], run: showPayment },
       { words: ['tamanho', 'medida', 'cm', 'capa', 'couro', 'veludo', 'acrílico', 'acrilico', 'linho', 'acabamento'], run: showSizes },
       { words: ['preço', 'preco', 'valor', 'quanto', 'custa', 'link', 'diferença', 'diferenca', 'produto'], run: showProducts },
-      { words: ['foto', 'enviar', 'upload', 'subir', 'galeria'], run: showUpload },
+      { words: ['álbum depois', 'album depois', 'upgrade', 'físico depois', 'fisico depois'], run: showAlbumLaterGuide },
+      { words: ['foto', 'enviar', 'upload', 'subir', 'galeria', 'receb'], run: showUpload },
       { words: ['editor', 'montar', 'layout', 'diagram', 'lâmina', 'lamina', 'página', 'pagina', '3d'], run: showEditor },
       { words: ['pessoa', 'humano', 'atendente', 'whatsapp', 'falar', 'ligar', 'telefone'], run: showHuman },
   ];
@@ -382,7 +445,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
   }, [isOpen, checkout, onClose]);
 
   const lastBot = [...messages].reverse().find(m => m.from === 'bot');
-  const summaryTotal = checkout ? calcTotal({ ...checkout, photoCount }).total : 0;
+  const summaryTotal = checkout ? calcTotal({ ...checkout, photoCount: checkout.photos ?? 0 }).total : 0;
 
   return (
     <>
@@ -500,7 +563,13 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
         <CheckoutModal
           isOpen={!!checkout}
           onClose={() => {
+            const wasLink = checkout.type === 'LINK';
             setCheckout(null);
+            if (wasLink) {
+              botSay(<p>Pronto! E quando quiser transformar suas fotos em um álbum físico, é assim: <Sparkles size={12} className="inline text-brand-gold" /></p>);
+              botSay(albumLaterSteps(), menuOptions());
+              return;
+            }
             botSay(
               <p>Pronto! Se precisar de mais alguma coisa, é só chamar. <Sparkles size={12} className="inline text-brand-gold" /></p>,
               menuOptions(),
@@ -510,10 +579,10 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
           albumSize={checkout.size}
           materialType={checkout.material}
           requestedPageCount={checkout.pages}
-          photoCount={photoCount}
+          photoCount={checkout.photos ?? 0}
           totalPrice={summaryTotal}
-          photos={photos}
-          coverPhotoUrl={photos[0]?.url}
+          photos={isBuyer ? photos : []}
+          coverPhotoUrl={isBuyer ? photos[0]?.url : undefined}
         />
       )}
     </>

@@ -8,6 +8,7 @@ import Gallery from './Gallery';
 import Album3D from './LazyAlbum3D';
 import AlbumEditor from './AlbumEditor';
 import ConciergeBot, { ConciergeIntent } from './ConciergeBot';
+import { DEMO_PHOTOS } from '../lib/demoPhotos';
 
 const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (intent?: ConciergeIntent) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
   <motion.div 
@@ -143,9 +144,15 @@ const Dashboard: React.FC<{
             </p>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-4">
-              <Link to="galeria" className="gold-button px-8 py-4 text-sm">
-                {userTier === 'PROSPECT' ? 'Subir Minhas Fotos' : 'Acessar Galeria Studio'}
-              </Link>
+              {userTier === 'PROSPECT' ? (
+                <Link to="editor" className="gold-button px-8 py-4 text-sm">
+                  Montar Álbum de Demonstração
+                </Link>
+              ) : (
+                <Link to="galeria" className="gold-button px-8 py-4 text-sm">
+                  Acessar Galeria Studio
+                </Link>
+              )}
               
               {userTier === 'PROSPECT' && (
                 <>
@@ -214,13 +221,17 @@ const Dashboard: React.FC<{
             </div>
           </div>
           <h3 className="text-3xl font-serif mb-2 gold-gradient">Galeria de Fotos</h3>
-          <p className="text-gray-400 text-sm max-w-md font-light leading-relaxed">Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria exclusiva Top Line.</p>
+          <p className="text-gray-400 text-sm max-w-md font-light leading-relaxed">
+            {userTier === 'PROSPECT'
+              ? 'Suas fotos oficiais da formatura aparecem aqui depois da compra. Enquanto isso, veja como fica com fotos de demonstração.'
+              : 'Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria exclusiva Top Line.'}
+          </p>
           
           <div className="mt-10 flex gap-4 overflow-hidden min-h-[144px] items-center">
-            {selectedPhotos.length > 0 ? (
-              selectedPhotos.slice(0, 5).map((photo, i) => (
+            {(userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos).length > 0 ? (
+              (userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos).slice(0, 5).map((photo, i) => (
                 <div key={photo.id || i} className="w-28 h-36 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-1000 relative">
-                  <img src={photo.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={(photo as any).thumbnail || photo.url} loading="lazy" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))
@@ -641,10 +652,14 @@ const Student: React.FC = () => {
               </div>
               <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/40 group-hover:text-brand-gold transition-colors hidden md:block">Voltar ao Estúdio</span>
             </motion.button>
-            <Gallery onSelect={(photos) => {
-              setSelectedPhotos(photos);
-              navigate('/area-do-aluno/editor');
-            }} />
+            <Gallery
+              userTier={userTier}
+              onOpenAssistant={handleOpenChat}
+              onSelect={(photos) => {
+                setSelectedPhotos(photos);
+                navigate('/area-do-aluno/editor');
+              }}
+            />
           </div>
         } />
         <Route path="album" element={
@@ -678,13 +693,13 @@ const Student: React.FC = () => {
 
             <div className="flex-1 w-full h-full relative overflow-hidden">
               <Album3D 
-                pages={selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages} 
+                pages={userTier === 'PROSPECT' ? DEMO_PHOTOS.map(p => p.url) : (selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages)} 
                 currentPage={viewerPage} 
                 onPageChange={setViewerPage}
                 albumSize={savedAlbumConfig.albumSize}
                 materialType={savedAlbumConfig.materialType}
                 sheetCount={savedAlbumConfig.sheetCount}
-                coverTextureUrl={selectedPhotos[0]?.url}
+                coverTextureUrl={userTier === 'PROSPECT' ? DEMO_PHOTOS[0].url : selectedPhotos[0]?.url}
                 zoom={1} 
                 isOpen={true} 
                 purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}
@@ -696,7 +711,7 @@ const Student: React.FC = () => {
         <Route path="editor" element={
           <div className="h-[calc(100vh-80px)]">
             <AlbumEditor 
-              photos={selectedPhotos} 
+              photos={userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos} 
               onBack={() => navigate('/area-do-aluno')}
               hasPurchasedAlbum={hasPurchasedAlbum}
               userTier={userTier}
@@ -713,6 +728,7 @@ const Student: React.FC = () => {
         studentName={studentData?.displayName || user?.displayName || ''}
         userId={user?.uid}
         photos={selectedPhotos}
+        userTier={userTier}
         orders={myOrders}
         onNavigate={(path) => navigate(path)}
       />
