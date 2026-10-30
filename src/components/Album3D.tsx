@@ -46,7 +46,7 @@ const SHEET_THICKNESS_CM = 0.02; // ~0,2 mm por lâmina
 const MAX_BLOCK_CM = 1.6; // espessura máxima do miolo
 const BOARD_CM = 0.12; // capa fina ~1,2 mm
 const OVERHANG_CM = 0.1; // capa praticamente rente às páginas
-const SPINE_GAP = 0.06; // folga visual no centro (lombada)
+const SPINE_GAP = 0.004; // dobra de revista: praticamente sem folga no centro
 
 export function parseAlbumSize(size?: string) {
   const m = /^(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)$/i.exec(size || '');
@@ -222,9 +222,9 @@ function gutterShadowTexture() {
   return makeCanvasTexture('gutter', 256, 4, (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 256, 0);
     g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(0.38, 'rgba(0,0,0,0.18)');
-    g.addColorStop(0.5, 'rgba(0,0,0,0.55)');
-    g.addColorStop(0.62, 'rgba(0,0,0,0.18)');
+    g.addColorStop(0.4, 'rgba(0,0,0,0.05)');
+    g.addColorStop(0.5, 'rgba(0,0,0,0.16)');
+    g.addColorStop(0.6, 'rgba(0,0,0,0.05)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 256, 4);
@@ -409,8 +409,11 @@ function PhotobookModel({
   const progressSpread = flipping ? flipping.to : displayed;
   const leftFrac = totalSpreads > 1 ? progressSpread / (totalSpreads - 1) : 0.5;
   const minSide = totalStack * 0.04;
-  const stackL = isOpen ? Math.max(minSide, totalStack * leftFrac) : totalStack / 2;
-  const stackR = isOpen ? Math.max(minSide, totalStack * (1 - leftFrac)) : totalStack / 2;
+  // Os dois lados ficam na mesma altura: sem "degrau" no meio, a foto panorâmica
+  // atravessa a dobra lisa, como numa revista aberta.
+  void leftFrac; void minSide;
+  const stackL = totalStack / 2;
+  const stackR = totalStack / 2;
   const HL = board + stackL;
   const HR = board + stackR;
   const pivotZ = (HL + HR) / 2;
@@ -491,7 +494,7 @@ function PhotobookModel({
           </mesh>
           {/* sombra suave da dobra central */}
           <mesh position={[0, 0, Math.max(HL, HR) + 0.003]} renderOrder={2}>
-            <planeGeometry args={[width * 0.22, height]} />
+            <planeGeometry args={[width * 0.06, height]} />
             <meshBasicMaterial map={gutterTex} transparent depthWrite={false} />
           </mesh>
           {flipping && (
@@ -820,6 +823,8 @@ export default function Album3D(props: Album3DProps) {
               <ambientLight intensity={0.35} />
               <directionalLight position={[3, 9, 5]} intensity={1.6} color="#fffaf0" />
               <directionalLight position={[-6, 4, -3]} intensity={0.35} color="#e8eeff" />
+              {/* luz suave por baixo: ao girar o álbum, a parte de trás não fica preta */}
+              <directionalLight position={[0, -8, 3]} intensity={0.7} color="#fff6e6" />
 
               <PhotobookModel
                 pages={pages}
@@ -844,10 +849,9 @@ export default function Album3D(props: Album3DProps) {
                 enablePan={false}
                 enableDamping
                 dampingFactor={0.08}
-                minPolarAngle={0.05}
-                maxPolarAngle={Math.PI / 2.4}
-                minAzimuthAngle={autoRotate ? -Infinity : -Math.PI / 3}
-                maxAzimuthAngle={autoRotate ? Infinity : Math.PI / 3}
+                // giro livre: 360° em volta e também por baixo (ver a capa de trás)
+                minPolarAngle={0}
+                maxPolarAngle={Math.PI}
               />
               <CameraRig albumSize={albumSize} isOpen={isOpen} />
 
@@ -887,7 +891,7 @@ export default function Album3D(props: Album3DProps) {
                   </span>
                 </button>
               ))}
-              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-16 bg-[linear-gradient(90deg,transparent,rgba(0,0,0,0.35),transparent)] pointer-events-none" />
+              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-3 bg-[linear-gradient(90deg,transparent,rgba(0,0,0,0.15),transparent)] pointer-events-none" />
             </div>
           </div>
         )}
@@ -957,7 +961,7 @@ export default function Album3D(props: Album3DProps) {
 
       <div className="absolute bottom-4 left-4 z-20 hidden lg:flex items-center gap-1.5 text-[9px] text-gray-500 tracking-wider pointer-events-none">
         <HelpCircle size={11} className="text-brand-gold/60" />
-        <span>Arraste para girar · Role para aproximar · Clique na página para folhear · Teclas ← →</span>
+        <span>Arraste para girar 360° · Role para aproximar · Clique na página para folhear · Teclas ← →</span>
       </div>
     </div>
   );
