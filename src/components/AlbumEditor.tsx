@@ -95,6 +95,29 @@ const DEMO_PHOTOS: Photo[] = [
 
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
+// Geometria das fotos em cada layout (mesma conta no desenho da página e no recorte).
+// Borda fina (3%) e espaço pequeno entre fotos (1,5%) para a foto ocupar quase toda a página.
+const PAGE_MARGIN = 0.03;
+const PHOTO_GAP = 0.015;
+const getLayoutCells = (layout: string, width: number, height: number) => {
+  const m = Math.min(width, height) * PAGE_MARGIN;
+  const g = Math.min(width, height) * PHOTO_GAP;
+  if (layout === 'grid') {
+    const cw = (width - m * 2 - g) / 2;
+    const ch = (height - m * 2 - g) / 2;
+    return [0, 1, 2, 3].map(i => ({ x: m + (i % 2) * (cw + g), y: m + Math.floor(i / 2) * (ch + g), w: cw, h: ch }));
+  }
+  if (layout === 'vgrid') {
+    const ch = (height - m * 2 - g) / 2;
+    return [0, 1].map(i => ({ x: m, y: m + i * (ch + g), w: width - m * 2, h: ch }));
+  }
+  if (layout === 'spread' || layout === 'panorama') {
+    return [{ x: 0, y: 0, w: width, h: height }];
+  }
+  // minimalist: uma foto preenchendo a página, com borda fina
+  return [{ x: m, y: m, w: width - m * 2, h: height - m * 2 }];
+};
+
 const getStorageKey = () => `topline_album_draft_${auth.currentUser?.uid || 'guest'}`;
 
 // Fotos enviadas ficam como data URL (até ~1 MB cada). Guardar isso dentro do rascunho
@@ -834,67 +857,20 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       }
     };
 
-    if (layout === 'minimalist') {
-      if (loadedImages[0]) {
-        const imgObj = loadedImages[0];
-        const { img } = imgObj;
-        
-        // Calculate fit dimensions within margins - Reduced for more impact
-        const marginX = width * 0.05;
-        const marginY = height * 0.05;
-        const maxW = width - marginX * 2;
-        const maxH = height - marginY * 2;
-        
-        const imgRatio = img.width / img.height;
-        const areaRatio = maxW / maxH;
-        
-        let drawW, drawH;
-        if (imgRatio > areaRatio) {
-          drawW = maxW;
-          drawH = drawW / imgRatio;
-        } else {
-          drawH = maxH;
-          drawW = drawH * imgRatio;
-        }
-        
-        const drawX = (width - drawW) / 2;
-        const drawY = (height - drawH) / 2;
-        
-        // Dynamic Paper Depth / Shadow behind the photo - Softer, centered shadow
-        ctx.shadowColor = 'rgba(0,0,0,0.6)';
-        ctx.shadowBlur = 60;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 15;
-
-        // Fine Art Frame (Passepartout Effect) - Thinner and more subtle
+    if (layout === 'minimalist' || layout === 'grid' || layout === 'vgrid') {
+      const cells = getLayoutCells(layout, width, height);
+      loadedImages.slice(0, cells.length).forEach((imgObj, i) => {
+        const c = cells[i];
+        // sombra discreta para dar profundidade sem "encolher" a foto
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 18;
+        ctx.shadowOffsetY = 4;
         ctx.fillStyle = '#111';
-        const framePadding = width * 0.005;
-        ctx.fillRect(drawX - framePadding, drawY - framePadding, drawW + framePadding * 2, drawH + framePadding * 2);
-        
-        drawImageWithCrop(imgObj, drawX, drawY, drawW, drawH);
-        
-        // Reset shadow for further drawing
+        ctx.fillRect(c.x, c.y, c.w, c.h);
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
-      }
-    }
- else if (layout === 'grid') {
-      const margin = width * 0.06;
-      const gap = width * 0.04;
-      const cols = 2;
-      const rows = 2;
-      const cellW = (width - margin * 2 - gap) / cols;
-      const cellH = (height - margin * 2 - gap) / rows;
-
-      loadedImages.forEach((imgObj, i) => {
-        if (i >= 4) return;
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const x = margin + col * (cellW + gap);
-        const y = margin + row * (cellH + gap);
-        drawImageWithCrop(imgObj, x, y, cellW, cellH);
+        drawImageWithCrop(imgObj, c.x, c.y, c.w, c.h);
       });
     } else if (layout === 'spread') {
       if (loadedImages[0]) {
@@ -904,17 +880,6 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       if (loadedImages[0]) {
         drawImageWithCrop(loadedImages[0], 0, 0, width, height, side);
       }
-    } else if (layout === 'vgrid') {
-      const margin = width * 0.05;
-      const gap = width * 0.02;
-      const cellW = width - margin * 2;
-      const cellH = (height - margin * 2 - gap) / 2;
-
-      loadedImages.forEach((imgObj, i) => {
-        if (i >= 2) return;
-        const y = margin + i * (cellH + gap);
-        drawImageWithCrop(imgObj, margin, y, cellW, cellH);
-      });
     }
 
     // If page has no photos assigned, render an exquisite luxury fine-art layout placeholder
@@ -1033,16 +998,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     const photoAspect = getPhotoAspect();
 
     // The aspect ratio MUST match how drawImageWithCrop will eventually render it
-    if (layout === 'minimalist') {
-      aspect = photoAspect;
-    } else if (layout === 'grid') {
-      const margin = width * 0.06;
-      const gap = width * 0.04;
-      const cellW = (width - margin * 2 - gap) / 2;
-      const cellH = (height - margin * 2 - gap) / 2;
-      aspect = cellW / cellH;
-    } else if (layout === 'vgrid') {
-      aspect = (width - width * 0.1) / ((height - height * 0.12) / 2);
+    if (layout === 'minimalist' || layout === 'grid' || layout === 'vgrid') {
+      const cell = getLayoutCells(layout, width, height)[0];
+      aspect = cell.w / cell.h;
     } else if (layout === 'spread') {
       aspect = width / height;
     } else if (layout === 'panorama') {
