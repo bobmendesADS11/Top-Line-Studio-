@@ -245,148 +245,57 @@ const Auth: React.FC = () => {
     }
   };
 
-  // Admin Master Authentication
+  // Login administrativo
+  // Segurança: nenhuma senha fica no código. O login só funciona com contas de admin
+  // que já existem no Firebase Authentication (criadas pelo console do Firebase).
+  // Quem é admin de verdade é decidido pelas regras do Firestore (campo role = 'admin').
   const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
 
-    try {
-      const loginInput = adminUsername.trim().toLowerCase();
-      const trimmedPassword = adminPassword.trim();
+    const loginInput = adminUsername.trim().toLowerCase();
+    const trimmedPassword = adminPassword.trim();
 
-      const isGabrielMaster = 
-        loginInput === 'gabriel' || 
-        loginInput === 'gabriel@admin.topline.com' ||
-        loginInput === 'gabriel@toplineformaturas.com.br' ||
-        loginInput === 'gabrielmestrelli@gmail.com' ||
-        loginInput === 'admin';
+    if (!loginInput || !trimmedPassword) {
+      setError('Informe usuário e senha.');
+      setLoading(false);
+      return;
+    }
 
-      const validMasterPasswords = [
-        'Topline0709*',
-        'topline0709*',
-        'admin123',
-        'topline2026',
-        '123456'
-      ];
-
-      if (isGabrielMaster) {
-        if (!validMasterPasswords.includes(trimmedPassword)) {
-          setError('Senha incorreta para o administrador Gabriel.');
-          setLoading(false);
-          return;
-        }
-
-        const candidateMasterEmails = [
-          'gabriel@admin.topline.com',
-          'gabriel0709@admin.topline.com',
-          'gabriel.master@admin.topline.com'
-        ];
-
-        let loggedIn = false;
-
-        for (const candidateEmail of candidateMasterEmails) {
-          try {
-            await signInWithEmailAndPassword(auth, candidateEmail, trimmedPassword);
-            loggedIn = true;
-            break;
-          } catch (err: any) {
-            if (err.code === 'auth/user-not-found') {
-              try {
-                const userCredential = await createUserWithEmailAndPassword(auth, candidateEmail, trimmedPassword);
-                await updateProfile(userCredential.user, { displayName: 'Gabriel (Master Admin)' });
-                loggedIn = true;
-                break;
-              } catch (createErr) {
-                // try next
-              }
-            } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-              continue;
-            }
-          }
-        }
-
-        if (loggedIn) {
-          setSuccessMessage('Acesso administrativo autorizado! Entrando no painel...');
-          return;
-        }
-
-        // Fallback passwords check
-        for (const fallbackPw of validMasterPasswords) {
-          if (fallbackPw === trimmedPassword) continue;
-          for (const candidateEmail of candidateMasterEmails) {
-            try {
-              await signInWithEmailAndPassword(auth, candidateEmail, fallbackPw);
-              loggedIn = true;
-              break;
-            } catch (e) {
-              // continue
-            }
-          }
-          if (loggedIn) break;
-        }
-
-        if (loggedIn) {
-          setSuccessMessage('Acesso administrativo autorizado! Entrando no painel...');
-          return;
-        }
-
-        setError('Não foi possível autenticar o acesso mestre. Verifique seus dados.');
-        setLoading(false);
-        return;
-      }
-
-      // Standard Phone / User Admin Login
-      let digits = loginInput.replace(/\D/g, '');
-      const isMasterPhone = digits === '48991764001' || digits === '5548991764001';
-
-      let normalizedDigits = digits;
-      if ((digits.length === 10 || digits.length === 11) && !digits.startsWith('55')) {
-        normalizedDigits = '55' + digits;
-      }
-
-      const primaryEmail = `${normalizedDigits}@admin.topline.com`;
-      const secondaryEmail = `${normalizedDigits.startsWith('55') ? normalizedDigits.substring(2) : normalizedDigits}@admin.topline.com`;
-
-      const tryLogin = async (userEmail: string) => {
-        try {
-          await signInWithEmailAndPassword(auth, userEmail, trimmedPassword);
-          return true;
-        } catch (err: any) {
-          if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            return 'wrong-password';
-          }
-          return false;
-        }
-      };
-
-      const result1 = await tryLogin(primaryEmail);
-      if (result1 === true) return;
-
-      const result2 = await tryLogin(secondaryEmail);
-      if (result2 === true) return;
-
-      if (isMasterPhone && validMasterPasswords.includes(trimmedPassword)) {
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, primaryEmail, trimmedPassword);
-          await updateProfile(userCredential.user, { displayName: 'Gabriel' });
-          setSuccessMessage('Acesso mestre configurado! Entrando...');
-          return;
-        } catch (e: any) {
-          // ignore
-        }
-      }
-
-      if (result1 === 'wrong-password' || result2 === 'wrong-password') {
-        setError('Senha incorreta para este usuário administrativo.');
+    // Monta a lista de e-mails possíveis a partir do que foi digitado
+    const candidates: string[] = [];
+    if (loginInput.includes('@')) {
+      candidates.push(loginInput);
+    } else if (loginInput === 'gabriel' || loginInput === 'admin') {
+      candidates.push('gabriel@admin.topline.com', 'gabriel0709@admin.topline.com', 'gabriel.master@admin.topline.com');
+    } else {
+      const digits = loginInput.replace(/\D/g, '');
+      if (digits) {
+        const withCountry = (digits.length === 10 || digits.length === 11) && !digits.startsWith('55') ? '55' + digits : digits;
+        const withoutCountry = withCountry.startsWith('55') ? withCountry.substring(2) : withCountry;
+        candidates.push(`${withCountry}@admin.topline.com`, `${withoutCountry}@admin.topline.com`);
       } else {
-        setError('Usuário administrativo não encontrado.');
+        candidates.push(`${loginInput}@admin.topline.com`);
       }
+    }
 
+    try {
+      for (const candidateEmail of candidates) {
+        try {
+          await signInWithEmailAndPassword(auth, candidateEmail, trimmedPassword);
+          setSuccessMessage('Acesso administrativo autorizado! Entrando no painel...');
+          return;
+        } catch (err: any) {
+          if (err?.code === 'auth/too-many-requests') throw err;
+          // tenta o próximo e-mail
+        }
+      }
+      setError('Usuário ou senha de administrador incorretos.');
     } catch (err: any) {
       console.error('Admin Auth Error:', err);
-      setError(err.message || 'Erro na autenticação do administrador.');
+      setError(getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }

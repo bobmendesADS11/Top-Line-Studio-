@@ -39,14 +39,20 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Admin = quem tem role 'admin' no próprio documento (só um admin pode definir isso),
+    // ou as contas mestre verificadas do Gabriel (e-mail verificado ou telefone via SMS).
+    // IMPORTANTE: não usar sufixo de e-mail (ex.: @admin.topline.com) — qualquer pessoa
+    // consegue criar uma conta com e-mail não verificado nesse domínio.
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         (
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          (request.auth.token.email != null && 
-           ((request.auth.token.email.lower() == "gabrielmestrelli@gmail.com" && request.auth.token.email_verified == true) || 
-            request.auth.token.email.lower().matches(".*@admin\\.topline\\.com$")))
+          (request.auth.token.email != null &&
+           request.auth.token.email.lower() == "gabrielmestrelli@gmail.com" &&
+           request.auth.token.email_verified == true) ||
+          (request.auth.token.phone_number != null &&
+           request.auth.token.phone_number == "+5548991764001")
         );
     }
 
@@ -54,16 +60,30 @@ service cloud.firestore {
       return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
+    function ownerProfileUpdateIsSafe() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return
+        // papel: o aluno só pode sair de 'pending' para 'student' (auto-ativação)
+        (!changed.hasAny(['role']) ||
+          (resource.data.get('role', 'pending') == 'pending' && request.resource.data.role == 'student')) &&
+        // pacote: o aluno não pode trocar o próprio pacote, só preencher se estiver vazio
+        (!changed.hasAny(['package']) || !('package' in resource.data)) &&
+        !changed.hasAny(['uid']);
+    }
+
     // User Rules
     match /users/{userId} {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow update: if isAuthenticated() && (isAdmin() || isOwner(userId));
+      allow create: if isAdmin() ||
+        (isOwner(userId) && request.resource.data.get('role', 'pending') in ['student', 'pending']);
+      allow update: if isAdmin() || (isOwner(userId) && ownerProfileUpdateIsSafe());
+      allow delete: if isAdmin();
 
       // Photos Sub-collection
       match /photos/{photoId} {
         allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-        allow create: if (isOwner(userId) || isAdmin()) && isValidPhoto(request.resource.data);
+        allow create: if isValidPhoto(request.resource.data) &&
+          (isAdmin() || (isOwner(userId) && request.resource.data.get('source', 'student') == 'student'));
         allow update: if isAdmin() && isValidPhoto(request.resource.data);
         allow delete: if isOwner(userId) || isAdmin();
       }
@@ -92,10 +112,13 @@ service cloud.firestore {
     }
 
     // Order Rules
+    // O aluno cria o pedido (sempre em status inicial); só o admin muda status/valores.
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.studentUid || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.studentUid;
-      allow update: if isAuthenticated() && (isAdmin() || request.auth.uid == resource.data.studentUid);
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.studentUid &&
+        request.resource.data.status in ['pending', 'aguardando_contato'];
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
   }

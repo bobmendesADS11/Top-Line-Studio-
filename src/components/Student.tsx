@@ -7,7 +7,7 @@ import { useNavigate, Routes, Route, Link } from 'react-router-dom';
 import Gallery from './Gallery';
 import Album3D from './Album3D';
 import AlbumEditor from './AlbumEditor';
-import ConciergeChat from './ConciergeChat';
+import { openWhatsApp } from '../lib/contact';
 
 const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (message?: string) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
   <motion.div 
@@ -106,7 +106,6 @@ const Dashboard: React.FC<{
   navigate: (path: string) => void;
   onOpenChat: (message?: string) => void;
 }> = ({ userTier, studentData, user, myOrders, selectedPhotos, hasPurchasedAlbum, navigate, onOpenChat }) => {
-  console.log('Dashboard rendered, onOpenChat type:', typeof onOpenChat);
   return (
     <main className="max-w-7xl mx-auto px-6 py-12">
     {/* Welcome Section - Editorial Style */}
@@ -422,22 +421,14 @@ const Dashboard: React.FC<{
 };
 
 const Student: React.FC = () => {
-  console.log('Student component rendering...');
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [initialChatMessage, setInitialChatMessage] = useState<string | undefined>();
   const [studentData, setStudentData] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const user = auth.currentUser;
 
-  console.log('Student component rendering, isChatOpen:', isChatOpen);
-
-  const handleOpenChat = (message?: string) => {
-    setInitialChatMessage(message);
-    setIsChatOpen(true);
-  };
+  const handleOpenChat = (message?: string) => openWhatsApp(message);
 
   const albumPages = [
     'https://picsum.photos/seed/grad1/800/1200',
@@ -574,7 +565,7 @@ const Student: React.FC = () => {
             <button 
               onClick={() => handleOpenChat("Olá! Gostaria de tirar algumas dúvidas sobre meu álbum e as opções da Top Line.")}
               className="p-2 hover:bg-brand-gold/10 text-gray-400 hover:text-brand-gold rounded-lg transition-colors group relative"
-              title="Concierge AI"
+              title="Falar com a equipe no WhatsApp"
             >
               <Sparkles size={18} className="md:w-5 md:h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-gold rounded-full animate-pulse" />
@@ -689,25 +680,11 @@ const Student: React.FC = () => {
               onBack={() => navigate('/area-do-aluno')}
               hasPurchasedAlbum={hasPurchasedAlbum}
               userTier={userTier}
-              onSave={(finalPages) => {
-                console.log('Saved album pages state');
-              }}
+              onSave={() => {}}
             />
           </div>
         } />
       </Routes>
-
-      {isChatOpen && (
-        <ConciergeChat 
-          onClose={() => {
-            console.log('DEBUG: Closing Concierge Chat');
-            setIsChatOpen(false);
-            setInitialChatMessage(undefined);
-          }} 
-          studentName={studentData?.displayName?.split(' ')[0]} 
-          initialMessage={initialChatMessage}
-        />
-      )}
 
       {/* Floating Chat Button */}
       <motion.button
@@ -720,7 +697,7 @@ const Student: React.FC = () => {
       >
         <Sparkles size={28} className="group-hover:rotate-12 transition-transform" />
         <div className="absolute right-full mr-4 bg-zinc-900 border border-brand-gold/20 px-4 py-2 rounded-xl text-[10px] uppercase tracking-widest text-brand-gold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Concierge AI
+          Fale conosco no WhatsApp
         </div>
       </motion.button>
     </div>

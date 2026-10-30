@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
+import { fileToCompressedDataUrl } from '../lib/image';
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { 
   Users, 
@@ -174,17 +175,12 @@ const Admin: React.FC = () => {
     
     try {
       for (const file of files) {
-        // Convert file to Base64 for demo persistence in Firestore (1MB limit)
-        const reader = new FileReader();
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-
-        // Check if dataUrl is too large for Firestore (approx 1MB limit)
-        if (dataUrl.length > 900000) {
-          console.warn(`A imagem ${file.name} é muito grande.`);
+        // Comprime/redimensiona para caber no Firestore (antes fotos grandes eram ignoradas)
+        let dataUrl: string;
+        try {
+          dataUrl = await fileToCompressedDataUrl(file);
+        } catch (err) {
+          console.warn(err);
           continue;
         }
 

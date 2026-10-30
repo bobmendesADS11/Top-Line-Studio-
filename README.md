@@ -1,85 +1,48 @@
-# Top Line Studio - Plataforma de Álbuns 3D
+# Top Line Studio — Plataforma de Álbuns 3D
 
-Este projeto é uma aplicação moderna para a **Top Line Formaturas**, permitindo que formandos criem e visualizem seus álbuns de formatura em um ambiente 3D interativo.
+Aplicação da **Top Line Formaturas** para formandos criarem e visualizarem o álbum de formatura em 3D.
 
-## 🧱 Stack Tecnológica
+Produção: https://top-line-studio-nine.vercel.app
 
-- **Frontend:** React + Vite
-- **Estilo:** Tailwind CSS 4
+## Stack
+
+- **Frontend:** React 19 + Vite + Tailwind CSS 4
 - **3D:** Three.js + React Three Fiber + Drei
-- **Animações:** Motion (Framer Motion)
-- **Backend:** Supabase (Integração preparada)
+- **Animações:** Motion
+- **Backend:** Firebase (Authentication + Cloud Firestore)
+- **Hospedagem:** Vercel (deploy automático a cada push na `main`)
 
-## 🗄️ Modelagem do Banco (Supabase)
+## Estrutura
 
-Para colocar em produção no Supabase, execute o seguinte SQL no Editor de SQL do seu projeto:
+| Rota | Tela |
+| --- | --- |
+| `/` | Página inicial (Landing) |
+| `/login` | Login de aluno e de administrador |
+| `/area-do-aluno` | Painel do aluno, galeria, editor de álbum e visualizador 3D |
+| `/admin` | Painel administrativo (alunos, pedidos, fotos) |
 
-```sql
--- 1. Users (Extensão do Auth)
-create table public.users (
-  id uuid references auth.users not null primary key,
-  phone text unique,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+Firestore (banco `ai-studio-99dc72af-...`):
 
--- 2. Albums
-create table public.albums (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users not null,
-  name text not null,
-  status text check (status in ('editing', 'finished', 'approved')) default 'editing',
-  total_pages integer default 20,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+- `users/{uid}` — perfil (`role`: `admin` / `student` / `pending`, `package`)
+- `users/{uid}/photos` — fotos do aluno (data URL comprimida)
+- `users/{uid}/drafts/album_editor` — rascunho do editor
+- `orders` — pedidos
+- `albums` — catálogo público
 
--- 3. Photos
-create table public.photos (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users not null,
-  url text not null,
-  thumbnail_url text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+## Segurança
 
--- 4. Favorites
-create table public.favorites (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users not null,
-  photo_id uuid references public.photos not null
-);
+- Quem é admin é decidido **só** pelas regras em `firestore.rules` (campo `role = 'admin'`,
+  ou as contas mestre verificadas). Nunca colocar senhas ou listas de admin no código do site.
+- Contas de admin novas: crie o usuário no Firebase Authentication e defina `role: "admin"`
+  no documento `users/{uid}` pelo console.
+- Depois de alterar `firestore.rules`, publique no console do Firebase
+  (Firestore → banco `ai-studio-...` → Regras).
 
--- 5. Album Pages
-create table public.album_pages (
-  id uuid default gen_random_uuid() primary key,
-  album_id uuid references public.albums not null,
-  page_number integer not null
-);
+## Como rodar
 
--- 6. Album Items
-create table public.album_items (
-  id uuid default gen_random_uuid() primary key,
-  page_id uuid references public.album_pages not null,
-  photo_id uuid references public.photos not null,
-  position_x float not null,
-  position_y float not null,
-  width float not null,
-  height float not null,
-  rotation float default 0
-);
+```bash
+npm install
+npm run dev     # http://localhost:3000
+npm run lint    # checagem de tipos
+npm run build   # build de produção em dist/
 ```
-
-## 🚀 Como Rodar
-
-1. Instale as dependências: `npm install`
-2. Configure o `.env` com suas chaves do Supabase (veja `.env.example`)
-3. Inicie o servidor de desenvolvimento: `npm run dev`
-
-## ✨ Funcionalidades Implementadas
-
-- [x] Landing Page sofisticada com tema "Gold & Navy"
-- [x] Fluxo de Autenticação via Telefone (Mock)
-- [x] Galeria de fotos com Lazy Loading (200+ fotos)
-- [x] Seleção de fotos para o álbum
-- [x] Visualizador de Álbum 3D interativo
-- [x] Editor com navegação entre páginas
-- [x] Geração de JSON para exportação futura

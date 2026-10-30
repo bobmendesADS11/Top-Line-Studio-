@@ -96,6 +96,27 @@ const DEMO_PHOTOS: Photo[] = [
 const DEFAULT_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-night-sky-11606-large.mp4";
 
 const getStorageKey = () => `topline_album_draft_${auth.currentUser?.uid || 'guest'}`;
+
+// Fotos enviadas ficam como data URL (até ~1 MB cada). Guardar isso dentro do rascunho
+// estourava o limite do Firestore (1 MB por documento) e do localStorage (~5 MB),
+// e o salvamento falhava em silêncio. No rascunho guardamos só a referência (id + url leve)
+// e na hora de restaurar buscamos a foto completa pelo id.
+const toLightPhoto = (p: Photo): Photo => ({
+  id: p.id,
+  url: p.url?.startsWith('data:') ? '' : p.url,
+  thumbnail: p.thumbnail?.startsWith('data:') ? undefined : p.thumbnail,
+  aspectRatio: p.aspectRatio,
+});
+
+const rehydratePhotos = (saved: Photo[], available: Photo[]): Photo[] => {
+  const byId = new Map(available.map(p => [p.id, p]));
+  const restored = saved
+    .map(p => byId.get(p.id) || (p.url ? p : null))
+    .filter(Boolean) as Photo[];
+  // Fotos novas que ainda não estavam no rascunho entram no final
+  const savedIds = new Set(saved.map(p => p.id));
+  return [...restored, ...available.filter(p => !savedIds.has(p.id))];
+};
 const getVersionsKey = () => `topline_album_versions_${auth.currentUser?.uid || 'guest'}`;
 
 interface AlbumSnapshot {
@@ -112,10 +133,13 @@ interface AlbumSnapshot {
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
   const [activePhotos, setActivePhotos] = useState<Photo[]>(() => photos.length > 0 ? photos : DEMO_PHOTOS);
   
+  // Ordem das fotos salva no rascunho (para não perder a arrumação quando as fotos recarregam)
+  const savedPhotoOrderRef = useRef<Photo[] | null>(null);
+
   // Keep activePhotos in sync with incoming photos prop
   useEffect(() => {
     if (photos.length > 0) {
-      setActivePhotos(photos);
+      setActivePhotos(savedPhotoOrderRef.current ? rehydratePhotos(savedPhotoOrderRef.current, photos) : photos);
     }
   }, [photos]);
 
@@ -301,7 +325,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
           if (draftData.photoCrops) setPhotoCrops(draftData.photoCrops);
           if (draftData.videoUrl) setVideoUrl(draftData.videoUrl);
           if (draftData.activePhotos && Array.isArray(draftData.activePhotos) && draftData.activePhotos.length > 0) {
-            setActivePhotos(draftData.activePhotos);
+            savedPhotoOrderRef.current = draftData.activePhotos;
+            const restored = rehydratePhotos(draftData.activePhotos, photos);
+            if (restored.length > 0) setActivePhotos(restored);
           }
 
           setDraftRestoredToast(true);
@@ -320,6 +346,11 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
 
   // Continuous Auto-Save to LocalStorage and Firestore
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Lembra a ordem atual (o aluno pode reordenar) para quando as fotos recarregarem
+  useEffect(() => {
+    if (!isFirstLoad && activePhotos.length > 0) savedPhotoOrderRef.current = activePhotos;
+  }, [activePhotos, isFirstLoad]);
 
   useEffect(() => {
     if (isFirstLoad) return;
@@ -341,7 +372,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         purchaseType,
         photoCrops,
         videoUrl,
-        activePhotos: activePhotos.map(p => ({ id: p.id, url: p.url, thumbnail: p.thumbnail, aspectRatio: p.aspectRatio })),
+        activePhotos: activePhotos.map(toLightPhoto),
         lastSavedAt: now.toISOString()
       };
 
@@ -394,7 +425,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         purchaseType,
         photoCrops: { ...photoCrops },
         videoUrl,
-        activePhotos: [...activePhotos]
+        activePhotos: activePhotos.map(toLightPhoto)
       }
     };
 
@@ -421,7 +452,11 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     if (s.purchaseType) setPurchaseType(s.purchaseType);
     if (s.photoCrops) setPhotoCrops(s.photoCrops);
     if (s.videoUrl) setVideoUrl(s.videoUrl);
-    if (s.activePhotos) setActivePhotos(s.activePhotos);
+    if (s.activePhotos) {
+      savedPhotoOrderRef.current = s.activePhotos;
+      const restored = rehydratePhotos(s.activePhotos, photos);
+      if (restored.length > 0) setActivePhotos(restored);
+    }
 
     setShowVersionsModal(false);
     setDraftRestoredToast(true);
