@@ -92,6 +92,72 @@ const getLayoutCells = (layout: string, width: number, height: number) => {
   return [{ x: m, y: m, w: width - m * 2, h: height - m * 2 }];
 };
 
+// ----------------------------------------------------------------------
+// Diagramação sugerida: mistura todos os tipos de layout (para o cliente ver
+// todas as possibilidades) e ajusta a densidade para caber todas as fotos.
+// ----------------------------------------------------------------------
+const LAYOUT_CAPACITY: Record<string, number> = { minimalist: 1, spread: 1, vgrid: 2, grid: 4 };
+// Ciclo de 10 páginas (5 lâminas): retrato, panorâmica, combinações e sangrado
+const SHOWCASE_PATTERN = ['minimalist', 'minimalist', 'panorama', 'panorama', 'vgrid', 'grid', 'spread', 'vgrid', 'grid', 'minimalist'] as const;
+
+const layoutsCapacity = (layouts: string[]) => {
+  let cap = 0;
+  for (let i = 0; i < layouts.length; i++) {
+    if (layouts[i] === 'panorama') { cap += 1; i++; } else cap += LAYOUT_CAPACITY[layouts[i]] ?? 1;
+  }
+  return cap;
+};
+
+export function suggestLayouts(totalPages: number, photoCount: number): string[] {
+  const layouts: string[] = Array.from({ length: totalPages }, (_, i) => SHOWCASE_PATTERN[i % SHOWCASE_PATTERN.length]);
+  // panorâmica precisa de 2 páginas: se sobrar só 1 no fim, vira página simples
+  if (layouts[totalPages - 1] === 'panorama' && layouts[totalPages - 2] !== 'panorama') layouts[totalPages - 1] = 'minimalist';
+  for (let i = 0; i < totalPages; i++) {
+    if (layouts[i] === 'panorama' && (i + 1 >= totalPages || layouts[i + 1] !== 'panorama')) layouts[i] = 'minimalist';
+    if (layouts[i] === 'panorama') i++;
+  }
+
+  // Ordem de preferência para mexer: páginas espalhadas pelo álbum (não só no fim),
+  // preservando a abertura (2 primeiras páginas) e ao menos um de cada tipo.
+  const order = Array.from({ length: totalPages }, (_, i) => i)
+    .filter(i => i >= 2)
+    .sort((a, b) => ((a * 7) % totalPages) - ((b * 7) % totalPages));
+  const count = (t: string) => layouts.filter(l => l === t).length;
+
+  // Mais fotos que espaço: aumenta a densidade
+  let guard = 0;
+  while (layoutsCapacity(layouts) < photoCount && guard++ < 500) {
+    const pick =
+      order.find(i => layouts[i] === 'minimalist') ??
+      order.find(i => layouts[i] === 'spread' && count('spread') > 1) ??
+      order.find(i => layouts[i] === 'vgrid' && count('vgrid') > 1) ??
+      order.find(i => layouts[i] === 'panorama' && count('panorama') > 2 && layouts[i + 1] === 'panorama') ??
+      // último recurso: abre mão da variedade para caber todas as fotos
+      [...order, 0, 1].find(i => i < totalPages && (layouts[i] === 'minimalist' || layouts[i] === 'spread' || layouts[i] === 'vgrid'));
+    if (pick === undefined) break;
+    if (layouts[pick] === 'panorama') { layouts[pick] = 'vgrid'; layouts[pick + 1] = 'vgrid'; }
+    else layouts[pick] = layouts[pick] === 'vgrid' ? 'grid' : 'vgrid';
+  }
+
+  // Menos fotos que espaço: diminui a densidade do fim para o começo
+  guard = 0;
+  while (layoutsCapacity(layouts) > photoCount && guard++ < 500) {
+    const excess = layoutsCapacity(layouts) - photoCount;
+    const rev = [...order].reverse();
+    const pick =
+      // grade -> vertical tira 2 vagas; só faz se não deixar foto de fora
+      rev.find(i => layouts[i] === 'grid' && excess >= 2 && (count('grid') > 1 || excess >= 3)) ??
+      rev.find(i => layouts[i] === 'vgrid');
+    if (pick === undefined) break;
+    layouts[pick] = layouts[pick] === 'grid' ? 'vgrid' : 'minimalist';
+  }
+  return layouts;
+}
+
+export const LAYOUT_LABEL: Record<string, string> = {
+  minimalist: 'Minimal', vgrid: 'Vertical', grid: 'Grade', panorama: 'Panorâmico', spread: 'Sangrado',
+};
+
 const getStorageKey = () => `topline_album_draft_${auth.currentUser?.uid || 'guest'}`;
 
 // Fotos enviadas ficam como data URL (até ~1 MB cada). Guardar isso dentro do rascunho
@@ -153,6 +219,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   const [showPreview, setShowPreview] = useState(false);
   // No celular a tela não comporta painel + prévia lado a lado: alterna entre os dois
   const [mobilePanel, setMobilePanel] = useState<'options' | 'preview'>('options');
+  const [showPhotoOrder, setShowPhotoOrder] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(true);
   const [requestedPageCount, setRequestedPageCount] = useState<number>(20);
@@ -183,70 +250,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
   };
 
   const optimizeHelper = (layoutsArr: LayoutType[], targetCount: number, updateFn: (arr: LayoutType[]) => void) => {
-    let photoIdx = 0;
-    const newLayouts = [...layoutsArr];
-    const totalPages = newLayouts.length;
-    
-    // Reset all to minimalist first to have a clean slate
-    for (let i = 0; i < totalPages; i++) newLayouts[i] = 'minimalist';
-
-    for (let i = 0; i < totalPages; i++) {
-      if (photoIdx >= targetCount) break;
-
-      const remainingPhotos = targetCount - photoIdx;
-      const remainingPages = totalPages - i;
-      
-      // If we have more photos than pages left, we need higher density
-      if (remainingPhotos > remainingPages) {
-        // Can we do a panorama? (Needs at least 2 pages and 1 photo)
-        // Only if it doesn't leave too many photos for too few pages
-        const isIdealForPanorama = i % 4 === 2 && remainingPages >= 2 && (remainingPhotos - 1) <= (remainingPages - 2) * 4;
-        
-        if (isIdealForPanorama) {
-          newLayouts[i] = 'panorama';
-          if (i + 1 < totalPages) newLayouts[i + 1] = 'panorama';
-          photoIdx += 1;
-          i++; // skip next page
-        } else {
-          // Choose density based on what's needed to finish exactly
-          const densityNeeded = remainingPhotos / remainingPages;
-          
-          if (densityNeeded > 2.5 && remainingPhotos >= 4) {
-            newLayouts[i] = 'grid';
-            photoIdx += 4;
-          } else if (densityNeeded > 1.2 && remainingPhotos >= 2) {
-            newLayouts[i] = 'vgrid';
-            photoIdx += 2;
-          } else {
-            newLayouts[i] = 'minimalist';
-            photoIdx += 1;
-          }
-        }
-      } else {
-        // 1 photo per page is enough
-        newLayouts[i] = 'minimalist';
-        photoIdx += 1;
-      }
-    }
-
-    // Final safety check: if we still have photos left (shouldn't happen with 30/20, but for safety)
-    if (photoIdx < targetCount) {
-       // Bump the last few pages to grid until satisfied
-       for (let i = totalPages - 1; i >= 0 && photoIdx < targetCount; i--) {
-          const oldLayout = newLayouts[i];
-          if (oldLayout === 'panorama') continue; // don't break spreads
-          
-          if (oldLayout === 'minimalist') {
-            newLayouts[i] = 'vgrid';
-            photoIdx += 1;
-          } else if (oldLayout === 'vgrid') {
-            newLayouts[i] = 'grid';
-            photoIdx += 2;
-          }
-       }
-    }
-
-    updateFn([...newLayouts]);
+    updateFn(suggestLayouts(layoutsArr.length, targetCount) as LayoutType[]);
   };
 
   const optimizeLayouts = () => {
@@ -482,9 +486,8 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
     
     // Auto-select best package for first load
     if (pageLayouts.length === 0) {
-      const photosPerPage = globalLayout === 'grid' ? 4 : (globalLayout === 'vgrid' ? 2 : 1);
-      const numPagesBase = Math.ceil(activePhotos.length / photosPerPage);
-      const numPages = globalLayout === 'panorama' ? activePhotos.length * 2 : numPagesBase;
+      // A diagramação sugerida mistura layouts (~1,6 foto por página em média)
+      const numPages = Math.ceil(activePhotos.length / 1.6);
       
       const ideal = [20, 40, 60, 80].reduce((prev, curr) => 
         Math.abs(curr - numPages) < Math.abs(prev - numPages) ? curr : prev
@@ -493,13 +496,9 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
       
       const initialLayouts = new Array(ideal).fill(globalLayout);
       
-      // If we have more photos than pages, we run the optimization logic immediately
-      if (activePhotos.length > ideal) {
-        optimizeHelper(initialLayouts, activePhotos.length, setPageLayouts);
-      } else {
-        setPageLayouts(initialLayouts);
-        setPageEffects(new Array(ideal).fill('none'));
-      }
+      // Já começa com a diagramação sugerida (mistura de layouts)
+      optimizeHelper(initialLayouts, activePhotos.length, setPageLayouts);
+      setPageEffects(new Array(ideal).fill('none'));
       
       if (!coverPhotoId && activePhotos.length > 0) {
         setCoverPhotoId(activePhotos[0].id);
@@ -1638,27 +1637,90 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                     <Sparkles className="text-brand-gold" />
                     Diagramação Sugerida
                   </h2>
-                  <div className="flex items-center gap-2 text-[10px] text-gray-500 uppercase tracking-widest">
-                    <Clock size={12} />
-                    Gerado automaticamente
-                  </div>
+                  <button
+                    onClick={optimizeLayouts}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-brand-gold/40 bg-brand-gold/10 text-brand-gold text-[10px] font-bold uppercase tracking-widest hover:bg-brand-gold hover:text-black transition-all"
+                    title="Monta de novo o álbum misturando todos os tipos de layout"
+                  >
+                    <RotateCcw size={12} />
+                    Nova sugestão
+                  </button>
                 </div>
 
-                {/* Photo Order Curation Section */}
-                <div className="bg-zinc-900/40 border border-white/5 p-8 rounded-[40px] space-y-6">
-                  <div className="flex items-center justify-between">
+                {/* Álbum lâmina por lâmina (visão geral da diagramação) */}
+                <div className="space-y-5">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-widest">Seu álbum, lâmina por lâmina</h3>
+                      <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Toque em uma página para personalizar</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(LAYOUT_LABEL).map(([id, label]) => {
+                        const n = pageLayouts.filter(l => l === id).length;
+                        return (
+                          <span key={id} className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${n ? 'border-brand-gold/40 text-brand-gold bg-brand-gold/5' : 'border-white/10 text-gray-600'}`}>
+                            {label}{n ? ` · ${id === 'panorama' ? n / 2 : n}` : ''}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {isGenerating && pages.length === 0 ? (
+                    <div className="h-40 flex items-center justify-center text-xs uppercase tracking-widest text-gray-500">Montando a diagramação…</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {Array.from({ length: Math.ceil(pages.length / 2) }).map((_, s) => {
+                        const left = s * 2;
+                        const right = s * 2 + 1;
+                        const isPano = pageLayouts[left] === 'panorama' && pageLayouts[right] === 'panorama';
+                        const pageAspect = albumSize === '20x30' ? '2 / 3' : albumSize === '30x40' ? '3 / 4' : '1 / 1';
+                        return (
+                          <div key={s} className="bg-zinc-900/40 border border-white/5 rounded-2xl p-3 hover:border-brand-gold/30 transition-all">
+                            <div className="flex items-center justify-between mb-2 px-1">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-gold">Lâmina {s + 1}</span>
+                              <span className="text-[9px] uppercase tracking-widest text-gray-500">
+                                {isPano ? 'Panorâmico' : [pageLayouts[left], pageLayouts[right]].filter(Boolean).map(l => LAYOUT_LABEL[l as string]).join(' + ')}
+                              </span>
+                            </div>
+                            <div className="flex rounded-lg overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative">
+                              {[left, right].map(idx => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => document.getElementById(`page-editor-${idx}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                                  className="w-1/2 bg-black"
+                                  style={{ aspectRatio: pageAspect }}
+                                  title={pages[idx] ? `Personalizar página ${idx + 1}` : 'Página vazia'}
+                                >
+                                  {pages[idx] ? <img src={pages[idx]} alt={`Página ${idx + 1}`} className="w-full h-full object-cover" /> : null}
+                                </button>
+                              ))}
+                              <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-2 bg-[linear-gradient(90deg,transparent,rgba(0,0,0,0.18),transparent)] pointer-events-none" />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Ordem das fotos (recolhida por padrão) */}
+                <div className="bg-zinc-900/40 border border-white/5 p-5 md:p-8 rounded-[32px] space-y-6">
+                  <button onClick={() => setShowPhotoOrder(!showPhotoOrder)} className="w-full flex items-center justify-between text-left">
                     <div>
                       <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
                         <ListOrdered className="text-brand-gold" size={18} />
-                        Curadoria de Ordem ({activePhotos.length} fotos)
+                        Ordem das fotos ({activePhotos.length})
                       </h3>
                       <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">
-                        Arraste ou use as setas para organizar a sequência narrativa do seu álbum.
+                        Mude a sequência em que as fotos aparecem no álbum
                       </p>
                     </div>
-                  </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-brand-gold whitespace-nowrap">{showPhotoOrder ? 'Fechar' : 'Organizar'}</span>
+                  </button>
                   
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-brand-gold/20 scrollbar-track-transparent">
+                  {showPhotoOrder && <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-brand-gold/20 scrollbar-track-transparent">
                     {activePhotos.map((photo, index) => (
                       <div key={photo.id} className="group">
                         <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-white/5 group-hover:border-brand-gold/50 transition-all shadow-xl bg-black">
@@ -1689,7 +1751,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                         </div>
                       </div>
                     ))}
-                  </div>
+                  </div>}
                 </div>
 
                 {activePhotos.length > getPhotosTotalCapacity() && (
@@ -1723,8 +1785,10 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-12">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest -mb-6">Personalizar página por página</h3>
                     {pages.map((page, i) => (
                       <motion.div
+                        id={`page-editor-${i}`}
                         key={i}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
