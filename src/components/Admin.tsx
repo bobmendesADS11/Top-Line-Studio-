@@ -229,7 +229,7 @@ const Admin: React.FC = () => {
                   Studio
                 </span>
               </div>
-              <span className="text-[6px] text-white/40 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
             </div>
 
             {/* 20 Anos Badge */}
@@ -238,13 +238,13 @@ const Admin: React.FC = () => {
               <span className="font-script text-sm gold-gradient leading-tight inline-block px-1 py-0.5">
                 20
               </span>
-              <span className="font-script text-[7px] gold-gradient -mt-1.5 inline-block px-0.5">
+              <span className="font-script text-[9px] gold-gradient -mt-1.5 inline-block px-0.5">
                 anos
               </span>
             </div>
           </div>
         </div>
-        <p className="text-[8px] text-gray-500 uppercase tracking-widest ml-11">Admin Panel</p>
+        <p className="text-[9px] text-gray-500 uppercase tracking-widest ml-11">Admin Panel</p>
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
@@ -543,7 +543,7 @@ const Admin: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-4 md:p-6">
-                      <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-bold uppercase ${
+                      <span className={`px-2 md:px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase ${
                         student.role === 'admin' ? 'bg-brand-gold/10 text-brand-gold' : 
                         student.role === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : 
                         'bg-green-500/10 text-green-500'
@@ -555,7 +555,7 @@ const Admin: React.FC = () => {
                       <select 
                         value={student.package || 'prospect'} 
                         onChange={(e) => handleUpdatePackage(student.id, e.target.value)}
-                        className={`bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-[8px] md:text-[10px] font-bold uppercase transition-all outline-none ${
+                        className={`bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-[9px] md:text-[10px] font-bold uppercase transition-all outline-none ${
                           student.package === 'album' ? 'text-brand-gold border-brand-gold/30' : 
                           student.package === 'link' ? 'text-blue-400 border-blue-400/30' :
                           'text-gray-400 border-white/10'
@@ -602,7 +602,7 @@ const Admin: React.FC = () => {
                           student.role === 'student' && (
                             <button 
                               onClick={() => sendWhatsApp(student.phoneNumber || '', student.displayName || 'Formando')}
-                              className="bg-green-500/10 text-green-500 p-2 rounded-lg hover:bg-green-500/20 transition-all flex items-center gap-2 text-[8px] md:text-[10px] font-bold uppercase"
+                              className="bg-green-500/10 text-green-500 p-2 rounded-lg hover:bg-green-500/20 transition-all flex items-center gap-2 text-[9px] md:text-[10px] font-bold uppercase"
                               title="Enviar confirmação via WhatsApp"
                             >
                               <MessageCircle size={14} className="md:w-4 md:h-4" />
@@ -712,9 +712,9 @@ const Admin: React.FC = () => {
                       setIsUploading(true);
                       try {
                         const demoPhotos = [
-                          'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1541339907198-e08756eaa539?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1525921429624-479b6a29d84c?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&q=80&w=800',
+                          'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800',
                           'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800',
                           'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800'
                         ];
