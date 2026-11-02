@@ -51,9 +51,6 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
             <span className="font-script text-4xl sm:text-5xl md:text-6xl gold-gradient leading-tight inline-block px-3 py-0.5 drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]">
               20
             </span>
-            <span className="font-script text-sm sm:text-base md:text-lg gold-gradient -mt-2 inline-block px-2">
-              anos
-            </span>
           </div>
         </div>
 
@@ -564,14 +561,10 @@ const Student: React.FC = () => {
                 <span className="text-[8px] md:text-[10px] text-white/50 uppercase tracking-[0.35em] md:tracking-[0.5em] mt-0.5 pl-0.5">Formaturas</span>
               </div>
               {/* Selo 20 anos */}
-              <div className="hidden min-[400px]:flex items-center gap-1.5 pl-3 md:pl-4 border-l border-white/10">
+              <div className="hidden min-[400px]:flex items-center pl-3 md:pl-4 border-l border-white/10">
                 <div className="flex flex-col items-center">
                   <GraduationCap className="text-brand-gold w-4 h-4 md:w-5 md:h-5 -mb-2 md:-mb-3 relative z-10 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
                   <span className="font-script text-3xl md:text-5xl gold-gradient leading-normal inline-block px-1.5 pt-1 -my-2 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">20</span>
-                </div>
-                <div className="hidden sm:flex flex-col leading-none">
-                  <span className="text-[9px] md:text-[10px] text-brand-gold font-bold uppercase tracking-[0.25em]">anos</span>
-                  <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-[0.2em] mt-0.5">de história</span>
                 </div>
               </div>
             </Link>

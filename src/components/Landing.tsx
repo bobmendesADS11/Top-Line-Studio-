@@ -151,12 +151,9 @@ function Logo() {
 
         {/* 20 Anos Badge - Vertical Stack */}
         <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
-          <GraduationCap className="text-brand-gold w-3 h-3 mb-[-3px] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-          <span className="font-script text-base gold-gradient leading-tight inline-block px-1.5 py-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+          <GraduationCap className="text-brand-gold w-3.5 h-3.5 -mb-1.5 relative z-10 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+          <span className="font-script text-xl gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
             20
-          </span>
-          <span className="font-script text-[8px] gold-gradient -mt-1.5 inline-block px-1">
-            anos
           </span>
         </div>
       </div>
