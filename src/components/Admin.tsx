@@ -234,12 +234,9 @@ const Admin: React.FC = () => {
 
             {/* 20 Anos Badge */}
             <div className="flex flex-col items-center justify-center pl-2 border-l border-white/10 -mt-0.5">
-              <GraduationCap className="text-brand-gold w-2.5 h-2.5 mb-[-2px] drop-shadow-[0_0_6px_rgba(212,175,55,0.4)]" />
-              <span className="font-script text-sm gold-gradient leading-tight inline-block px-1 py-0.5">
+              <GraduationCap className="text-brand-gold w-3 h-3 -mb-1 relative z-10 drop-shadow-[0_0_6px_rgba(212,175,55,0.4)]" />
+              <span className="font-script text-lg gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5">
                 20
-              </span>
-              <span className="font-script text-[9px] gold-gradient -mt-1.5 inline-block px-0.5">
-                anos
               </span>
             </div>
           </div>

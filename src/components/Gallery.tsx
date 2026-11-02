@@ -244,8 +244,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
                 {/* 20 Anos Badge - Vertical Stack */}
                 <div className="flex flex-col items-center -mt-2 -ml-3">
                   <GraduationCap className="text-brand-gold w-5 h-5 mb-[-6px] drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
-                  <span className="font-script text-4xl gold-gradient leading-none">20</span>
-                  <span className="font-script text-sm gold-gradient -mt-2">anos</span>
+                  <span className="font-script text-4xl gold-gradient leading-normal inline-block px-2 pt-1">20</span>
                 </div>
 
                 <span className="font-script text-5xl md:text-7xl gold-gradient leading-none pt-4 pb-2 ml-6">Studio</span>
