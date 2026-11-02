@@ -1,0 +1,43 @@
+# Publica no site automaticamente tudo o que for enviado para o branch "vercel"
+# do repositório do Gabriel (onde o Claude trabalha). Leva até ~5 minutos.
+name: Publicar automaticamente
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-main
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    # Só roda no repositório do Bob; em PRs, só para o branch vercel do Gabriel
+    if: >-
+      github.repository == 'bobmendesADS11/Top-Line-Studio-' &&
+      (github.event_name != 'pull_request_target' ||
+       (github.event.pull_request.head.repo.full_name == 'gabrielmestrelli-cmd/Top-Line-Studio-' &&
+        github.event.pull_request.head.ref == 'vercel'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Trazer atualizações e publicar
+        run: |
+          git config user.name "bobmendesADS11"
+          git config user.email "bobmendes1406@gmail.com"
+          git fetch https://github.com/gabrielmestrelli-cmd/Top-Line-Studio-.git vercel
+          if git merge-base --is-ancestor FETCH_HEAD HEAD; then
+            echo "Nada novo para publicar."
+            exit 0
+          fi
+          git merge --no-edit -m "Publicação automática" FETCH_HEAD
+          git push origin HEAD:main
