@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { GraduationCap, Sparkles, ArrowRight, Users, Calendar, Award, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Image as ImageIcon, LogIn, Menu, X, Instagram, Facebook, Phone } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, MapPin, CheckCircle2, Play, ChevronDown, BookOpen, MousePointer2, Menu, X, Instagram, Facebook, Phone } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -673,7 +673,6 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   // trailer aberto na moldura ("Veja como funciona o Studio")
   const [watchVideo, setWatchVideo] = useState<null | 'studio'>(null);
   useEffect(() => {
@@ -683,7 +682,6 @@ export default function Landing() {
     return () => window.removeEventListener('keydown', onKey);
   }, [watchVideo]);
   const aboutRef = useRef<HTMLDivElement>(null);
-  const servicesRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const albumRef = useRef<HTMLElement>(null);
   const [albumStep, setAlbumStep] = useState(0);
@@ -706,9 +704,6 @@ export default function Landing() {
     albumRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollToServices = () => {
-    servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const scrollToContact = () => {
     contactRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -724,7 +719,7 @@ export default function Landing() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-bold">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
-            <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">A Empresa</button>
+            <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">O Studio</button>
             
             <div 
               onClick={scrollToAlbum}
@@ -733,7 +728,6 @@ export default function Landing() {
               3D
             </div>
 
-            <button onClick={scrollToServices} className="hover:text-brand-gold transition-colors">Serviços</button>
             <button onClick={scrollToContact} className="hover:text-brand-gold transition-colors">Contato</button>
           </div>
 
@@ -763,8 +757,7 @@ export default function Landing() {
             >
               <div className="p-8 flex flex-col gap-6 text-[10px] uppercase tracking-[0.3em] font-bold text-center">
                 <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setIsMobileMenuOpen(false); }}>Home</button>
-              <button onClick={() => { scrollToAbout(); setIsMobileMenuOpen(false); }}>A Empresa</button>
-              <button onClick={() => { scrollToServices(); setIsMobileMenuOpen(false); }}>Serviços</button>
+              <button onClick={() => { scrollToAbout(); setIsMobileMenuOpen(false); }}>O Studio</button>
               <button onClick={() => { scrollToContact(); setIsMobileMenuOpen(false); }}>Contato</button>
               <div className="h-[1px] bg-white/5 my-2" />
               <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }} className="bg-brand-gold text-black py-5 rounded-full text-xs font-black uppercase tracking-widest">
@@ -974,9 +967,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* A Empresa Section */}
+      {/* O Studio Section */}
       <section ref={aboutRef} className="py-20 md:py-32 px-6 relative overflow-hidden bg-zinc-950">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -984,9 +977,9 @@ export default function Landing() {
             className="relative"
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-brand-gold/10 border border-white/10">
-              <img loading="lazy" decoding="async" 
-                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=75" 
-                alt="Formatura Top Line" 
+              <img loading="lazy" decoding="async"
+                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=75"
+                alt="Formandos jogando o capelo"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
@@ -1000,45 +993,23 @@ export default function Landing() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
+            <p className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] mb-3">O que é</p>
             <h2 className="text-4xl md:text-5xl font-serif mb-8 flex items-center gap-4">
-              A Empresa
+              O Studio
               <div className="h-[1px] flex-1 bg-brand-gold/30" />
             </h2>
             <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-light">
               <p>
-                Concluir um curso de graduação é o sonho da maioria das pessoas. Por isso, para fazer desta conquista um momento único inesquecível, a <span className="text-white font-medium">Top Line Formaturas</span> oferece a você os melhores serviços.
+                O <span className="text-white font-medium">Top Line Studio</span> é a área online onde você monta o álbum da sua formatura. Tudo pelo computador ou celular, no seu tempo.
               </p>
               <p>
-                Desde os momentos ao lado de sua turma que antecedem o grande dia, até todos os detalhes que envolvem a organização deste tão esperado evento. Credibilidade e comprometimento são os nossos princípios básicos.
+                Você entra com o seu acesso, escolhe tamanho, capa e número de lâminas, e o Studio sugere a diagramação das páginas. Depois é só folhear o álbum em 3D e ver como ele vai ficar antes de ser impresso.
               </p>
               <p>
-                Este rito de passagem deixa muitas lembranças como as amizades cultivadas durante os anos de estudos e os incentivos familiares. <span className="text-brand-gold font-medium italic">Você é único, por isso você é TOP.</span>
+                Ficou com dúvida? O <span className="text-white font-medium">Assistente Top Line</span> explica cada passo e ajuda a fechar o pedido. <span className="text-brand-gold font-medium italic">Você é único, por isso você é TOP.</span>
               </p>
             </div>
           </motion.div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mt-16 md:mt-32">
-          {[
-            { icon: Award, value: "20", label: "Anos de Experiência" },
-            { icon: Calendar, value: "2.500", label: "Eventos Realizados" },
-            { icon: Users, value: "75.000", label: "Alunos Formados" },
-            { icon: MapPin, value: "54", label: "Cidades Atendidas" }
-          ].map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="p-8 rounded-2xl bg-white/5 border border-white/10 text-center group hover:border-brand-gold/30 transition-colors"
-            >
-              <stat.icon className="w-8 h-8 text-brand-gold mx-auto mb-6 group-hover:scale-110 transition-transform" />
-              <div className="text-4xl font-serif text-white mb-2">{stat.value}</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold">{stat.label}</div>
-            </motion.div>
-          ))}
         </div>
       </section>
 
@@ -1099,142 +1070,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Nossos Serviços Section */}
-      <section ref={servicesRef} className="py-20 md:py-32 px-6 bg-zinc-950">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
-            <div>
-              <h2 className="text-4xl md:text-6xl font-serif mb-6">Nossos Serviços</h2>
-              <p className="text-gray-400 text-xl font-light max-w-xl">
-                Uma empresa completa para transformar seus sonhos em realidade através de alta qualidade.
-              </p>
-            </div>
-            <div className="h-[1px] flex-1 bg-brand-gold/20 hidden md:block mx-12 mb-6" />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {[
-              "Colação de Grau", "Baile de Gala", "Culto Ecumênico", 
-              "Jantar de Formatura", "Festa de Integração", "Pré-Eventos"
-            ].map((service, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ y: -10 }}
-                className="p-8 rounded-2xl bg-white/5 border border-white/10 text-center flex flex-col items-center justify-center hover:bg-brand-gold/5 hover:border-brand-gold/30 transition-all"
-              >
-                <GraduationCap className="w-8 h-8 text-brand-gold mb-4" />
-                <span className="text-sm font-bold uppercase tracking-wider text-gray-300">{service}</span>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="mt-24 p-12 rounded-3xl bg-gradient-to-br from-brand-gold/10 to-transparent border border-brand-gold/20">
-            <h3 className="text-2xl font-serif mb-10 text-center">O que mais podemos te oferecer?</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-              {[
-                "Assessoria Financeira", "Assessoria Jurídica", "Assessoria Organizacional", "Assessoria Prime",
-                "Connect Top", "Espaços Sociais", "Festas de Integração", "Know How"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 text-gray-400 group">
-                  <CheckCircle2 className="w-5 h-5 text-brand-gold/50 group-hover:text-brand-gold transition-colors" />
-                  <span className="text-sm font-medium">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Instituições Parceiras Section */}
-      <section className="py-20 md:py-32 px-6 bg-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 md:mb-20">
-            <h2 className="text-4xl md:text-5xl font-serif mb-6">Instituições Parceiras</h2>
-            <p className="text-gray-400 font-light">Confiança das maiores universidades do país.</p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12 items-center">
-            {/* Placeholder logos with university names */}
-            {[
-              "UFSC", "UNIVALI", "Positivo", "Uniguaçu", "UniBrasil", "Univille",
-              "UniSociesc", "UFPR", "UTP", "PUCPR", "Unicuritiba", "Unisul"
-            ].map((uni, i) => (
-              <div key={i} className="flex items-center justify-center p-4">
-                <span className="text-lg md:text-2xl font-serif font-bold text-white/60 hover:text-brand-gold transition-colors">{uni}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Galeria de Fotos Section — fotos reais de eventos Top Line */}
-      <section className="relative py-16 md:py-24 px-4 md:px-6 bg-[#0d0c08] overflow-hidden">
-        {/* faixa dourada no topo */}
-        <div className="absolute top-0 left-0 right-0 h-2 md:h-3 bg-gradient-to-r from-[#9c7a1e] via-brand-gold to-[#9c7a1e] -skew-y-[0.6deg] origin-left shadow-[0_4px_20px_rgba(212,175,55,0.35)]" />
-        <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_20%_20%,rgba(212,175,55,0.18),transparent_45%),radial-gradient(circle_at_80%_70%,rgba(212,175,55,0.12),transparent_50%)]" />
-        <div className="relative max-w-6xl mx-auto">
-          <h2 className="text-center text-2xl md:text-4xl font-bold uppercase tracking-wide text-white mb-10 md:mb-14 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-            Galeria de Fotos
-          </h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-            {[
-              'Decoração de formatura de Medicina',
-              'Palco da colação de Medicina',
-              'Show de luzes da formatura de Medicina',
-              'Formandos de Medicina na colação',
-              'Show no baile de formatura',
-              'Decoração do salão com lustres',
-              'Formandos comemorando no baile',
-              'Mesas decoradas do jantar de formatura',
-              'Animação no baile de formatura',
-              'Brasão e bandeiras da colação de Direito',
-              'Palco da formatura de Direito',
-              'Altar decorado da cerimônia',
-            ].map((alt, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setGalleryIndex(i)}
-                className="group aspect-[3/2] rounded-lg overflow-hidden border-2 border-white bg-black shadow-[0_10px_25px_rgba(0,0,0,0.7)] focus:outline-none focus:ring-2 focus:ring-brand-gold"
-                aria-label={`Ampliar foto: ${alt}`}
-              >
-                <img
-                  src={`/galeria/foto-${String(i + 1).padStart(2, '0')}.jpg`}
-                  alt={alt}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover text-transparent group-hover:scale-105 transition-transform duration-500"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Foto ampliada */}
-        <AnimatePresence>
-          {galleryIndex !== null && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
-              onClick={() => setGalleryIndex(null)}
-            >
-              <img
-                src={`/galeria/foto-${String(galleryIndex + 1).padStart(2, '0')}-g.jpg`}
-                alt=""
-                className="w-[min(92vw,960px)] max-h-[85vh] object-contain rounded-xl border-2 border-white shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <button className="absolute top-5 right-5 text-white/80 hover:text-white text-sm uppercase tracking-widest" onClick={() => setGalleryIndex(null)}>Fechar ✕</button>
-              <button className="absolute left-3 md:left-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white text-2xl" onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 11) % 12); }} aria-label="Foto anterior">‹</button>
-              <button className="absolute right-3 md:right-8 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 text-white text-2xl" onClick={(e) => { e.stopPropagation(); setGalleryIndex((galleryIndex + 1) % 12); }} aria-label="Próxima foto">›</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
-
       {/* Footer / Contact */}
       <footer ref={contactRef} className="py-24 px-6 border-t border-white/10 bg-black relative overflow-hidden">
         {/* Subtle background element */}
@@ -1253,9 +1088,8 @@ export default function Landing() {
             <h4 className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.4em]">Navegação</h4>
             <div className="flex flex-col items-center md:items-start gap-4 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
               <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
-              <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">Empresa</button>
-              <button onClick={scrollToServices} className="hover:text-brand-gold transition-colors">Serviços</button>
-              <button onClick={scrollToContact} className="hover:text-brand-gold transition-colors">Contato</button>
+              <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">O Studio</button>
+                <button onClick={scrollToContact} className="hover:text-brand-gold transition-colors">Contato</button>
               <button onClick={() => navigate('/login')} className="text-brand-gold hover:text-white transition-colors">Área do Aluno</button>
             </div>
           </div>
