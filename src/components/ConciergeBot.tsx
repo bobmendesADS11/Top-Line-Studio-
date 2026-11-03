@@ -74,12 +74,24 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       { id: ++idRef.current, from, content, options },
     ]);
 
-  const botSay = (content: React.ReactNode, options?: Option[]) => {
-    setTyping(true);
-    window.setTimeout(() => {
-      setTyping(false);
+  // Mensagens do assistente saem uma de cada vez, com "digitando…" entre elas
+  const busyUntil = useRef(0);
+  const timers = useRef<number[]>([]);
+  const clearQueue = () => {
+    timers.current.forEach(t => window.clearTimeout(t));
+    timers.current = [];
+    busyUntil.current = 0;
+    setTyping(false);
+  };
+  const botSay = (content: React.ReactNode, options?: Option[], delay = 750) => {
+    const now = Date.now();
+    const startAt = Math.max(now, busyUntil.current);
+    busyUntil.current = startAt + delay;
+    timers.current.push(window.setTimeout(() => setTyping(true), startAt - now));
+    timers.current.push(window.setTimeout(() => {
       push('bot', content, options);
-    }, 450);
+      if (Date.now() >= busyUntil.current - 20) setTyping(false);
+    }, startAt - now + delay));
   };
 
   const userSay = (text: string) => push('user', text);
@@ -265,7 +277,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       return preset === 'LINK' ? showSummary() : askSize();
     }
     botSay(
-      <p>Vamos montar seu pedido em poucos passos. <b>Qual produto você quer?</b></p>,
+      <p>Bora! 😊 Você está pensando em qual opção?</p>,
       [
         { label: `📖 Álbum + Link · desde ${formatBRL(PRICES.edition.album)}`, onSelect: choose('Álbum + Link', () => { draftRef.current.type = 'FULL'; askSize(); }), primary: true },
         { label: `💎 Só o Link Studio · ${formatBRL(PRICES.edition.link)}`, onSelect: choose('Só o Link Studio', () => { draftRef.current.type = 'LINK'; showSummary(); }) },
@@ -276,7 +288,10 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
 
   function askSize() {
     botSay(
-      <p><b>Passo 1 de 4 · Tamanho.</b> Qual tamanho de álbum?</p>,
+      <div className="space-y-1">
+        <p>Primeiro, o <b>tamanho</b>. Qual combina mais com você?</p>
+        <p className="text-gray-500 text-[11px]">Medida de cada página (largura × altura). O 30 × 30 é o mais escolhido.</p>
+      </div>,
       SIZE_OPTIONS.map(s => ({
         label: `${sizeLabel(s)} · ${plus(PRICES.size[s])}`,
         onSelect: choose(sizeLabel(s), () => { draftRef.current.size = s; askMaterial(); }),
@@ -287,7 +302,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
 
   function askMaterial() {
     botSay(
-      <p><b>Passo 2 de 4 · Capa.</b> Qual acabamento você prefere?</p>,
+      <p>{sizeLabel(draftRef.current.size)} fica lindo! ✨ Agora a <b>capa</b>: qual acabamento você prefere?</p>,
       MATERIAL_OPTIONS.map(m => ({
         label: `${MATERIAL_INFO[m].label} · ${plus(PRICES.material[m])}`,
         onSelect: choose(MATERIAL_INFO[m].label, () => { draftRef.current.material = m; askPages(); }),
@@ -297,7 +312,10 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
 
   function askPages() {
     botSay(
-      <p><b>Passo 3 de 4 · Lâminas.</b> Quantas lâminas (páginas duplas)? Recomendamos ~1,5 foto por lâmina.</p>,
+      <div className="space-y-1">
+        <p>Boa escolha! E quantas <b>lâminas</b> você quer?</p>
+        <p className="text-gray-500 text-[11px]">Cada lâmina é uma página dupla, que abre inteira. A gente recomenda umas 1,5 foto por lâmina.</p>
+      </div>,
       PAGE_OPTIONS.map(n => ({
         label: `${n} lâminas · ${plus(PRICES.pagePackage[n])} · até ${RECOMMENDED_PHOTOS[n]} fotos`,
         onSelect: choose(`${n} lâminas`, () => { draftRef.current.pages = n; askPhotos(); }),
@@ -308,7 +326,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
 
   function askPhotos() {
     const d = draftRef.current;
-    const step = d.type === 'FULL' ? 'Passo 4 de 4 · Fotos.' : 'Fotos.';
+    const step = d.type === 'FULL' ? 'Última pergunta!' : 'Sobre as fotos:';
     const rec = d.type === 'FULL' ? RECOMMENDED_PHOTOS[d.pages] : undefined;
     const setPhotos = (n: number | null, label: string) => choose(label, () => { draftRef.current.photos = n; showSummary(); });
 
@@ -356,7 +374,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
     );
     botSay(
       <div className="space-y-3">
-        <p><b>Resumo do seu pedido</b></p>
+        <p>Prontinho, <b>{firstName}</b>! Olha como ficou o seu pedido:</p>
         <div className="rounded-xl border border-brand-gold/30 bg-black/40 p-3 space-y-1.5 text-[12px]">
           {row('Produto', d.type === 'LINK' ? 'Link Studio (digital)' : 'Álbum + Link')}
           {row(d.type === 'LINK' ? 'Link Studio' : 'Álbum + Link', formatBRL(t.base))}
@@ -424,17 +442,58 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
   };
 
   // ---------- abertura ----------
+  // Quando o formando abre o assistente por um botão, a conversa já começa com a
+  // pergunta dele (como se tivesse digitado) e o assistente segue a partir daí.
   const start = () => {
+    clearQueue();
     setMessages([]);
     idRef.current = 0;
-    push('bot', <p>Olá, <b>{firstName}</b>! 👋 Sou o assistente da <b>Top Line Studio</b>. Posso tirar suas dúvidas e te ajudar a fazer seu pedido completo.</p>);
-    if (intent === 'order') startOrder();
-    else if (intent === 'order_full') { botSay('Vamos montar seu Álbum + Link.'); startOrder('FULL'); }
-    else if (intent === 'order_link') { botSay('Vamos montar seu Link Studio.'); startOrder('LINK'); }
-    else botSay('Como posso te ajudar?', menuOptions());
+
+    if (intent === 'order_link') {
+      userSay('Quero adquirir o Link Studio 💎');
+      botSay(<p>Ótima escolha, <b>{firstName}</b>! 😊</p>, undefined, 600);
+      botSay(<p>Com o <b>Link Studio</b> você recebe <b>todas as fotos oficiais</b> da sua formatura, na íntegra e em alta definição, para baixar e compartilhar quando quiser.</p>);
+      botSay(<p>E um detalhe legal: mesmo sem comprar o álbum, você consegue <b>montar e ver ele em 3D</b> aqui no Studio. Se gostar, dá para pedir o impresso depois.</p>);
+      botSay(
+        <p>O valor é <b>{formatBRL(PRICES.edition.link)}</b>, preço único. Vamos fechar o seu?</p>,
+        [
+          { label: '✅ Sim, quero o Link Studio', onSelect: choose('Sim, quero o Link Studio', () => startOrder('LINK')), primary: true },
+          { label: '📖 Quero o álbum impresso também', onSelect: choose('Quero o álbum impresso também', () => { botSay(<p>Perfeito! O álbum já vem com o Link Studio incluso. Vou te ajudar a montar em 4 perguntinhas rápidas.</p>); startOrder('FULL'); }) },
+          { label: '❓ Tenho uma dúvida', onSelect: choose('Tenho uma dúvida', showMenu) },
+        ],
+      );
+      return;
+    }
+
+    if (intent === 'order_full') {
+      if (userTier === 'LINK') {
+        userSay('Quero pedir o meu álbum impresso 📖');
+        botSay(<p>Que demais, <b>{firstName}</b>! 🎓</p>, undefined, 600);
+        botSay(<p>Como você já tem o <b>Link Studio</b>, suas fotos oficiais já estão aqui. Agora é só escolher como o álbum vai ser.</p>);
+      } else {
+        userSay('Quero adquirir o Álbum + Link 📖');
+        botSay(<p>Que demais, <b>{firstName}</b>! O álbum é o jeito mais bonito de eternizar a formatura. 🎓</p>, undefined, 600);
+        botSay(<p>E ele já vem com o <b>Link Studio</b>: todas as fotos oficiais, na íntegra, para baixar quando quiser.</p>);
+      }
+      botSay(<p>Vou te ajudar a montar o pedido em <b>4 perguntinhas rápidas</b>. 😉</p>);
+      startOrder('FULL');
+      return;
+    }
+
+    if (intent === 'order') {
+      userSay('Quero fazer meu pedido');
+      botSay(<p>Oi, <b>{firstName}</b>! Que bom te ver por aqui. 😊</p>, undefined, 600);
+      startOrder();
+      return;
+    }
+
+    botSay(<p>Oi, <b>{firstName}</b>! Tudo bem? 👋</p>, undefined, 500);
+    botSay(<p>Sou o assistente da <b>Top Line Studio</b>. Posso tirar suas dúvidas e te ajudar a fazer o seu pedido.</p>);
+    botSay('Em que posso te ajudar hoje?', menuOptions());
   };
 
   useEffect(() => {
+    if (!isOpen) clearQueue();
     if (isOpen) start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, intent]);
@@ -489,9 +548,14 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
 
               {/* Conversa */}
               <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-3 overscroll-contain">
-                {messages.map(m => (
-                  <div key={m.id} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[88%] ${m.from === 'user' ? '' : 'space-y-2'}`}>
+                {messages.map((m, idx) => (
+                  <div key={m.id} className={`flex items-end gap-2 ${m.from === 'user' ? 'justify-end' : 'justify-start'} ${idx > 0 && messages[idx - 1].from === m.from ? '!mt-1.5' : ''}`}>
+                    {m.from === 'bot' && (
+                      <div className={`w-7 h-7 shrink-0 rounded-full bg-brand-gold/15 border border-brand-gold/40 text-brand-gold flex items-center justify-center self-start mt-1 ${idx > 0 && messages[idx - 1].from === 'bot' ? 'invisible' : ''}`}>
+                        <Bot size={14} />
+                      </div>
+                    )}
+                    <div className={`max-w-[85%] ${m.from === 'user' ? '' : 'space-y-2'}`}>
                       <div
                         className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed ${
                           m.from === 'user'
@@ -522,7 +586,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
                   </div>
                 ))}
                 {typing && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start pl-9">
                     <div className="px-4 py-3 rounded-2xl rounded-bl-md bg-zinc-900 border border-white/5 flex gap-1">
                       {[0, 1, 2].map(i => (
                         <span key={i} className="w-1.5 h-1.5 rounded-full bg-brand-gold/70 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
