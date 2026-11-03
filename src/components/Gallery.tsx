@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Image as ImageIcon, Check, Search, Filter, Loader2, Heart, X, Upload, Trash2, Maximize2, Download, Plus, GraduationCap } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { fileToCompressedDataUrl } from '../lib/image';
-import { DEMO_PHOTOS } from '../lib/demoPhotos';
 import { PRICES, formatBRL } from '../lib/pricing';
 import type { ConciergeIntent } from './ConciergeBot';
 import { collection, onSnapshot, query, orderBy, limit, addDoc, serverTimestamp, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
@@ -23,7 +22,7 @@ interface UserProfile {
 
 interface GalleryProps {
   onSelect: (photos: Photo[]) => void;
-  /** PROSPECT = ainda não comprou: vê fotos de demonstração e não sobe fotos */
+  /** PROSPECT = ainda não comprou: sobe fotos do acervo pessoal para testar o álbum */
   userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
   onOpenAssistant?: (intent: ConciergeIntent) => void;
 }
@@ -45,13 +44,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
   const PHOTOS_PER_PAGE = 100;
 
   useEffect(() => {
-    // Antes da compra: só fotos de demonstração (as oficiais chegam depois da compra)
-    if (isProspect) {
-      setPhotos(DEMO_PHOTOS.map(p => ({ id: p.id, url: p.url, thumbnail: p.thumbnail, name: 'Demonstração', source: 'admin' })) as any);
-      setLoading(false);
-      return;
-    }
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) { setLoading(false); return; }
 
     // Fetch User Profile for Package Status
     const userRef = doc(db, 'users', auth.currentUser.uid);
@@ -107,7 +100,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isProspect || !e.target.files || !auth.currentUser) return;
+    if (!e.target.files || !auth.currentUser) return;
     
     setIsUploading(true);
     const files = Array.from(e.target.files);
@@ -257,7 +250,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
               <span className="font-script text-3xl text-white/60">Sonhe, acredite, realize!</span>
               <p className="text-gray-500 text-xs max-w-md leading-relaxed">
                 {isProspect
-                  ? 'Estas são fotos de demonstração. Suas fotos oficiais da formatura serão liberadas aqui depois da compra — e aí você também poderá subir as suas.'
+                  ? 'Suba fotos do seu acervo pessoal e veja como fica o seu álbum. Depois da compra, a equipe Top Line coloca aqui as fotos oficiais da formatura.'
                   : 'Selecione as fotos que farão parte do seu álbum exclusivo. O número em cada foto indica a ordem em que aparecerão na sua diagramação.'}
               </p>
             </div>
@@ -274,14 +267,14 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
               </button>
             )}
 
-            <button 
+            {photos.length > 0 && <button 
               onClick={toggleSelectAll}
               className="px-6 py-2 rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all text-xs font-bold uppercase tracking-widest"
             >
               {selectedIds.size === photos.length ? 'Desmarcar Tudo' : 'Selecionar Tudo'}
-            </button>
+            </button>}
 
-            {!isProspect && <button 
+            {<button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="bg-brand-gold text-black px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.2)]"
@@ -317,13 +310,19 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
             <div>
               <p className="text-brand-gold text-xs font-bold uppercase tracking-widest mb-1">Modo demonstração</p>
               <p className="text-gray-300 text-sm leading-relaxed max-w-2xl">
-                Monte e veja seu álbum em 3D com estas fotos de exemplo. Depois da compra, suas fotos oficiais entram no lugar delas.
+                Suba fotos do seu acervo pessoal e veja como fica o seu álbum em 3D. Prefere não montar agora? É só comprar: a nossa equipe coloca as fotos oficiais da formatura para você.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 shrink-0">
-              <button onClick={() => onSelect(photos)} className="px-5 py-3 rounded-xl bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all">
-                Montar álbum de demonstração
-              </button>
+              {photos.length > 0 ? (
+                <button onClick={() => onSelect(photos)} className="px-5 py-3 rounded-xl bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all">
+                  Montar meu álbum
+                </button>
+              ) : (
+                <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="px-5 py-3 rounded-xl bg-brand-gold text-black text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all">
+                  {isUploading ? 'Enviando...' : 'Subir minhas fotos'}
+                </button>
+              )}
               <button onClick={() => onOpenAssistant?.('menu')} className="px-5 py-3 rounded-xl border border-brand-gold/40 text-brand-gold text-[10px] font-bold uppercase tracking-widest hover:bg-brand-gold/10 transition-all">
                 Como comprar
               </button>
@@ -337,7 +336,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
             { id: 'all', label: 'Fotos do Evento', icon: ImageIcon },
             { id: 'selected', label: `Minha Seleção (${selectedIds.size})`, icon: Check },
             { id: 'student', label: 'Minhas Fotos', icon: Upload },
-          ].filter(tab => !(isProspect && tab.id === 'student')).map((tab) => (
+          ].filter(tab => !(isProspect && tab.id === 'student')).map((tab) => isProspect && tab.id === 'all' ? { ...tab, label: 'Minhas Fotos', icon: Upload } : tab).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
@@ -352,6 +351,22 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
             </button>
           ))}
         </div>
+
+        {photos.length === 0 && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="w-full py-16 md:py-24 rounded-3xl border-2 border-dashed border-white/10 hover:border-brand-gold/40 transition-colors flex flex-col items-center justify-center gap-3 text-center px-6"
+          >
+            {isUploading ? <Loader2 className="w-10 h-10 text-brand-gold animate-spin" /> : <Upload className="w-10 h-10 text-brand-gold/70" />}
+            <span className="text-white font-semibold">{isUploading ? 'Enviando suas fotos...' : isProspect ? 'Suba fotos do seu acervo pessoal' : 'Suas fotos oficiais ainda não chegaram'}</span>
+            <span className="text-gray-500 text-sm max-w-md">
+              {isProspect
+                ? 'Escolha algumas fotos do seu computador ou celular para montar e ver o seu álbum em 3D.'
+                : 'A equipe Top Line vai colocar as fotos da formatura aqui. Enquanto isso, você pode subir fotos suas.'}
+            </span>
+          </button>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredPhotos.map((photo) => (
@@ -524,7 +539,7 @@ export default function Gallery({ onSelect, userTier = 'PROSPECT', onOpenAssista
 
             <p className="text-gray-400 mb-8">
               {isProspect 
-                ? 'Você está no modo demonstração. Escolha um pacote: o assistente te guia no pedido e, depois da compra, suas fotos oficiais são liberadas.'
+                ? 'Você está no modo demonstração. Escolha um pacote: o assistente te guia no pedido e, depois da compra, a equipe coloca as suas fotos oficiais.'
                 : `Você selecionou ${selectedIds.size} fotos para o seu álbum.`}
             </p>
 

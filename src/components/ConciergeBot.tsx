@@ -27,7 +27,7 @@ interface Props {
   intent?: ConciergeIntent;
   studentName?: string;
   userId?: string;
-  /** PROSPECT = ainda não comprou (usa fotos de demonstração, não sobe fotos) */
+  /** PROSPECT = ainda não comprou (testa o álbum com fotos do acervo pessoal) */
   userTier?: 'PROSPECT' | 'LINK' | 'ALBUM';
   photos: { id: string; url: string; thumbnail?: string }[];
   orders: any[];
@@ -178,12 +178,12 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
     if (!isBuyer) {
       botSay(
         <div className="space-y-2">
-          <p>Você não precisa enviar fotos agora. 😊</p>
-          <p><b>Depois da compra</b>, suas <b>fotos oficiais</b> da formatura são liberadas aqui na sua área. A partir daí você também pode <b>subir as suas próprias fotos</b>.</p>
-          <p className="text-gray-400">Enquanto isso, você pode montar e ver o álbum em 3D com <b>fotos de demonstração</b>.</p>
+          <p>No <b>modo demonstração</b> você sobe fotos do seu <b>acervo pessoal</b> e vê como fica o seu álbum em 3D. 📸</p>
+          <p>Prefere não montar agora? É só <b>comprar</b>: a equipe Top Line coloca as <b>fotos oficiais</b> da formatura para você.</p>
+          <p className="text-gray-400">Você tem <b>{photoCount}</b> {photoCount === 1 ? 'foto enviada' : 'fotos enviadas'} até agora.</p>
         </div>,
         backOptions([
-          { label: '🎨 Montar álbum de demonstração', onSelect: () => { onClose(); onNavigate('/area-do-aluno/editor'); }, primary: true },
+          { label: '📸 Subir minhas fotos', onSelect: () => { onClose(); onNavigate('/area-do-aluno/galeria'); }, primary: true },
           { label: '🛒 Fazer meu pedido', onSelect: choose('Quero fazer meu pedido', startOrder) },
         ]),
       );
@@ -203,7 +203,7 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
       <div className="space-y-2">
         <p>No <b>Editor de Lâminas</b> você escolhe tamanho, capa e número de lâminas, organiza a ordem das fotos e escolhe o layout de cada página.</p>
         <p>Depois é só tocar em <b>Ver em 3D</b> para folhear o álbum como ele vai ficar.</p>
-        {!isBuyer && <p className="text-gray-400">Antes da compra o editor usa <b>fotos de demonstração</b>; depois, suas fotos oficiais entram no lugar delas.</p>}
+        {!isBuyer && <p className="text-gray-400">Antes da compra você monta com <b>fotos do seu acervo pessoal</b>; depois, a equipe coloca as fotos oficiais da formatura.</p>}
       </div>,
       backOptions([{ label: '🎨 Abrir o editor', onSelect: () => { onClose(); onNavigate('/area-do-aluno/editor'); }, primary: true }]),
     );

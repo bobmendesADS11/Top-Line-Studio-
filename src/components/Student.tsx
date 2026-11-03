@@ -10,6 +10,23 @@ import AlbumEditor from './AlbumEditor';
 import ConciergeBot, { ConciergeIntent } from './ConciergeBot';
 import { DEMO_PHOTOS } from '../lib/demoPhotos';
 
+/** Sem fotos ainda: o aluno sobe do acervo pessoal ou compra e a equipe coloca as oficiais */
+const NoPhotosYet: React.FC<{ isProspect: boolean; onUpload: () => void; onBuy: () => void }> = ({ isProspect, onUpload, onBuy }) => (
+  <div className="h-full w-full flex items-center justify-center p-6 bg-black">
+    <div className="max-w-lg text-center">
+      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl border border-brand-gold/30 bg-brand-gold/5 flex items-center justify-center text-brand-gold"><ImageIcon size={28} /></div>
+      <h3 className="font-serif text-2xl md:text-3xl text-white mb-3">{isProspect ? 'Monte seu álbum com as suas fotos' : 'Suas fotos oficiais estão a caminho'}</h3>
+      <p className="text-gray-400 leading-relaxed mb-8">{isProspect
+        ? 'Suba algumas fotos do seu acervo pessoal para ver como fica o álbum em 3D. Prefere não montar agora? É só comprar: a equipe Top Line coloca as fotos oficiais da formatura para você.'
+        : 'A equipe Top Line vai colocar as fotos da formatura na sua galeria. Enquanto isso, você pode subir fotos suas para testar o álbum.'}</p>
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <button onClick={onUpload} className="gold-button px-6 py-3 !text-[11px] !font-bold uppercase tracking-wider">Subir minhas fotos</button>
+        {isProspect && <button onClick={onBuy} className="px-6 py-3 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[11px] uppercase tracking-wider hover:bg-brand-gold/5 transition-all">Comprar e a equipe monta</button>}
+      </div>
+    </div>
+  </div>
+);
+
 const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; setShowWelcome: (show: boolean) => void; onOpenChat: (intent?: ConciergeIntent) => void }> = ({ userTier, studentData, user, setShowWelcome, onOpenChat }) => (
   <motion.div 
     initial={{ opacity: 0 }}
@@ -142,8 +159,8 @@ const Dashboard: React.FC<{
 
             <div className="grid grid-cols-1 sm:grid-flow-col sm:auto-cols-fr gap-2.5 w-full max-w-2xl">
               {userTier === 'PROSPECT' ? (
-                <Link to="editor" className="gold-button px-3 py-4 !text-[10px] lg:!text-[11px] !font-bold uppercase tracking-wider text-center leading-tight flex items-center justify-center">
-                  Montar Álbum de Demonstração
+                <Link to="galeria" className="gold-button px-3 py-4 !text-[10px] lg:!text-[11px] !font-bold uppercase tracking-wider text-center leading-tight flex items-center justify-center">
+                  Testar com minhas fotos
                 </Link>
               ) : (
                 <Link to="galeria" className="gold-button px-3 py-4 !text-[10px] lg:!text-[11px] !font-bold uppercase tracking-wider text-center leading-tight flex items-center justify-center">
@@ -225,13 +242,13 @@ const Dashboard: React.FC<{
           <h3 className="text-3xl font-serif mb-2 gold-gradient">Galeria de Fotos</h3>
           <p className="text-gray-400 text-sm max-w-md font-light leading-relaxed">
             {userTier === 'PROSPECT'
-              ? 'Suas fotos oficiais da formatura aparecem aqui depois da compra. Enquanto isso, veja como fica com fotos de demonstração.'
+              ? 'Suba fotos do seu acervo pessoal e veja como fica o seu álbum. Depois da compra, a equipe coloca aqui as fotos oficiais da formatura.'
               : 'Gerencie seus registros, selecione seus favoritos e prepare seu álbum com a curadoria exclusiva Top Line.'}
           </p>
           
           <div className="mt-10 flex gap-4 overflow-hidden min-h-[144px] items-center">
-            {(userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos).length > 0 ? (
-              (userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos).slice(0, 5).map((photo, i) => (
+            {selectedPhotos.length > 0 ? (
+              selectedPhotos.slice(0, 5).map((photo, i) => (
                 <div key={photo.id || i} className="w-28 h-36 rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-1000 relative">
                   <img src={(photo as any).thumbnail || photo.url} loading="lazy" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -673,31 +690,39 @@ const Student: React.FC = () => {
             </div>
 
             <div className="flex-1 w-full h-full relative overflow-hidden">
+              {selectedPhotos.length === 0 ? (
+                <NoPhotosYet isProspect={userTier === 'PROSPECT'} onUpload={() => navigate('/area-do-aluno/galeria')} onBuy={() => handleOpenChat('order')} />
+              ) : (
               <Album3D 
-                pages={(userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos).map(p => p.url)} 
+                pages={selectedPhotos.map(p => p.url)} 
                 currentPage={viewerPage} 
                 onPageChange={setViewerPage}
                 albumSize={savedAlbumConfig.albumSize}
                 materialType={savedAlbumConfig.materialType}
                 sheetCount={savedAlbumConfig.sheetCount}
-                coverTextureUrl={(userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos)[0]?.url}
+                coverTextureUrl={selectedPhotos[0]?.url}
                 zoom={1} 
                 isOpen={true} 
                 purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}
                 onCheckout={() => handleOpenChat('order_full')}
               />
+              )}
             </div>
           </div>
         } />
         <Route path="editor" element={
           <div className="h-[calc(100vh-80px)]">
+            {selectedPhotos.length === 0 ? (
+              <NoPhotosYet isProspect={userTier === 'PROSPECT'} onUpload={() => navigate('/area-do-aluno/galeria')} onBuy={() => handleOpenChat('order')} />
+            ) : (
             <AlbumEditor 
-              photos={userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos} 
+              photos={selectedPhotos} 
               onBack={() => navigate('/area-do-aluno')}
               hasPurchasedAlbum={hasPurchasedAlbum}
               userTier={userTier}
               onSave={() => {}}
             />
+            )}
           </div>
         } />
       </Routes>
