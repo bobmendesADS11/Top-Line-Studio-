@@ -8,12 +8,8 @@ import {
   Book, 
   ShoppingBag, 
   LogOut, 
-  Plus, 
   Search, 
-  MoreVertical,
   Trash2,
-  Edit2,
-  ExternalLink,
   LayoutDashboard,
   GraduationCap,
   MessageCircle,
@@ -28,6 +24,30 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { setDoc, serverTimestamp, addDoc, getDocs } from 'firebase/firestore';
 
+const TAB_TITLE: Record<string, string> = { dashboard: 'Painel', orders: 'Pedidos', albums: 'Álbuns', students: 'Alunos' };
+
+// Status de pedido (os mesmos que o site e o assistente usam)
+const ORDER_STATUS: { value: string; label: string }[] = [
+  { value: 'aguardando_contato', label: 'Aguardando contato' },
+  { value: 'pending', label: 'Recebido' },
+  { value: 'em_producao', label: 'Em produção' },
+  { value: 'pago', label: 'Pago' },
+  { value: 'concluido', label: 'Concluído' },
+  { value: 'cancelado', label: 'Cancelado' },
+];
+const ROLE_LABEL: Record<string, string> = { admin: 'Admin', student: 'Aluno', pending: 'Aguardando' };
+
+// Datas do Firestore podem vir como Timestamp, objeto {seconds}, texto ou vazias
+const fmtDate = (v: any): string => {
+  try {
+    const d = v?.toDate ? v.toDate() : v?.seconds ? new Date(v.seconds * 1000) : v ? new Date(v) : null;
+    return d && !isNaN(d.getTime()) ? d.toLocaleDateString('pt-BR') : '—';
+  } catch {
+    return '—';
+  }
+};
+const fmtBRL = (n: any) => `R$ ${(Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'albums' | 'students'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -40,6 +60,7 @@ const Admin: React.FC = () => {
   const [studentPhotos, setStudentPhotos] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [approvalTier, setApprovalTier] = useState('prospect');
+  const [loadError, setLoadError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,17 +68,22 @@ const Admin: React.FC = () => {
     const albumsQuery = query(collection(db, 'albums'), orderBy('createdAt', 'desc'));
     const studentsQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
 
+    const onErr = (what: string) => (error: any) => {
+      console.error(`Erro ao carregar ${what}:`, error);
+      setLoadError(`Não foi possível carregar ${what}. Saia e entre de novo; se continuar, confira se esta conta é admin.`);
+    };
+
     const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
       setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, onErr('os pedidos'));
 
     const unsubAlbums = onSnapshot(albumsQuery, (snapshot) => {
       setAlbums(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, onErr('os álbuns'));
 
     const unsubStudents = onSnapshot(studentsQuery, (snapshot) => {
       setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, onErr('os alunos'));
 
     return () => {
       unsubOrders();
@@ -71,7 +97,9 @@ const Admin: React.FC = () => {
     if (activeTab === 'orders') {
       return orders.filter(o => 
         o.id.toLowerCase().includes(term) || 
+        o.studentName?.toLowerCase().includes(term) ||
         o.studentEmail?.toLowerCase().includes(term) ||
+        o.studentPhone?.includes(term) ||
         o.status?.toLowerCase().includes(term)
       );
     }
@@ -97,7 +125,8 @@ const Admin: React.FC = () => {
     navigate('/');
   };
 
-  const handleDelete = async (collectionName: string, id: string) => {
+  const handleDelete = async (collectionName: string, id: string, label = 'este item') => {
+    if (!window.confirm(`Tem certeza que quer excluir ${label}? Isso não pode ser desfeito.`)) return;
     try {
       await deleteDoc(doc(db, collectionName, id));
     } catch (error) {
@@ -156,10 +185,6 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleAddStudentInfo = () => {
-    // No-op or custom modal
-  };
-
   const handleManagePhotos = async (student: any) => {
     setSelectedStudentForPhotos(student);
     const photosRef = collection(db, 'users', student.id, 'photos');
@@ -202,6 +227,7 @@ const Admin: React.FC = () => {
 
   const handleDeletePhoto = async (photoId: string) => {
     if (!selectedStudentForPhotos) return;
+    if (!window.confirm('Excluir esta foto do aluno?')) return;
     try {
       await deleteDoc(doc(db, 'users', selectedStudentForPhotos.id, 'photos', photoId));
       setStudentPhotos(studentPhotos.filter(p => p.id !== photoId));
@@ -246,7 +272,7 @@ const Admin: React.FC = () => {
 
       <nav className="flex-1 px-4 space-y-2">
         {[
-          { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+          { id: 'dashboard', icon: LayoutDashboard, label: 'Painel' },
           { id: 'orders', icon: ShoppingBag, label: 'Pedidos' },
           { id: 'albums', icon: Book, label: 'Álbuns' },
           { id: 'students', icon: Users, label: 'Alunos' },
@@ -318,12 +344,12 @@ const Admin: React.FC = () => {
       <main className="flex-1 p-4 md:p-12 overflow-y-auto">
         <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 md:mb-12 gap-6">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold capitalize">{activeTab}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold">{TAB_TITLE[activeTab]}</h2>
             <p className="text-gray-500 text-sm">Gerencie sua plataforma Top Line Studio</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <div className="relative flex-1 sm:flex-none">
+            {activeTab !== 'dashboard' && <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input 
                 type="text" 
@@ -332,33 +358,31 @@ const Admin: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:w-64 bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-brand-gold outline-none transition-all"
               />
-            </div>
-            <button 
-              onClick={() => activeTab === 'students' ? handleAddStudentInfo() : null}
-              className="bg-brand-gold text-black px-6 py-2 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-brand-gold/90 transition-all"
-            >
-              <Plus size={20} />
-              {activeTab === 'students' ? 'Info Cadastro' : 'Novo Item'}
-            </button>
+            </div>}
           </div>
         </header>
+
+        {loadError && (
+          <div className="mb-6 p-4 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-300 text-sm flex items-center gap-3">
+            <AlertCircle size={18} className="shrink-0" /> {loadError}
+          </div>
+        )}
 
         {/* Dashboard Stats */}
         {activeTab === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 mb-8 md:mb-12">
               {[
                 { label: 'Total de Pedidos', value: orders.length, icon: ShoppingBag, color: 'text-blue-500' },
-                { label: 'Álbuns Ativos', value: albums.length, icon: Book, color: 'text-brand-gold' },
-                { label: 'Alunos Ativos', value: students.filter(s => s.role === 'student').length, icon: Users, color: 'text-green-500' },
-                { label: 'Pendentes', value: students.filter(s => s.role === 'pending').length, icon: AlertCircle, color: 'text-yellow-500' },
+                { label: 'Pedidos de álbum', value: orders.filter(o => o.productType === 'album_studio_full' || o.package === 'album').length, icon: Book, color: 'text-brand-gold' },
+                { label: 'Alunos', value: students.filter(s => s.role === 'student').length, icon: Users, color: 'text-green-500' },
+                { label: 'Aguardando aprovação', value: students.filter(s => s.role === 'pending').length, icon: AlertCircle, color: 'text-yellow-500' },
               ].map((stat, i) => (
-                <div key={i} className="bg-zinc-900/50 border border-white/5 p-6 md:p-8 rounded-3xl">
+                <div key={i} className="bg-zinc-900/50 border border-white/5 p-4 md:p-8 rounded-2xl md:rounded-3xl">
                   <div className="flex items-center justify-between mb-4">
                     <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
                       <stat.icon size={24} />
                     </div>
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Este Mês</span>
                   </div>
                   <p className="text-gray-400 text-xs md:text-sm mb-1">{stat.label}</p>
                   <p className="text-3xl md:text-4xl font-bold">{stat.value}</p>
@@ -366,11 +390,11 @@ const Admin: React.FC = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-8 mb-8 md:mb-12">
               {[
                 { label: 'Link Studio', count: students.filter(s => s.package === 'link').length, color: 'bg-blue-500', icon: ImageIcon },
                 { label: 'Album Studio', count: students.filter(s => s.package === 'album').length, color: 'bg-brand-gold', icon: Check },
-                { label: 'Demonstração', count: students.filter(s => s.package === 'prospect' || !s.package).length, color: 'bg-gray-500', icon: Search },
+                { label: 'Demonstração', count: students.filter(s => s.role !== 'admin' && (s.package === 'prospect' || !s.package)).length, color: 'bg-gray-500', icon: Search },
               ].map((pkg, i) => (
                 <div key={i} className="bg-zinc-900/30 border border-white/5 p-6 rounded-3xl flex items-center gap-6">
                   <div className={`w-12 h-12 rounded-2xl ${pkg.color} flex items-center justify-center text-black`}>
@@ -383,17 +407,68 @@ const Admin: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold">Pedidos recentes</h3>
+                  <button onClick={() => setActiveTab('orders')} className="text-[10px] uppercase tracking-widest text-brand-gold hover:text-white">Ver todos</button>
+                </div>
+                {orders.length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">Nenhum pedido ainda.</p> : (
+                  <ul className="divide-y divide-white/5">
+                    {orders.slice(0, 6).map(o => (
+                      <li key={o.id} className="py-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{o.studentName || `Pedido #${o.id.slice(0, 8).toUpperCase()}`}</p>
+                          <p className="text-[11px] text-gray-500">{o.productName || (o.productType === 'link_studio' ? 'Link Studio' : 'Álbum Studio')} · {fmtDate(o.createdAt)}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-brand-gold">{fmtBRL(o.totalPrice)}</p>
+                          <p className="text-[10px] text-gray-500">{ORDER_STATUS.find(st => st.value === (o.status || 'aguardando_contato'))?.label || o.status}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold">Aguardando aprovação</h3>
+                  <button onClick={() => setActiveTab('students')} className="text-[10px] uppercase tracking-widest text-brand-gold hover:text-white">Ver alunos</button>
+                </div>
+                {students.filter(st => st.role === 'pending').length === 0 ? <p className="text-sm text-gray-500 py-6 text-center">Ninguém aguardando. 🎉</p> : (
+                  <ul className="divide-y divide-white/5">
+                    {students.filter(st => st.role === 'pending').slice(0, 6).map(st => (
+                      <li key={st.id} className="py-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{st.displayName || 'Sem nome'}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{st.email || st.phoneNumber || '—'}</p>
+                        </div>
+                        <button
+                          onClick={() => { setSelectedStudentForApproval(st); setApprovalTier(st.package || 'prospect'); }}
+                          className="shrink-0 bg-brand-gold text-black px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase hover:bg-white transition-all"
+                        >
+                          Aprovar
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </>
         )}
 
         {/* Data Tables */}
+        {activeTab !== 'dashboard' && (
         <div className="bg-zinc-900/30 border border-white/5 rounded-3xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
                 <tr className="border-b border-white/5 bg-white/5">
-                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Item / Aluno</th>
-                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Status</th>
+                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">{activeTab === 'albums' ? 'Álbum' : 'Aluno'}</th>
+                  <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">{activeTab === 'albums' ? 'Fotos' : activeTab === 'students' ? 'Acesso' : 'Status'}</th>
                   {activeTab === 'orders' && (
                     <>
                       <th className="p-4 md:p-6 text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500">Produto</th>
@@ -441,11 +516,8 @@ const Admin: React.FC = () => {
                         onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
                         className="bg-black/60 border border-white/10 text-white rounded-lg px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider outline-none focus:border-brand-gold"
                       >
-                        <option value="aguardando_contato">Aguardando Contato</option>
-                        <option value="em_producao">Em Produção</option>
-                        <option value="pago">Pago</option>
-                        <option value="concluido">Concluído</option>
-                        <option value="cancelado">Cancelado</option>
+                        {ORDER_STATUS.map(st => <option key={st.value} value={st.value}>{st.label}</option>)}
+                        {order.status && !ORDER_STATUS.some(st => st.value === order.status) && <option value={order.status}>{order.status}</option>}
                       </select>
                     </td>
                     <td className="p-4 md:p-6">
@@ -461,10 +533,10 @@ const Admin: React.FC = () => {
                       </div>
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm font-bold text-brand-gold">
-                      R$ {(order.totalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {fmtBRL(order.totalPrice)}
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
-                      {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('pt-BR') : 'Hoje'}
+                      {fmtDate(order.createdAt)}
                     </td>
                     <td className="p-4 md:p-6 text-right">
                       <div className="flex items-center justify-end gap-1 md:gap-2">
@@ -478,7 +550,7 @@ const Admin: React.FC = () => {
                           </button>
                         )}
                         <button 
-                          onClick={() => handleDelete('orders', order.id)}
+                          onClick={() => handleDelete('orders', order.id, `o pedido de ${order.studentName || order.id.slice(0, 8)}`)}
                           className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
                           title="Excluir pedido"
                         >
@@ -506,13 +578,12 @@ const Admin: React.FC = () => {
                       <p className="text-xs md:text-sm font-medium">{album.photosCount || 0} Fotos</p>
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
-                      {album.createdAt?.toDate().toLocaleDateString()}
+                      {fmtDate(album.createdAt)}
                     </td>
                     <td className="p-4 md:p-6 text-right">
                       <div className="flex items-center justify-end gap-1 md:gap-2">
-                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors"><ExternalLink size={16} /></button>
                         <button 
-                          onClick={() => handleDelete('albums', album.id)}
+                          onClick={() => handleDelete('albums', album.id, `o álbum ${album.title || ''}`)}
                           className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
                         >
                           <Trash2 size={16} />
@@ -545,7 +616,7 @@ const Admin: React.FC = () => {
                         student.role === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : 
                         'bg-green-500/10 text-green-500'
                       }`}>
-                        {student.role}
+                        {ROLE_LABEL[student.role] || student.role || '—'}
                       </span>
                     </td>
                     <td className="p-4 md:p-6">
@@ -573,7 +644,7 @@ const Admin: React.FC = () => {
                       {student.semester || '-'}
                     </td>
                     <td className="p-4 md:p-6 text-xs md:text-sm text-gray-400">
-                      {student.createdAt?.toDate().toLocaleDateString()}
+                      {fmtDate(student.createdAt)}
                     </td>
                     <td className="p-4 md:p-6 text-right">
                       <div className="flex items-center justify-end gap-1 md:gap-2">
@@ -596,9 +667,9 @@ const Admin: React.FC = () => {
                             Aprovar Acesso
                           </button>
                         ) : (
-                          student.role === 'student' && (
+                          student.role === 'student' && student.phoneNumber && (
                             <button 
-                              onClick={() => sendWhatsApp(student.phoneNumber || '', student.displayName || 'Formando')}
+                              onClick={() => sendWhatsApp(student.phoneNumber, student.displayName || 'Formando')}
                               className="bg-green-500/10 text-green-500 p-2 rounded-lg hover:bg-green-500/20 transition-all flex items-center gap-2 text-[9px] md:text-[10px] font-bold uppercase"
                               title="Enviar confirmação via WhatsApp"
                             >
@@ -608,7 +679,7 @@ const Admin: React.FC = () => {
                           )
                         )}
                         <button 
-                          onClick={() => handleDelete('users', student.id)}
+                          onClick={() => handleDelete('users', student.id, `o aluno ${student.displayName || student.email || ''}`)}
                           className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"
                           title="Excluir Aluno"
                         >
@@ -620,8 +691,14 @@ const Admin: React.FC = () => {
                 ))}
               </tbody>
             </table>
+            {filteredData().length === 0 && (
+              <p className="text-center text-gray-500 text-sm py-12">
+                {searchTerm ? 'Nada encontrado para essa busca.' : activeTab === 'orders' ? 'Nenhum pedido ainda.' : activeTab === 'albums' ? 'Nenhum álbum salvo ainda.' : 'Nenhum aluno cadastrado ainda.'}
+              </p>
+            )}
           </div>
         </div>
+        )}
       </main>
 
       {/* Approve Student Modal */}
@@ -695,46 +772,14 @@ const Admin: React.FC = () => {
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-zinc-900 border border-white/10 rounded-[40px] p-8 max-w-4xl w-full h-[80vh] flex flex-col"
+            className="bg-zinc-900 border border-white/10 rounded-3xl md:rounded-[40px] p-5 md:p-8 max-w-4xl w-full h-[85vh] flex flex-col"
           >
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-8">
               <div>
-                <h3 className="text-xl font-bold">Fotos de {selectedStudentForPhotos.displayName}</h3>
+                <h3 className="text-xl font-bold">Fotos de {selectedStudentForPhotos.displayName || 'aluno'}</h3>
                 <p className="text-xs text-gray-500">{studentPhotos.length} fotos carregadas</p>
               </div>
               <div className="flex items-center gap-4">
-                {auth.currentUser?.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' && (
-                  <button 
-                    onClick={async () => {
-                      setIsUploading(true);
-                      try {
-                        const demoPhotos = [
-                          'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800',
-                          'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=800'
-                        ];
-                        for (const [index, url] of demoPhotos.entries()) {
-                          await addDoc(collection(db, 'users', selectedStudentForPhotos.id, 'photos'), {
-                            url,
-                            name: `demo-photo-${index + 1}.jpg`,
-                            createdAt: serverTimestamp()
-                          });
-                        }
-                        handleManagePhotos(selectedStudentForPhotos);
-                      } catch (error) {
-                        console.error("Error loading demo photos:", error);
-                      } finally {
-                        setIsUploading(false);
-                      }
-                    }}
-                    disabled={isUploading}
-                    className="bg-white/5 text-white/60 px-4 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10"
-                  >
-                    Demo Photos
-                  </button>
-                )}
                 <label className="bg-brand-gold text-black px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-white transition-all cursor-pointer flex items-center gap-2">
                   <Upload size={16} />
                   {isUploading ? 'Enviando...' : 'Subir Fotos'}
@@ -757,9 +802,11 @@ const Admin: React.FC = () => {
               {studentPhotos.map((photo) => (
                 <div key={photo.id} className="aspect-[2/3] bg-black rounded-xl overflow-hidden relative group">
                   <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {photo.source === 'student' && <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/70 text-[9px] uppercase tracking-wider text-gray-300">do aluno</span>}
+                  <div className="absolute top-2 right-2 md:inset-0 md:bg-black/60 md:opacity-0 md:group-hover:opacity-100 transition-opacity md:flex md:items-center md:justify-center">
                     <button 
                       onClick={() => handleDeletePhoto(photo.id)}
+                      title="Excluir foto"
                       className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                     >
                       <Trash2 size={16} />
