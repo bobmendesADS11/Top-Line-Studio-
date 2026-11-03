@@ -710,7 +710,7 @@ export default function Landing() {
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/15 backdrop-blur-md border-b border-white/[0.04] py-2' : 'bg-transparent py-4 border-b border-white/0'}`}>
-        <div className="w-full px-5 md:px-8 xl:px-12 2xl:px-16 flex items-center justify-between">
+        <div className="w-full px-4 md:px-6 xl:px-8 flex items-center justify-between">
           <div className={`origin-left transition-transform duration-700 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
             <Logo />
           </div>
@@ -772,7 +772,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center py-32 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 md:pt-28 md:pb-24 [@media(max-height:720px)]:md:pt-20 [@media(max-height:720px)]:md:pb-10 overflow-hidden">
         {/* Vídeo de fundo: Formatura de Medicina Unisul (Top Line), sem som, em preto e branco */}
         <video
           src="/video/fundo-formatura.mp4"
@@ -800,7 +800,7 @@ export default function Landing() {
             transition={{ duration: 1 }}
             className="flex flex-col items-center"
           >
-            <div className="flex items-center gap-6 mb-12">
+            <div className="flex items-center gap-6 mb-8 [@media(max-height:820px)]:mb-5 [@media(max-height:720px)]:mb-3">
               <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
               <div className="relative px-8 py-3 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.7)] group overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
@@ -813,9 +813,9 @@ export default function Landing() {
               <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
             </div>
             
-            <div className="flex flex-col items-center mb-10">
-              <div className="flex flex-col items-center mb-4">
-                <h1 className="font-serif text-4xl md:text-7xl text-white tracking-[0.02em] uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            <div className="flex flex-col items-center mb-6">
+              <div className="flex flex-col items-center mb-2">
+                <h1 className="font-serif text-4xl md:text-6xl xl:text-7xl [@media(max-height:820px)]:xl:text-6xl [@media(max-height:720px)]:md:text-5xl text-white tracking-[0.02em] uppercase leading-none drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                   Top Line
                 </h1>
                 <span className="text-white/50 text-[8px] md:text-xs uppercase tracking-[1.2em] font-light mt-3 ml-[1.2em]">
@@ -823,11 +823,11 @@ export default function Landing() {
                 </span>
               </div>
               
-              <div className="relative w-full max-w-xl py-3 md:py-4">
+              <div className="relative w-full max-w-xl py-1 md:py-2">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/5 to-transparent border-y border-brand-gold/10 backdrop-blur-[1px]" />
                 <div className="relative z-10 flex items-center justify-center gap-8">
                   <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent" />
-                  <span className="gold-gradient text-5xl md:text-7xl font-script drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] py-4">
+                  <span className="gold-gradient text-5xl md:text-6xl xl:text-7xl [@media(max-height:820px)]:xl:text-6xl [@media(max-height:720px)]:md:text-5xl font-script drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] py-2">
                     Studio
                   </span>
                   <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-brand-gold/30 to-transparent" />
@@ -839,25 +839,25 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-              className="mb-16 relative"
+              className="mb-8 [@media(max-height:820px)]:mb-5 [@media(max-height:720px)]:mb-3 relative"
             >
-              <span className="relative z-10 font-script text-6xl md:text-8xl gold-gradient drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_12px_rgba(212,175,55,0.25)] block hover:scale-105 transition-transform cursor-default py-2">
+              <span className="relative z-10 font-script text-6xl md:text-7xl xl:text-8xl [@media(max-height:820px)]:xl:text-7xl [@media(max-height:720px)]:md:text-6xl gold-gradient drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_12px_rgba(212,175,55,0.25)] block hover:scale-105 transition-transform cursor-default py-2">
                 Sonhe, acredite, realize!
               </span>
-              <div className="mt-4 flex items-center justify-center gap-4">
+              <div className="mt-2 flex [@media(max-height:720px)]:hidden items-center justify-center gap-4">
                 <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-brand-gold/30" />
                 <span className="text-[8px] uppercase tracking-[0.8em] text-white/40 font-light">Eternizando Conquistas</span>
                 <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-brand-gold/30" />
               </div>
             </motion.div>
             
-            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-8">
+            <p className="text-gray-300 text-base md:text-lg max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-6 [@media(max-height:820px)]:mb-4">
               A experiência definitiva em formaturas premium. 
               Transformamos sonhos em memórias eternas com exclusividade e sofisticação.
             </p>
 
             {/* Assistir: como no site da Top Line */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center mb-10">
+            <div className="flex flex-col sm:flex-row gap-3 items-center mb-6 [@media(max-height:820px)]:mb-4">
               <button
                 onClick={() => setWatchVideo('studio')}
                 className="px-6 py-3 rounded-lg border border-white/30 text-white bg-black/40 backdrop-blur-sm hover:border-brand-gold hover:text-brand-gold transition-all text-sm font-semibold flex items-center gap-2"
@@ -869,7 +869,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-6 items-center">
               <button 
                 onClick={() => navigate('/login')}
-                className="bg-brand-gold text-black px-12 py-5 rounded-full text-lg font-black uppercase tracking-[0.1em] hover:bg-white transition-all hover:scale-105 shadow-[0_4px_25px_rgba(212,175,55,0.25)] active:scale-95 group flex items-center gap-3"
+                className="bg-brand-gold text-black px-10 py-4 rounded-full text-base font-black uppercase tracking-[0.1em] hover:bg-white transition-all hover:scale-105 shadow-[0_4px_25px_rgba(212,175,55,0.25)] active:scale-95 group flex items-center gap-3"
               >
                 Acessar Studio
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -877,7 +877,7 @@ export default function Landing() {
               
               <button 
                 onClick={scrollToAlbum}
-                className="px-12 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-xs font-bold tracking-[0.3em] uppercase text-white/80 backdrop-blur-sm hover:text-white flex items-center gap-3 group shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
+                className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-xs font-bold tracking-[0.3em] uppercase text-white/80 backdrop-blur-sm hover:text-white flex items-center gap-3 group shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
               >
                 Monte seu Álbum
                 <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
@@ -890,7 +890,7 @@ export default function Landing() {
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-70 cursor-pointer group z-20"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden [@media(min-height:900px)]:flex flex-col items-center gap-2 opacity-70 cursor-pointer group z-20"
           onClick={() => albumRef.current?.scrollIntoView({ behavior: 'smooth' })}
         >
           <p className="text-[10px] uppercase tracking-[0.5em] font-bold text-brand-gold group-hover:text-white transition-colors">Álbum 3D</p>
