@@ -114,7 +114,7 @@ function ParticleBackground() {
 function Logo() {
   return (
     <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-      <div className="relative w-12 h-12 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16 shrink-0 overflow-hidden rounded-lg bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
+      <div className="relative w-10 h-10 xl:w-11 xl:h-11 2xl:w-12 2xl:h-12 shrink-0 overflow-hidden rounded-lg bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
         <motion.div 
           animate={{ y: [0, -120, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
@@ -131,28 +131,28 @@ function Logo() {
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <GraduationCap className="text-brand-gold w-6 h-6 xl:w-7 xl:h-7 2xl:w-8 2xl:h-8 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+          <GraduationCap className="text-brand-gold w-5 h-5 2xl:w-6 2xl:h-6 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
         </div>
       </div>
       <div className="flex items-center gap-3 relative group">
         {/* Brand: TOP LINE STUDIO & FORMATURAS */}
         <div className="flex flex-col items-start leading-none">
           <div className="flex items-baseline gap-1.5">
-            <div className="flex gap-1 font-serif text-[14px] xl:text-[17px] 2xl:text-[20px] text-white uppercase tracking-[0.2em] whitespace-nowrap">
+            <div className="flex gap-1 font-serif text-[13px] xl:text-[14px] 2xl:text-[16px] text-white uppercase tracking-[0.2em] whitespace-nowrap">
               <span>Top</span>
               <span>Line</span>
             </div>
-            <span className="font-script text-xl xl:text-2xl 2xl:text-3xl gold-gradient leading-normal inline-block -my-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+            <span className="font-script text-lg xl:text-xl 2xl:text-2xl gold-gradient leading-normal inline-block -my-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
               Studio
             </span>
           </div>
-          <span className="text-[8px] xl:text-[10px] 2xl:text-[11px] text-white/50 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
+          <span className="text-[8px] xl:text-[9px] text-white/50 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
         </div>
 
         {/* 20 Anos Badge - Vertical Stack */}
         <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
-          <GraduationCap className="text-brand-gold w-4 h-4 xl:w-5 xl:h-5 2xl:w-6 2xl:h-6 -mb-1.5 relative z-10 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-          <span className="font-script text-2xl xl:text-3xl 2xl:text-4xl gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+          <GraduationCap className="text-brand-gold w-3.5 h-3.5 xl:w-4 xl:h-4 -mb-1.5 relative z-10 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+          <span className="font-script text-xl xl:text-2xl gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
             20
           </span>
         </div>
@@ -709,20 +709,20 @@ export default function Landing() {
   return (
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/45 backdrop-blur-xl backdrop-saturate-150 border-b border-white/10 py-3 shadow-[0_10px_40px_rgba(0,0,0,0.45)]' : 'bg-transparent py-6 2xl:py-8 border-b border-white/0'}`}>
-        <div className="max-w-[1500px] 2xl:max-w-[1800px] mx-auto px-6 lg:px-10 flex items-center justify-between">
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/45 backdrop-blur-xl backdrop-saturate-150 border-b border-white/10 py-2 shadow-[0_10px_40px_rgba(0,0,0,0.45)]' : 'bg-transparent py-4 border-b border-white/0'}`}>
+        <div className="w-full px-5 md:px-8 xl:px-12 2xl:px-16 flex items-center justify-between">
           <div className={`origin-left transition-transform duration-700 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
             <Logo />
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8 xl:gap-12 2xl:gap-16 text-[11px] xl:text-[13px] 2xl:text-[15px] uppercase tracking-[0.3em] font-bold">
+          <div className="hidden md:flex items-center gap-8 xl:gap-12 text-[11px] xl:text-[12px] uppercase tracking-[0.3em] font-bold">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
             <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">O Studio</button>
             
             <div 
               onClick={scrollToAlbum}
-              className="px-4 py-2 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-sm text-brand-gold text-[9px] xl:text-[11px] 2xl:text-[12px] font-bold uppercase tracking-[0.3em] shadow-[0_2px_10px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
+              className="px-4 py-2 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-sm text-brand-gold text-[9px] xl:text-[10px] font-bold uppercase tracking-[0.3em] shadow-[0_2px_10px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
             >
               3D
             </div>
@@ -733,7 +733,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => navigate('/login')}
-              className="bg-brand-gold text-black px-8 py-3 xl:px-10 xl:py-4 2xl:px-12 rounded-full text-[11px] xl:text-[13px] 2xl:text-[15px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_4px_16px_rgba(212,175,55,0.2)] active:scale-95"
+              className="bg-brand-gold text-black px-7 py-2.5 xl:px-8 rounded-full text-[11px] xl:text-[12px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_4px_16px_rgba(212,175,55,0.2)] active:scale-95"
             >
               Acessar Studio
             </button>
