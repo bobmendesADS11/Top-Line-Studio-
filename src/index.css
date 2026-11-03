@@ -82,3 +82,7 @@
     -10px 10px 40px rgba(0,0,0,0.5);
   transform: perspective(1000px) rotateY(-2deg) rotateX(2deg);
 }
+
+/* Entrada suave das telas (CSS puro: funciona mesmo com a aba em segundo plano) */
+@keyframes route-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.route-fade-in { animation: route-fade-in 0.24s cubic-bezier(0.22, 1, 0.36, 1); }
