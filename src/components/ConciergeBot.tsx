@@ -42,6 +42,8 @@ const STATUS_LABEL: Record<string, string> = {
   pending: 'Recebido — aguardando confirmação',
   aguardando_contato: 'Recebido — a equipe vai te chamar no WhatsApp',
   processing: 'Em produção',
+  em_producao: 'Em produção',
+  cancelado: 'Cancelado',
   pago: 'Pagamento confirmado',
   concluido: 'Concluído',
   completed: 'Concluído',
