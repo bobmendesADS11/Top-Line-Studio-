@@ -142,7 +142,7 @@ function Logo() {
               <span>Top</span>
               <span>Line</span>
             </div>
-            <span className="font-script text-base gold-gradient leading-none inline-block pr-1.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+            <span className="font-script text-base gold-gradient leading-normal inline-block -my-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
               Studio
             </span>
           </div>

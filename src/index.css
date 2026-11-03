@@ -27,8 +27,8 @@
 }
 
 .font-script.gold-gradient {
-  padding-right: 0.2em;
-  padding-left: 0.05em;
+  /* folga para a letra cursiva não ser cortada pelo degradê (S, d e o final) */
+  padding: 0.12em 0.35em 0.12em 0.12em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
