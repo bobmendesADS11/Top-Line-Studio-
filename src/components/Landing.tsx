@@ -709,7 +709,7 @@ export default function Landing() {
   return (
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/45 backdrop-blur-xl backdrop-saturate-150 border-b border-white/10 py-2 shadow-[0_10px_40px_rgba(0,0,0,0.45)]' : 'bg-transparent py-4 border-b border-white/0'}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/15 backdrop-blur-md border-b border-white/[0.04] py-2' : 'bg-transparent py-4 border-b border-white/0'}`}>
         <div className="w-full px-5 md:px-8 xl:px-12 2xl:px-16 flex items-center justify-between">
           <div className={`origin-left transition-transform duration-700 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
             <Logo />
