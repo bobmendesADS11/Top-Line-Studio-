@@ -114,7 +114,7 @@ function ParticleBackground() {
 function Logo() {
   return (
     <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-      <div className="relative w-10 h-10 overflow-hidden rounded-lg bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
+      <div className="relative w-11 h-11 2xl:w-14 2xl:h-14 shrink-0 overflow-hidden rounded-lg bg-zinc-900 border border-brand-gold/30 shadow-lg group-hover:border-brand-gold transition-colors">
         <motion.div 
           animate={{ y: [0, -120, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
@@ -131,28 +131,28 @@ function Logo() {
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <GraduationCap className="text-brand-gold w-5 h-5 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
+          <GraduationCap className="text-brand-gold w-5 h-5 2xl:w-7 2xl:h-7 drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
         </div>
       </div>
       <div className="flex items-center gap-3 relative group">
         {/* Brand: TOP LINE STUDIO & FORMATURAS */}
         <div className="flex flex-col items-start leading-none">
           <div className="flex items-baseline gap-1.5">
-            <div className="flex gap-1 font-serif text-[11px] text-white uppercase tracking-[0.2em]">
+            <div className="flex gap-1 font-serif text-[13px] 2xl:text-[17px] text-white uppercase tracking-[0.2em] whitespace-nowrap">
               <span>Top</span>
               <span>Line</span>
             </div>
-            <span className="font-script text-base gold-gradient leading-normal inline-block -my-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+            <span className="font-script text-xl 2xl:text-2xl gold-gradient leading-normal inline-block -my-1 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
               Studio
             </span>
           </div>
-          <span className="text-[6px] text-white/50 uppercase tracking-[0.4em] mt-1.5 pl-0.5">Formaturas</span>
+          <span className="text-[8px] 2xl:text-[10px] text-white/50 uppercase tracking-[0.4em] mt-1 pl-0.5">Formaturas</span>
         </div>
 
         {/* 20 Anos Badge - Vertical Stack */}
         <div className="flex flex-col items-center justify-center pl-2.5 border-l border-white/10 -mt-0.5">
-          <GraduationCap className="text-brand-gold w-3.5 h-3.5 -mb-1.5 relative z-10 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
-          <span className="font-script text-xl gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+          <GraduationCap className="text-brand-gold w-4 h-4 2xl:w-5 2xl:h-5 -mb-1.5 relative z-10 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]" />
+          <span className="font-script text-2xl 2xl:text-3xl gold-gradient leading-normal inline-block px-1.5 pt-1 pb-0.5 drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
             20
           </span>
         </div>
@@ -710,17 +710,17 @@ export default function Landing() {
     <div className="relative min-h-screen bg-[#080808] text-white selection:bg-brand-gold/30">
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 ease-in-out ${isScrolled ? 'bg-black/90 backdrop-blur-2xl border-b border-white/10 py-4 shadow-2xl' : 'bg-transparent py-8 border-b border-white/0'}`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-[1400px] 2xl:max-w-[1680px] mx-auto px-6 lg:px-10 flex items-center justify-between">
           <Logo />
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8 text-[10px] uppercase tracking-[0.3em] font-bold">
+          <div className="hidden md:flex items-center gap-8 xl:gap-12 text-[11px] 2xl:text-[13px] uppercase tracking-[0.3em] font-bold">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-gold transition-colors">Home</button>
             <button onClick={scrollToAbout} className="hover:text-brand-gold transition-colors">O Studio</button>
             
             <div 
               onClick={scrollToAlbum}
-              className="px-4 py-2 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-sm text-brand-gold text-[8px] font-bold uppercase tracking-[0.3em] shadow-[0_2px_10px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
+              className="px-4 py-2 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-sm text-brand-gold text-[9px] 2xl:text-[11px] font-bold uppercase tracking-[0.3em] shadow-[0_2px_10px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-brand-gold hover:text-black transition-all"
             >
               3D
             </div>
@@ -731,7 +731,7 @@ export default function Landing() {
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => navigate('/login')}
-              className="bg-brand-gold text-black px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_4px_16px_rgba(212,175,55,0.2)] active:scale-95"
+              className="bg-brand-gold text-black px-8 py-3 2xl:px-10 2xl:py-4 rounded-full text-[11px] 2xl:text-[13px] uppercase tracking-[0.15em] font-black hover:bg-white transition-all hover:scale-105 shadow-[0_4px_16px_rgba(212,175,55,0.2)] active:scale-95"
             >
               Acessar Studio
             </button>
@@ -966,7 +966,7 @@ export default function Landing() {
 
       {/* O Studio Section */}
       <section ref={aboutRef} className="py-20 md:py-32 px-6 relative overflow-hidden bg-zinc-950">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="max-w-7xl 2xl:max-w-[1560px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -1012,7 +1012,7 @@ export default function Landing() {
 
       {/* Como Funciona Section */}
       <section ref={albumRef} className="py-20 md:py-32 px-6 bg-black relative">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl 2xl:max-w-[1560px] mx-auto">
           <div className="text-center mb-12 md:mb-20">
             <h2 className="text-4xl md:text-6xl font-serif mb-6">Como Funciona</h2>
             <p className="text-gray-400 text-xl max-w-2xl mx-auto font-light">
@@ -1072,7 +1072,7 @@ export default function Landing() {
         {/* Subtle background element */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-gold/50 to-transparent" />
         
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-7xl 2xl:max-w-[1560px] mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
             <div className="flex flex-col items-center md:items-start gap-8">
               <Logo />
@@ -1117,7 +1117,7 @@ export default function Landing() {
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-600 text-[9px] tracking-[0.2em] uppercase">
+      <div className="max-w-7xl 2xl:max-w-[1560px] mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-gray-600 text-[9px] tracking-[0.2em] uppercase">
           <span>© 2026 Top Line Formaturas. Todos os direitos reservados.</span>
           <div className="flex gap-8">
             <a href="#" className="hover:text-white transition-colors">Privacidade</a>
