@@ -30,7 +30,6 @@ import {
 import Cropper, { Area } from 'react-easy-crop';
 import Album3D from './LazyAlbum3D';
 import { PRICES } from '../lib/pricing';
-import { DEMO_PHOTOS } from '../lib/demoPhotos';
 import CheckoutModal from './CheckoutModal';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -188,7 +187,7 @@ interface AlbumSnapshot {
 }
 
 const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPurchasedAlbum = false, userTier = 'PROSPECT' }) => {
-  const [activePhotos, setActivePhotos] = useState<Photo[]>(() => photos.length > 0 ? photos : DEMO_PHOTOS);
+  const [activePhotos, setActivePhotos] = useState<Photo[]>(() => photos);
   
   // Ordem das fotos salva no rascunho (para não perder a arrumação quando as fotos recarregam)
   const savedPhotoOrderRef = useRef<Photo[] | null>(null);
@@ -1214,7 +1213,7 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
             </p>
             <p className="text-[9px] text-gray-400 leading-relaxed">
               {userTier === 'PROSPECT' 
-                ? 'Estas são fotos de demonstração para você montar e testar seu álbum. Depois da compra, suas fotos oficiais da formatura entram aqui no lugar delas, e você também pode subir as suas.'
+                ? 'Você está montando com fotos do seu acervo pessoal para ver como fica. Depois da compra, a equipe Top Line coloca as fotos oficiais da formatura no lugar.'
                 : 'Com o Link Studio você monta e vê seu álbum em 3D com suas fotos oficiais, sem compromisso. Gostou? É só pedir o álbum impresso.'}
             </p>
           </div>

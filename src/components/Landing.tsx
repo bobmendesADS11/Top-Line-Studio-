@@ -992,6 +992,9 @@ export default function Landing() {
               <p>
                 Escolha tamanho, capa e número de lâminas: o Studio sugere a diagramação das páginas e você folheia o álbum em 3D, do jeito que ele vai ficar impresso.
               </p>
+              <p>
+                Quer testar antes de comprar? Suba fotos do seu acervo pessoal e veja como fica. Ou simplesmente compre: a nossa equipe coloca as fotos oficiais da formatura para você.
+              </p>
               <div className="rounded-2xl border border-brand-gold/25 bg-brand-gold/[0.04] p-5">
                 <p className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.3em] mb-2">Comprou só o Link Studio?</p>
                 <p className="text-base text-gray-300">
