@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -26,12 +26,8 @@ interface RouteWrapperProps {
 
 const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentLocation, user, role }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full min-h-screen bg-black"
+    <div
+      className="w-full min-h-screen bg-black route-fade-in"
     >
       <Suspense fallback={<ScreenLoader />}>
       <Routes location={currentLocation}>
@@ -56,7 +52,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
-    </motion.div>
+    </div>
   );
 });
 
@@ -78,15 +74,15 @@ const AnimatedRoutes: React.FC<{ user: any; role: string | null }> = ({ user, ro
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [sectionKey]);
 
+  // Sem esperar animação de saída: se a aba estiver em segundo plano (ex.: popup de
+  // login do Google), a animação não termina e a tela nova nunca aparecia.
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <AnimatedRouteWrapper
-        key={sectionKey}
-        currentLocation={location}
-        user={user}
-        role={role}
-      />
-    </AnimatePresence>
+    <AnimatedRouteWrapper
+      key={sectionKey}
+      currentLocation={location}
+      user={user}
+      role={role}
+    />
   );
 };
 
