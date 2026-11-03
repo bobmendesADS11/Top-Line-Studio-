@@ -236,8 +236,8 @@ export default function ConciergeBot({ isOpen, onClose, intent = 'menu', student
         <ol className="list-decimal pl-5 space-y-1.5 text-[12px]">
           <li>Depois da compra do Link Studio, suas <b>fotos oficiais</b> aparecem na sua área.</li>
           <li>Abra o <b>Editor de Lâminas</b>: suas fotos já entram no álbum com uma diagramação sugerida.</li>
-          <li>Escolha <b>tamanho, capa e lâminas</b> e veja tudo em <b>3D</b>.</li>
-          <li>No painel, toque em <b>Upgrade para Álbum</b> — ou fale comigo e escolha <b>Fazer meu pedido → Álbum + Link</b>.</li>
+          <li>Escolha <b>tamanho, capa e lâminas</b> e veja tudo em <b>3D</b> — com o Link você já pode fazer isso sem comprar o álbum.</li>
+          <li>No painel, toque em <b>Pedir Álbum Impresso</b> — ou fale comigo e escolha <b>Fazer meu pedido → Álbum + Link</b>.</li>
           <li>Confirme o pedido: a equipe te chama no WhatsApp para pagamento e produção.</li>
         </ol>
       </div>

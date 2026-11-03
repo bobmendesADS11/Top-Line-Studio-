@@ -800,18 +800,6 @@ export default function Landing() {
             transition={{ duration: 1 }}
             className="flex flex-col items-center"
           >
-            <div className="flex items-center gap-6 mb-8 [@media(max-height:820px)]:mb-5 [@media(max-height:720px)]:mb-3">
-              <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
-              <div className="relative px-8 py-3 rounded-full border border-brand-gold/40 bg-black/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.7)] group overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-gold/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <div className="flex items-center gap-4">
-                  <span className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em]">20 Anos de Excelência</span>
-                  <div className="w-[1px] h-4 bg-brand-gold/30" />
-                  <span className="font-script text-2xl text-white/90">Sonhe, acredite, realize!</span>
-                </div>
-              </div>
-              <Sparkles className="w-4 h-4 text-brand-gold opacity-50" />
-            </div>
             
             <div className="flex flex-col items-center mb-6">
               <div className="flex flex-col items-center mb-2">
@@ -997,15 +985,21 @@ export default function Landing() {
               O Studio
               <div className="h-[1px] flex-1 bg-brand-gold/30" />
             </h2>
-            <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-light">
+            <div className="space-y-5 text-gray-400 text-lg leading-relaxed font-light">
               <p>
-                O <span className="text-white font-medium">Top Line Studio</span> é a área online onde você monta o álbum da sua formatura. Tudo pelo computador ou celular, no seu tempo.
+                O <span className="text-white font-medium">Top Line Studio</span> é a área online da sua formatura. Pelo computador ou celular, você vê suas fotos, monta o seu álbum e acompanha tudo no seu tempo.
               </p>
               <p>
-                Você entra com o seu acesso, escolhe tamanho, capa e número de lâminas, e o Studio sugere a diagramação das páginas. Depois é só folhear o álbum em 3D e ver como ele vai ficar antes de ser impresso.
+                Escolha tamanho, capa e número de lâminas: o Studio sugere a diagramação das páginas e você folheia o álbum em 3D, do jeito que ele vai ficar impresso.
               </p>
+              <div className="rounded-2xl border border-brand-gold/25 bg-brand-gold/[0.04] p-5">
+                <p className="text-brand-gold text-[10px] font-bold uppercase tracking-[0.3em] mb-2">Comprou só o Link Studio?</p>
+                <p className="text-base text-gray-300">
+                  Você recebe todas as fotos na íntegra e também pode montar e ver o seu álbum em 3D, sem compromisso. Gostou? É só pedir o álbum impresso.
+                </p>
+              </div>
               <p>
-                Ficou com dúvida? O <span className="text-white font-medium">Assistente Top Line</span> explica cada passo e ajuda a fechar o pedido. <span className="text-brand-gold font-medium italic">Você é único, por isso você é TOP.</span>
+                Ficou com dúvida? O <span className="text-white font-medium">Assistente Top Line</span> te guia em cada passo. <span className="text-brand-gold font-medium italic">Você é único, por isso você é TOP.</span>
               </p>
             </div>
           </motion.div>
