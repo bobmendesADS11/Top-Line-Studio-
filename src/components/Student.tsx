@@ -66,7 +66,7 @@ const WelcomeOverlay: React.FC<{ userTier: string; studentData: any; user: any; 
           {userTier === 'ALBUM'
             ? <>Prepare-se para eternizar seus melhores momentos. Explore seu álbum em 3D, personalize cada detalhe e receba uma obra de arte exclusiva em sua casa com a <span className="whitespace-nowrap font-medium text-white">Top Line Studio</span>.</>
             : userTier === 'LINK'
-              ? <>Acesse sua galeria exclusiva, baixe suas fotos em alta resolução e experimente como elas ficariam no nosso álbum físico de luxo da <span className="whitespace-nowrap font-medium text-white">Top Line Studio</span>.</>
+              ? <>Acesse sua galeria, baixe suas fotos em alta resolução e veja em 3D como elas ficam no álbum da <span className="whitespace-nowrap font-medium text-white">Top Line Studio</span>, mesmo sem ter comprado o álbum.</>
               : <>Conheça o futuro das recordações! Experimente nosso editor 3D, explore os materiais nobres e descubra todo o poder da <span className="whitespace-nowrap font-semibold text-white">Top Line Studio</span>.</>}
         </p>
 
@@ -132,7 +132,7 @@ const Dashboard: React.FC<{
               {userTier === 'ALBUM' 
                 ? 'Sua jornada de excelência continua. Suas fotos estão prontas para serem eternizadas em seu álbum exclusivo.'
                 : userTier === 'LINK'
-                  ? 'Explore o poder do Studio. Suas fotos digitais já estão disponíveis, mas a experiência física aguarda por você.'
+                  ? 'Suas fotos oficiais já estão aqui, na íntegra. Com o Link Studio você também pode montar e ver seu álbum em 3D, sem compromisso. Se gostar, é só pedir o impresso.'
                   : 'Sua formatura está sendo preparada com o requinte que você merece. Enquanto aguardamos os registros, planeje seu legado.'}
             </p>
 
@@ -169,12 +169,17 @@ const Dashboard: React.FC<{
               )}
 
               {userTier === 'LINK' && (
-                <button 
-                  onClick={() => onOpenChat('order_full')}
-                  className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all"
-                >
-                  Upgrade para Álbum
-                </button>
+                <>
+                  <Link to="editor" className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all flex items-center justify-center">
+                    Ver meu álbum em 3D
+                  </Link>
+                  <button 
+                    onClick={() => onOpenChat('order_full')}
+                    className="px-3 py-4 rounded-full border border-brand-gold/30 text-brand-gold font-bold text-[10px] lg:text-[11px] uppercase tracking-wider text-center leading-tight hover:bg-brand-gold/5 transition-all"
+                  >
+                    Pedir Álbum Impresso
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -440,14 +445,6 @@ const Student: React.FC = () => {
   const [botIntent, setBotIntent] = useState<ConciergeIntent | null>(null);
   const handleOpenChat = (intent: ConciergeIntent = 'menu') => setBotIntent(intent);
 
-  const albumPages = [
-    'https://picsum.photos/seed/grad1/800/1200',
-    'https://picsum.photos/seed/grad2/800/1200',
-    'https://picsum.photos/seed/grad3/800/1200',
-    'https://picsum.photos/seed/grad4/800/1200',
-    'https://picsum.photos/seed/grad5/800/1200',
-    'https://picsum.photos/seed/grad6/800/1200',
-  ];
 
   useEffect(() => {
     if (!user) return;
@@ -677,13 +674,13 @@ const Student: React.FC = () => {
 
             <div className="flex-1 w-full h-full relative overflow-hidden">
               <Album3D 
-                pages={userTier === 'PROSPECT' ? DEMO_PHOTOS.map(p => p.url) : (selectedPhotos.length > 0 ? selectedPhotos.map(p => p.url) : albumPages)} 
+                pages={(userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos).map(p => p.url)} 
                 currentPage={viewerPage} 
                 onPageChange={setViewerPage}
                 albumSize={savedAlbumConfig.albumSize}
                 materialType={savedAlbumConfig.materialType}
                 sheetCount={savedAlbumConfig.sheetCount}
-                coverTextureUrl={userTier === 'PROSPECT' ? DEMO_PHOTOS[0].url : selectedPhotos[0]?.url}
+                coverTextureUrl={(userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos)[0]?.url}
                 zoom={1} 
                 isOpen={true} 
                 purchaseType={hasPurchasedAlbum ? 'FULL' : 'LINK'}
@@ -695,7 +692,7 @@ const Student: React.FC = () => {
         <Route path="editor" element={
           <div className="h-[calc(100vh-80px)]">
             <AlbumEditor 
-              photos={userTier === 'PROSPECT' ? DEMO_PHOTOS : selectedPhotos} 
+              photos={userTier === 'PROSPECT' || selectedPhotos.length === 0 ? DEMO_PHOTOS : selectedPhotos} 
               onBack={() => navigate('/area-do-aluno')}
               hasPurchasedAlbum={hasPurchasedAlbum}
               userTier={userTier}

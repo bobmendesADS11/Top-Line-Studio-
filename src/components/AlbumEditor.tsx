@@ -1210,12 +1210,12 @@ const AlbumEditor: React.FC<AlbumEditorProps> = ({ photos, onSave, onBack, hasPu
         {userTier !== 'ALBUM' && (
           <div className="p-4 bg-brand-gold/10 border border-brand-gold/30 rounded-2xl">
             <p className="text-[10px] text-brand-gold font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
-              <Sparkles size={12} /> {userTier === 'PROSPECT' ? 'Modo de Demonstração' : 'Prévia Premium'}
+              <Sparkles size={12} /> {userTier === 'PROSPECT' ? 'Modo de Demonstração' : 'Prévia do Álbum · Link Studio'}
             </p>
             <p className="text-[9px] text-gray-400 leading-relaxed">
               {userTier === 'PROSPECT' 
                 ? 'Estas são fotos de demonstração para você montar e testar seu álbum. Depois da compra, suas fotos oficiais da formatura entram aqui no lugar delas, e você também pode subir as suas.'
-                : 'Você está visualizando suas fotos no modelo físico. Adquira o Studio para finalizar e receber seu álbum em casa.'}
+                : 'Com o Link Studio você monta e vê seu álbum em 3D com suas fotos oficiais, sem compromisso. Gostou? É só pedir o álbum impresso.'}
             </p>
           </div>
         )}
