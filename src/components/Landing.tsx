@@ -825,12 +825,7 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="flex flex-col items-center"
-          >
+          <div className="flex flex-col items-center hero-in">
             
             <div className="flex flex-col items-center mb-6">
               <div className="flex flex-col items-center mb-2">
@@ -854,12 +849,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-              className="mb-8 [@media(max-height:820px)]:mb-5 [@media(max-height:720px)]:mb-3 relative"
-            >
+            <div className="mb-8 [@media(max-height:820px)]:mb-5 [@media(max-height:720px)]:mb-3 relative hero-in-slogan">
               <span className="relative z-10 font-script text-6xl md:text-7xl xl:text-8xl [@media(max-height:820px)]:xl:text-7xl [@media(max-height:720px)]:md:text-6xl gold-gradient drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_2px_12px_rgba(212,175,55,0.25)] block hover:scale-105 transition-transform cursor-default py-2">
                 Sonhe, acredite, realize!
               </span>
@@ -868,7 +858,7 @@ export default function Landing() {
                 <span className="text-[8px] uppercase tracking-[0.8em] text-white/40 font-light">Eternizando Conquistas</span>
                 <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-brand-gold/30" />
               </div>
-            </motion.div>
+            </div>
             
             <p className="text-gray-300 text-base md:text-lg max-w-3xl mx-auto font-light tracking-wide leading-relaxed mb-6 [@media(max-height:820px)]:mb-4">
               A experiência definitiva em formaturas premium. 
@@ -903,7 +893,7 @@ export default function Landing() {
               </button>
             </div>
 
-          </motion.div>
+          </div>
         </div>
 
         <motion.div 
