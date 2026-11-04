@@ -8,7 +8,7 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -17,7 +17,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Services
 export const auth = getAuth(app);
 auth.languageCode = 'pt-br';
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+// Detecta redes móveis/proxies que travam a conexão em tempo real e usa um modo compatível
+export const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }, firebaseConfig.firestoreDatabaseId);
 
 // Auth Providers & Helpers
 export const googleProvider = new GoogleAuthProvider();

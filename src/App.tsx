@@ -1,9 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './lib/firebase';
 import Landing from './components/Landing';
 
 // Telas pesadas (3D, editor, painel admin) só são baixadas quando a pessoa entra nelas.
@@ -22,9 +19,10 @@ interface RouteWrapperProps {
   currentLocation: ReturnType<typeof useLocation>;
   user: any;
   role: string | null;
+  loading: boolean;
 }
 
-const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentLocation, user, role }) => {
+const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentLocation, user, role, loading }) => {
   return (
     <div
       className="w-full min-h-screen bg-black route-fade-in"
@@ -34,15 +32,16 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
         <Route path="/" element={<Landing />} />
         <Route 
           path="/login" 
-          element={user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} replace /> : <Auth />} 
+          element={loading ? <ScreenLoader /> : user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} replace /> : <Auth />} 
         />
         <Route 
           path="/admin/*" 
-          element={role === 'admin' ? <Admin /> : <Navigate to="/login" replace />} 
+          element={loading ? <ScreenLoader /> : role === 'admin' ? <Admin /> : <Navigate to="/login" replace />} 
         />
         <Route 
           path="/area-do-aluno/*" 
           element={
+            loading ? <ScreenLoader /> :
             role === 'admin' ? <Navigate to="/admin" replace /> :
             role === 'student' ? <Student /> : 
             role === 'pending' ? <PendingAccess /> : 
@@ -58,7 +57,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
 
 AnimatedRouteWrapper.displayName = 'AnimatedRouteWrapper';
 
-const AnimatedRoutes: React.FC<{ user: any; role: string | null }> = ({ user, role }) => {
+const AnimatedRoutes: React.FC<{ user: any; role: string | null; loading: boolean }> = ({ user, role, loading }) => {
   const location = useLocation();
 
   // Top-level section key so that main views (Landing, Login, Admin, Student) transition smoothly
@@ -82,6 +81,7 @@ const AnimatedRoutes: React.FC<{ user: any; role: string | null }> = ({ user, ro
       currentLocation={location}
       user={user}
       role={role}
+      loading={loading}
     />
   );
 };
@@ -92,6 +92,13 @@ const App: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+    let unsubscribe = () => {};
+    let cancelled = false;
+    // Firebase (login + banco) carrega depois da página aparecer: a home abre bem mais rápido
+    (async () => {
+    const [{ auth, db }, { onAuthStateChanged, isSignInWithEmailLink, signInWithEmailLink }, { doc, getDoc, setDoc, serverTimestamp }] =
+      await Promise.all([import('./lib/firebase'), import('firebase/auth'), import('firebase/firestore')]);
+    if (cancelled) return;
     // Handle Email Link Sign-in
     if (isSignInWithEmailLink(auth, window.location.href)) {
       let email = window.localStorage.getItem('emailForSignIn');
@@ -109,7 +116,7 @@ const App: React.FC = () => {
       }
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         try {
           // Contas "mestre" que podem se promover a admin sozinhas (as regras do Firestore
@@ -122,7 +129,11 @@ const App: React.FC = () => {
 
           // Check user role in Firestore
           const userRef = doc(db, 'users', currentUser.uid);
-          const userSnap = await getDoc(userRef);
+          // Internet ruim: não deixa a tela esperando o banco para sempre
+          const userSnap = await Promise.race([
+            getDoc(userRef),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout ao ler perfil')), 12000)),
+          ]);
 
           if (userSnap.exists()) {
             const currentData = userSnap.data();
@@ -189,20 +200,18 @@ const App: React.FC = () => {
       }
     });
 
-    return () => unsubscribe();
+    })().catch((error) => {
+      console.error('Erro ao iniciar o login:', error);
+      setLoading(false);
+    });
+
+    return () => { cancelled = true; unsubscribe(); };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
+  // A página inicial abre na hora; só as áreas que dependem do login esperam o banco.
   return (
     <Router>
-      <AnimatedRoutes user={user} role={role} />
+      <AnimatedRoutes user={user} role={role} loading={loading} />
     </Router>
   );
 };
@@ -224,7 +233,7 @@ const PendingAccess: React.FC = () => {
           Em breve você terá acesso total à sua área exclusiva Top Line.
         </p>
         <button 
-          onClick={() => auth.signOut()}
+          onClick={async () => { const { auth } = await import('./lib/firebase'); auth.signOut(); }}
           className="text-brand-gold text-xs font-bold uppercase tracking-widest hover:underline"
         >
           Sair e Voltar depois

@@ -969,9 +969,7 @@ export default function Landing() {
       <section ref={aboutRef} className="py-20 md:py-32 px-6 relative overflow-hidden bg-zinc-950">
         <div className="max-w-7xl 2xl:max-w-[1560px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            /* sempre visível: não depende de animação para aparecer */
             className="relative"
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-brand-gold/10 border border-white/10">
@@ -987,9 +985,7 @@ export default function Landing() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            /* sempre visível: não depende de animação para aparecer */
           >
             <p className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] mb-3">O que é</p>
             <h2 className="text-4xl md:text-5xl font-serif mb-8 flex items-center gap-4">
@@ -1050,9 +1046,7 @@ export default function Landing() {
             ].map((item, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                /* sempre visível: não depende de animação para aparecer */
                 transition={{ delay: i * 0.2 }}
                 onClick={() => {
                   setAlbumStep(i);
