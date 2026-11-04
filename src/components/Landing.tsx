@@ -111,6 +111,36 @@ function ParticleBackground() {
   );
 }
 
+// Vídeo que só começa a baixar quando aparece na tela (não pesa a abertura no celular)
+function LazyVideo({ src, poster, className }: { src: string; poster?: string; className?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (!('IntersectionObserver' in window)) { setVisible(true); return; }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setVisible(true); io.disconnect(); }
+    }, { rootMargin: '200px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={visible ? src : undefined}
+      poster={poster}
+      className={className}
+      autoPlay={visible}
+      muted
+      loop
+      playsInline
+      controls
+      preload={visible ? 'auto' : 'none'}
+    />
+  );
+}
+
 function Logo() {
   return (
     <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -775,8 +805,9 @@ export default function Landing() {
       <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 md:pt-28 md:pb-24 [@media(max-height:720px)]:md:pt-20 [@media(max-height:720px)]:md:pb-10 overflow-hidden">
         {/* Vídeo de fundo: Formatura de Medicina Unisul (Top Line), sem som, em preto e branco */}
         <video
-          src="/video/fundo-formatura.mp4"
+          src={typeof window !== 'undefined' && window.innerWidth < 768 ? '/video/fundo-formatura-cel.mp4' : '/video/fundo-formatura.mp4'}
           className="absolute inset-0 w-full h-full object-cover grayscale opacity-80 pointer-events-none"
+          preload="auto"
           autoPlay
           muted
           loop
@@ -934,17 +965,7 @@ export default function Landing() {
             <h2 className="text-3xl md:text-5xl font-serif text-white">Seu álbum, do jeito que você sonhou</h2>
           </div>
           <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-brand-gold/30 shadow-[0_30px_80px_rgba(0,0,0,0.8),0_0_60px_rgba(212,175,55,0.12)] bg-zinc-950">
-            <video
-              src="/trailer.mp4"
-              poster="/trailer-poster.jpg"
-              className="w-full aspect-video object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
-            />
+            <LazyVideo src="/trailer.mp4" poster="/trailer-poster.jpg" className="w-full aspect-video object-cover" />
           </div>
           <div className="flex justify-center mt-8 md:mt-10">
             <button onClick={() => navigate('/login')} className="gold-button px-8 py-4 !text-[11px] !font-bold uppercase tracking-widest">
