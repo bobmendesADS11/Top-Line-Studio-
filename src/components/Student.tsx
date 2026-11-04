@@ -450,6 +450,25 @@ const Dashboard: React.FC<{
   );
 };
 
+// Aviso para quem entra pelo celular: no computador fica melhor para baixar as fotos e montar o álbum
+const MobileTip: React.FC = () => {
+  const [show, setShow] = useState(() => {
+    try { return window.innerWidth < 768 && localStorage.getItem('topline_dica_pc') !== 'ok'; } catch { return window.innerWidth < 768; }
+  });
+  if (!show) return null;
+  const close = () => { try { localStorage.setItem('topline_dica_pc', 'ok'); } catch { /* sem armazenamento */ } setShow(false); };
+  return (
+    <div className="mx-4 mt-4 p-4 rounded-2xl border border-brand-gold/30 bg-brand-gold/[0.06] flex items-start gap-3">
+      <span className="text-xl leading-none">💻</span>
+      <div className="flex-1 text-[13px] leading-relaxed text-gray-300">
+        <p className="text-brand-gold font-bold text-[11px] uppercase tracking-widest mb-1">Dica</p>
+        O Studio funciona pelo celular, mas <b className="text-white">pelo computador fica melhor</b>: as fotos baixam mais rápido, em alta resolução, e o álbum em 3D roda mais leve.
+      </div>
+      <button onClick={close} className="text-gray-500 hover:text-white text-lg leading-none px-1" aria-label="Fechar dica">✕</button>
+    </div>
+  );
+};
+
 const Student: React.FC = () => {
   const [myOrders, setMyOrders] = useState<any[]>([]);
   const [selectedPhotos, setSelectedPhotos] = useState<any[]>([]);
@@ -622,6 +641,8 @@ const Student: React.FC = () => {
           </div>
         </div>
       </header>
+
+      <MobileTip />
 
       <Routes>
         <Route path="/" element={
