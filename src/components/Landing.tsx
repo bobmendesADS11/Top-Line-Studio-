@@ -153,7 +153,7 @@ function Logo() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
             <img loading="lazy" decoding="async" 
               key={i}
-              src={`https://picsum.photos/seed/grad_logo_${i}/100/100`} 
+              src={`/home/t${String(i).padStart(2, '0')}.webp`} 
               className="w-full aspect-square object-cover rounded-md opacity-30 group-hover:opacity-60 transition-opacity"
               referrerPolicy="no-referrer"
             />
@@ -206,9 +206,9 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       category: "Rito Tradicional",
       pageLeft: "Pág. 12",
       pageRight: "Pág. 13",
-      leftImg: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=80",
-      rightImg1: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80",
-      rightImg2: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+      leftImg: "/home/f04.webp",
+      rightImg1: "/home/f05.webp",
+      rightImg2: "/home/f10.webp",
       rightTag1: "Discurso & Juramento",
       rightTag2: "Entrega do Diploma"
     },
@@ -217,9 +217,9 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       category: "Noite de Gala",
       pageLeft: "Pág. 24",
       pageRight: "Pág. 25",
-      leftImg: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80",
-      rightImg1: "https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&w=800&q=80",
-      rightImg2: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
+      leftImg: "/home/f07.webp",
+      rightImg1: "/home/f08.webp",
+      rightImg2: "/home/f09.webp",
       rightTag1: "Valsa dos Formandos",
       rightTag2: "Brinde com a Turma"
     },
@@ -228,9 +228,9 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
       category: "Legado Eterno",
       pageLeft: "Pág. 36",
       pageRight: "Pág. 37",
-      leftImg: "https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?auto=format&fit=crop&w=1200&q=80",
-      rightImg1: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80",
-      rightImg2: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=800&q=80",
+      leftImg: "/home/f02.webp",
+      rightImg1: "/home/f01.webp",
+      rightImg2: "/home/f06.webp",
       rightTag1: "Abraço de Vitória",
       rightTag2: "Chuva de Ouro"
     }
@@ -296,7 +296,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 className={`aspect-square rounded-xl border overflow-hidden relative group cursor-pointer transition-all duration-300 ${selectedPhotos.includes(i) ? 'border-brand-gold ring-2 ring-brand-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'border-white/10 grayscale hover:grayscale-0'}`}
               >
                 <img loading="lazy" decoding="async" 
-                  src={`https://picsum.photos/seed/graduation_cap_${i}/400/400`} 
+                  src={`/home/t${String((i % 12) + 1).padStart(2, '0')}.webp`} 
                   alt="Graduation" 
                   className={`w-full h-full object-cover transition-all duration-500 ${selectedPhotos.includes(i) ? 'scale-105 opacity-100' : 'opacity-50 group-hover:opacity-100'}`}
                   referrerPolicy="no-referrer"
@@ -367,7 +367,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 className="col-span-7 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-2xl group/card"
               >
                 <img loading="lazy" decoding="async" 
-                  src={`https://picsum.photos/seed/photo_album_design_${layoutSeed}/800/600`} 
+                  src={`/home/f${String(((layoutSeed * 3) % 12) + 1).padStart(2, '0')}.webp`} 
                   className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" 
                   referrerPolicy="no-referrer" 
                 />
@@ -399,7 +399,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
                 >
                   <img loading="lazy" decoding="async" 
-                    src={`https://picsum.photos/seed/page_layout_${layoutSeed}/500/350`} 
+                    src={`/home/f${String(((layoutSeed * 3 + 1) % 12) + 1).padStart(2, '0')}.webp`} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
                     referrerPolicy="no-referrer" 
                   />
@@ -415,7 +415,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                   className="flex-1 rounded-xl bg-zinc-800 border border-white/10 overflow-hidden relative shadow-md group/side"
                 >
                   <img loading="lazy" decoding="async" 
-                    src={`https://picsum.photos/seed/photo_editing_${layoutSeed}/500/350`} 
+                    src={`/home/f${String(((layoutSeed * 3 + 2) % 12) + 1).padStart(2, '0')}.webp`} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover/side:scale-105" 
                     referrerPolicy="no-referrer" 
                   />
@@ -440,7 +440,7 @@ function AlbumShowcase({ currentStep, onStepChange }: { currentStep: number, onS
                 <div className="flex -space-x-1.5">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-5 h-5 rounded-full border border-zinc-900 bg-zinc-800 overflow-hidden">
-                      <img loading="lazy" decoding="async" src={`https://picsum.photos/seed/person${i}/50/50`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img loading="lazy" decoding="async" src={`/home/t${String(i + 3).padStart(2, '0')}.webp`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                   ))}
                   <div className="w-5 h-5 rounded-full border border-zinc-900 bg-brand-gold flex items-center justify-center text-[7px] font-bold text-black">
@@ -974,8 +974,8 @@ export default function Landing() {
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-brand-gold/10 border border-white/10">
               <img loading="lazy" decoding="async"
-                src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=75"
-                alt="Formandos jogando o capelo"
+                src="/home/f07.webp"
+                alt="Formandos comemorando no baile"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
