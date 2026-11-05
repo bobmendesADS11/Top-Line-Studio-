@@ -410,7 +410,7 @@ const Auth: React.FC = () => {
                 <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                 <input
                   type="text"
-                  placeholder="Usuário (ex: gabriel)"
+                  placeholder="Usuário"
                   value={adminUsername}
                   onChange={(e) => setAdminUsername(e.target.value)}
                   className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-brand-gold outline-none transition-colors text-sm"
