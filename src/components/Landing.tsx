@@ -112,7 +112,7 @@ function ParticleBackground() {
 }
 
 // Vídeo que só começa a baixar quando aparece na tela (não pesa a abertura no celular)
-function LazyVideo({ src, poster, className }: { src: string; poster?: string; className?: string }) {
+function LazyVideo({ src, poster, className, autoPlay = true }: { src: string; poster?: string; className?: string; autoPlay?: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
@@ -131,12 +131,12 @@ function LazyVideo({ src, poster, className }: { src: string; poster?: string; c
       src={visible ? src : undefined}
       poster={poster}
       className={className}
-      autoPlay={visible}
-      muted
-      loop
+      autoPlay={visible && autoPlay}
+      muted={autoPlay}
+      loop={autoPlay}
       playsInline
       controls
-      preload={visible ? 'auto' : 'none'}
+      preload={visible ? (autoPlay ? 'auto' : 'metadata') : 'none'}
     />
   );
 }
@@ -929,8 +929,8 @@ export default function Landing() {
             >
               <video
                 key={watchVideo}
-                src="/trailer.mp4"
-                poster="/trailer-poster.jpg"
+                src="/tutorial.mp4"
+                poster="/tutorial-poster.jpg"
                 className="w-full aspect-video bg-black border-2 border-white shadow-[0_30px_80px_rgba(0,0,0,0.9)]"
                 autoPlay
                 controls
@@ -951,11 +951,12 @@ export default function Landing() {
       <section className="relative py-16 md:py-24 px-4 md:px-6 bg-black">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8 md:mb-12">
-            <p className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] mb-3">Conheça o Studio</p>
-            <h2 className="text-3xl md:text-5xl font-serif text-white">Seu álbum, do jeito que você sonhou</h2>
+            <p className="text-brand-gold text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] mb-3">Passo a passo</p>
+            <h2 className="text-3xl md:text-5xl font-serif text-white">Como usar o Top Line Studio</h2>
+            <p className="text-gray-400 mt-4 text-sm md:text-base">Cadastro, escolha do pacote, suas fotos, montagem do álbum e a visualização em 3D.</p>
           </div>
           <div className="relative rounded-2xl md:rounded-3xl overflow-hidden border border-brand-gold/30 shadow-[0_30px_80px_rgba(0,0,0,0.8),0_0_60px_rgba(212,175,55,0.12)] bg-zinc-950">
-            <LazyVideo src="/trailer.mp4" poster="/trailer-poster.jpg" className="w-full aspect-video object-cover" />
+            <LazyVideo src="/tutorial.mp4" poster="/tutorial-poster.jpg" className="w-full aspect-video object-cover" autoPlay={false} />
           </div>
           <div className="flex justify-center mt-8 md:mt-10">
             <button onClick={() => navigate('/login')} className="gold-button px-8 py-4 !text-[11px] !font-bold uppercase tracking-widest">

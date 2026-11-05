@@ -335,7 +335,7 @@ const Dashboard: React.FC<{
         onClick={() => navigate('album')}
       >
         <div className="absolute right-0 top-0 w-2/3 h-full opacity-30 group-hover:opacity-50 transition-opacity duration-1000">
-          <img src="https://picsum.photos/seed/album_3d_render_preview/1200/800" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src="/home/f02.webp" alt="" loading="lazy" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/60 to-transparent" />
         </div>
         
@@ -424,10 +424,10 @@ const Dashboard: React.FC<{
             >
               <div className="relative aspect-[4/5] rounded-[32px] overflow-hidden mb-6 border border-white/5">
                 <img 
-                  src={`https://picsum.photos/seed/${item.img}/800/1000`} 
+                  src={`/home/f${['06', '09', '11', '01', '08'][idx % 5]}.webp`} 
                   alt={item.title} 
+                  loading="lazy"
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
                 <div className="absolute top-6 right-6">
