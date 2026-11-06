@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, googleProvider, sendSignInLinkToEmail, db } from '../lib/firebase';
+import { adminEmailCandidates, setAccessMode } from '../lib/accessMode';
 import { 
   signInWithPopup, 
   signInWithEmailAndPassword,
@@ -93,7 +94,19 @@ const Auth: React.FC = () => {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      // Entrou pela Área do Aluno: mesmo sendo admin, abre a visão de aluno
+      setAccessMode('aluno');
+      if (cleanEmail.includes('@')) {
+        await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+      } else {
+        // Admin pode digitar o usuário de gestão aqui também
+        let ok = false;
+        for (const candidate of adminEmailCandidates(cleanEmail)) {
+          try { await signInWithEmailAndPassword(auth, candidate, cleanPassword); ok = true; break; }
+          catch (err: any) { if (err?.code === 'auth/too-many-requests') throw err; }
+        }
+        if (!ok) { setError('E-mail ou senha incorretos.'); return; }
+      }
       setSuccessMessage('Login efetuado com sucesso! Acessando sua área...');
     } catch (err: any) {
       console.error('Student login error:', err);
@@ -181,6 +194,7 @@ const Auth: React.FC = () => {
         }));
       }
 
+      setAccessMode('aluno');
       await signInWithPopup(auth, googleProvider);
       setSuccessMessage('Autenticado com Google com sucesso!');
     } catch (err: any) {
@@ -265,21 +279,8 @@ const Auth: React.FC = () => {
     }
 
     // Monta a lista de e-mails possíveis a partir do que foi digitado
-    const candidates: string[] = [];
-    if (loginInput.includes('@')) {
-      candidates.push(loginInput);
-    } else if (loginInput === 'gabriel' || loginInput === 'admin') {
-      candidates.push('gabriel@admin.topline.com', 'gabriel0709@admin.topline.com', 'gabriel.master@admin.topline.com');
-    } else {
-      const digits = loginInput.replace(/\D/g, '');
-      if (digits) {
-        const withCountry = (digits.length === 10 || digits.length === 11) && !digits.startsWith('55') ? '55' + digits : digits;
-        const withoutCountry = withCountry.startsWith('55') ? withCountry.substring(2) : withCountry;
-        candidates.push(`${withCountry}@admin.topline.com`, `${withoutCountry}@admin.topline.com`);
-      } else {
-        candidates.push(`${loginInput}@admin.topline.com`);
-      }
-    }
+    const candidates = adminEmailCandidates(loginInput);
+    setAccessMode('admin');
 
     try {
       for (const candidateEmail of candidates) {
@@ -617,7 +618,10 @@ const Auth: React.FC = () => {
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={17} />
                       <input
-                        type="email"
+                        type="text"
+                        inputMode="email"
+                        autoCapitalize="none"
+                        autoComplete="username"
                         placeholder="Seu e-mail cadastrado"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}

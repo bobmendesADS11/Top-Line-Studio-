@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../lib/firebase';
+import { setAccessMode } from '../lib/accessMode';
 import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { LogOut, Book, Image as ImageIcon, Clock, User, GraduationCap, ArrowLeft, Sparkles, ArrowRight } from 'lucide-react';
 import { useNavigate, Routes, Route, Link } from 'react-router-dom';
@@ -498,15 +499,7 @@ const Student: React.FC = () => {
       }
     });
 
-    // Safety redirect for admins who end up here
-    const isAdminEmail = user.email?.toLowerCase() === 'gabrielmestrelli@gmail.com' || 
-                       user.email?.toLowerCase().endsWith('@admin.topline.com');
-    const isAdminPhone = user.phoneNumber === '+5548991764001';
-    
-    if (isAdminEmail || isAdminPhone) {
-      navigate('/admin');
-      return;
-    }
+    // Admin só chega aqui se escolheu ver como aluno (entrou pela aba Área do Aluno ou pelo botão "Ver como aluno")
 
     const q = query(
       collection(db, 'orders'), 
@@ -545,7 +538,9 @@ const Student: React.FC = () => {
     (order.status === 'pago' || order.status === 'concluido')
   );
 
-  const userTier = hasPurchasedAlbum ? 'ALBUM' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
+  const isAdmin = studentData?.role === 'admin';
+  // Admin vendo como aluno: acesso completo para testar tudo
+  const userTier = isAdmin || hasPurchasedAlbum ? 'ALBUM' : (hasPurchasedLink ? 'LINK' : 'PROSPECT');
 
   const [viewerPage, setViewerPage] = useState(0);
   // Mostra no visualizador o álbum como o aluno configurou no editor (tamanho, capa, lâminas)
@@ -632,6 +627,15 @@ const Student: React.FC = () => {
                 )}
               </div>
             </div>
+            {isAdmin && (
+              <button
+                onClick={() => { setAccessMode('admin'); navigate('/admin'); }}
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border border-brand-gold/30 text-brand-gold text-[10px] font-bold uppercase tracking-widest hover:bg-brand-gold/10 transition-all"
+                title="Voltar ao painel de administração"
+              >
+                Painel admin
+              </button>
+            )}
             <button 
               onClick={handleLogout}
               className="p-2 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
