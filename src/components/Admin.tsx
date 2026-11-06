@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Menu,
   X,
+  KeyRound,
   Upload,
   Image as ImageIcon,
   Check,
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { setDoc, serverTimestamp, addDoc, getDocs } from 'firebase/firestore';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 
 const TAB_TITLE: Record<string, string> = { dashboard: 'Painel', orders: 'Pedidos', albums: 'Álbuns', students: 'Alunos' };
 
@@ -124,6 +126,32 @@ const Admin: React.FC = () => {
   const handleLogout = () => {
     auth.signOut();
     navigate('/');
+  };
+
+  // Troca da senha do próprio admin (a senha fica no Firebase, nunca no código)
+  const [showPwd, setShowPwd] = useState(false);
+  const [pwd, setPwd] = useState({ atual: '', nova: '', confirma: '' });
+  const [pwdMsg, setPwdMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pwdBusy, setPwdBusy] = useState(false);
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdMsg(null);
+    const u = auth.currentUser;
+    if (!u?.email) { setPwdMsg({ ok: false, text: 'Entre de novo e tente outra vez.' }); return; }
+    if (pwd.nova.length < 6) { setPwdMsg({ ok: false, text: 'A nova senha precisa ter pelo menos 6 caracteres.' }); return; }
+    if (pwd.nova !== pwd.confirma) { setPwdMsg({ ok: false, text: 'A confirmação não bate com a nova senha.' }); return; }
+    setPwdBusy(true);
+    try {
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, pwd.atual));
+      await updatePassword(u, pwd.nova);
+      setPwd({ atual: '', nova: '', confirma: '' });
+      setPwdMsg({ ok: true, text: 'Senha alterada! Use a nova senha no próximo login.' });
+    } catch (err: any) {
+      const code = err?.code || '';
+      setPwdMsg({ ok: false, text: code.includes('wrong-password') || code.includes('invalid-credential') ? 'Senha atual incorreta.' : code.includes('too-many-requests') ? 'Muitas tentativas. Espere alguns minutos.' : code.includes('weak-password') ? 'Senha muito fraca.' : 'Não foi possível alterar a senha agora.' });
+    } finally {
+      setPwdBusy(false);
+    }
   };
 
   const handleDelete = async (collectionName: string, id: string, label = 'este item') => {
@@ -297,6 +325,13 @@ const Admin: React.FC = () => {
       </nav>
 
       <div className="p-4 border-t border-white/5 space-y-2">
+        <button
+          onClick={() => { setShowPwd(true); setPwdMsg(null); setIsSidebarOpen(false); }}
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/5 transition-all"
+        >
+          <KeyRound size={20} />
+          Alterar senha
+        </button>
         <button
           onClick={() => { setAccessMode('aluno'); navigate('/area-do-aluno'); }}
           className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-brand-gold hover:bg-brand-gold/10 transition-all"
@@ -830,6 +865,33 @@ const Admin: React.FC = () => {
               )}
             </div>
           </motion.div>
+        </div>
+      )}
+      {showPwd && (
+        <div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowPwd(false)}>
+          <form onClick={(e) => e.stopPropagation()} onSubmit={handleChangePassword} className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2"><KeyRound size={18} className="text-brand-gold" /> Alterar senha</h3>
+              <button type="button" onClick={() => setShowPwd(false)} className="text-gray-500 hover:text-white"><X size={18} /></button>
+            </div>
+            <p className="text-xs text-gray-500">Vale para o login no painel e na Área do Aluno.</p>
+            {(['atual', 'nova', 'confirma'] as const).map((k) => (
+              <input
+                key={k}
+                type="password"
+                autoComplete={k === 'atual' ? 'current-password' : 'new-password'}
+                placeholder={k === 'atual' ? 'Senha atual' : k === 'nova' ? 'Nova senha (mín. 6 caracteres)' : 'Repita a nova senha'}
+                value={pwd[k]}
+                onChange={(e) => setPwd({ ...pwd, [k]: e.target.value })}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-brand-gold outline-none"
+                required
+              />
+            ))}
+            {pwdMsg && <p className={`text-sm ${pwdMsg.ok ? 'text-green-400' : 'text-red-400'}`}>{pwdMsg.text}</p>}
+            <button type="submit" disabled={pwdBusy} className="w-full bg-brand-gold text-black font-bold py-3 rounded-xl hover:bg-white transition-all disabled:opacity-60">
+              {pwdBusy ? 'Alterando...' : 'Salvar nova senha'}
+            </button>
+          </form>
         </div>
       )}
     </div>
