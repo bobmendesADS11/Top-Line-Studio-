@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Landing from './components/Landing';
+import { getAccessMode } from './lib/accessMode';
 
 // Telas pesadas (3D, editor, painel admin) só são baixadas quando a pessoa entra nelas.
 // Assim a página inicial abre bem mais rápido.
@@ -32,7 +33,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
         <Route path="/" element={<Landing />} />
         <Route 
           path="/login" 
-          element={loading ? <ScreenLoader /> : user ? <Navigate to={role === 'admin' ? '/admin' : '/area-do-aluno'} replace /> : <Auth />} 
+          element={loading ? <ScreenLoader /> : user ? <Navigate to={role === 'admin' && getAccessMode() !== 'aluno' ? '/admin' : '/area-do-aluno'} replace /> : <Auth />} 
         />
         <Route 
           path="/admin/*" 
@@ -42,7 +43,7 @@ const AnimatedRouteWrapper: React.FC<RouteWrapperProps> = React.memo(({ currentL
           path="/area-do-aluno/*" 
           element={
             loading ? <ScreenLoader /> :
-            role === 'admin' ? <Navigate to="/admin" replace /> :
+            role === 'admin' ? (getAccessMode() === 'aluno' ? <Student /> : <Navigate to="/admin" replace />) :
             role === 'student' ? <Student /> : 
             role === 'pending' ? <PendingAccess /> : 
             <Navigate to="/login" replace />

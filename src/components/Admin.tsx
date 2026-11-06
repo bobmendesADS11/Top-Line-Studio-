@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { db, auth } from '../lib/firebase';
+import { setAccessMode } from '../lib/accessMode';
 import { fileToCompressedDataUrl } from '../lib/image';
 import { collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { 
@@ -295,7 +296,14 @@ const Admin: React.FC = () => {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-white/5">
+      <div className="p-4 border-t border-white/5 space-y-2">
+        <button
+          onClick={() => { setAccessMode('aluno'); navigate('/area-do-aluno'); }}
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-brand-gold hover:bg-brand-gold/10 transition-all"
+        >
+          <Users size={20} />
+          Ver como aluno
+        </button>
         <button 
           onClick={handleLogout}
           className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all"
