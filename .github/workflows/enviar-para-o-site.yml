@@ -1,0 +1,33 @@
+# Roda no repositório do Gabriel. Toda vez que o branch "publicar" recebe algo,
+# abre (se ainda não houver) um pedido no repositório do site (bobmendesADS11),
+# e a automação de lá ("Publicar automaticamente") publica na hora.
+name: Enviar para o site
+
+on:
+  push:
+    branches: [publicar]
+  workflow_dispatch:
+
+jobs:
+  enviar:
+    if: github.repository == 'gabrielmestrelli-cmd/Top-Line-Studio-'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Abrir pedido de publicação no repositório do site
+        env:
+          GH_TOKEN: ${{ secrets.PUBLICAR_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Falta o segredo PUBLICAR_TOKEN neste repositório."
+            exit 1
+          fi
+          SITE=bobmendesADS11/Top-Line-Studio-
+          aberto=$(gh pr list -R "$SITE" --state open --json number,headRefName,headRepositoryOwner \
+            --jq '.[] | select(.headRefName=="vercel" and .headRepositoryOwner.login=="gabrielmestrelli-cmd") | .number' | head -1)
+          if [ -n "$aberto" ]; then
+            echo "Pedido #$aberto já está aberto; a atualização já dispara a publicação."
+            exit 0
+          fi
+          gh pr create -R "$SITE" --base main --head gabrielmestrelli-cmd:vercel \
+            --title "Publicação automática" \
+            --body "Aberto automaticamente para publicar o site. Não precisa aprovar: a automação do repositório faz a publicação sozinha."
